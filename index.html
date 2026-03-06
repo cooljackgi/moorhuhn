@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moorhuhn Clone - Cartoon Style</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Das Canvas, auf dem das eigentliche Spiel gerendert wird -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- UI Overlays -->
+        <div id="ui-layer">
+            
+            <!-- Hauptmenü -->
+            <div id="main-menu" class="screen active">
+                <h1 class="game-title">Moorhuhn<br><span>Madness</span></h1>
+                <div class="menu-buttons">
+                    <button id="btn-start" class="btn btn-primary">Spiel Starten</button>
+                    <button id="btn-shop" class="btn btn-secondary">Upgrade Shop</button>
+                    <button id="btn-highscores" class="btn btn-secondary">Highscores</button>
+                </div>
+                <!-- Währungsanzeige im Menü -->
+                <div class="currency-display">
+                    <span class="coin-icon">💰</span> <span id="menu-coins">0</span>
+                </div>
+            </div>
+
+            <!-- In-Game HUD -->
+            <div id="hud" class="screen hidden">
+                <div class="hud-top">
+                    <div class="score-container">
+                        Punkte: <span id="hud-score">0</span>
+                    </div>
+                    <div class="time-container">
+                        Zeit: <span id="hud-time">90</span>s
+                    </div>
+                </div>
+                
+                <div class="hud-bottom">
+                    <!-- Munitionsanzeige -->
+                    <div id="ammo-container" class="ammo-container">
+                        <!-- Patronen werden per JS generiert -->
+                    </div>
+                    <div id="reload-hint" class="hidden">Rechtsklick zum Nachladen!</div>
+                    <!-- Temporäre Buffs Anzeige -->
+                    <div id="buffs-container"></div>
+                </div>
+            </div>
+
+            <!-- Shop Menü -->
+            <div id="shop-menu" class="screen hidden window-menu">
+                <h2>Upgrade Shop</h2>
+                <div class="currency-display">
+                    Guthaben: <span class="coin-icon">💰</span> <span id="shop-coins">0</span>
+                </div>
+                <div class="shop-items" id="shop-items-container">
+                    <!-- Shop Items werden per JS geladen -->
+                </div>
+                <button id="btn-shop-back" class="btn btn-secondary mt-20">Zurück</button>
+            </div>
+
+            <!-- Highscore Menü -->
+            <div id="highscore-menu" class="screen hidden window-menu">
+                <h2>Highscores</h2>
+                <ul id="highscore-list" class="highscore-list">
+                    <!-- Highscores via JS -->
+                </ul>
+                <button id="btn-highscores-back" class="btn btn-secondary mt-20">Zurück</button>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="game-over-screen" class="screen hidden window-menu">
+                <h2>Zeit abgelaufen!</h2>
+                <div class="results">
+                    <p>Erreichte Punkte: <span id="result-score" class="highlight">0</span></p>
+                    <p>Verdiente Münzen: <span id="result-coins" class="highlight">0</span></p>
+                    <p id="new-highscore-msg" class="hidden highlight-gold">Neuer Highscore!</p>
+                </div>
+                <div class="menu-buttons mt-20">
+                    <button id="btn-play-again" class="btn btn-primary">Nochmal spielen</button>
+                    <button id="btn-gameover-menu" class="btn btn-secondary">Hauptmenü</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Eigener Cursor -->
+    <div id="custom-cursor" class="crosshair"></div>
+
+    <script src="js/audioManager.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

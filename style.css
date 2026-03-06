@@ -1,0 +1,315 @@
+/* == CSS Reset & Base == */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    cursor: none; /* Wir verwenden ein eigenes Fadenkreuz */
+}
+
+:root {
+    --primary-color: #ff5722;
+    --secondary-color: #4caf50;
+    --text-color: #ffffff;
+    --bg-dark: rgba(0, 0, 0, 0.7);
+    --gold: #ffd700;
+}
+
+body {
+    font-family: 'Fredoka One', cursive, sans-serif;
+    background-color: #222;
+    color: var(--text-color);
+    overflow: hidden; /* Nichts scrollbar machen */
+    user-select: none;
+}
+
+/* == Container == */
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #87CEEB 0%, #4682B4 100%);
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* Verhindert Default-Aktionen beim Rechtsklickkampf */
+    touch-action: none;
+}
+
+/* == UI Layer == */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* UI Overlay fängt keine Klicks ab, es sei denn in Menüs */
+}
+
+/* Screens */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto; /* In Menüs Klicks erlauben */
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.active {
+    opacity: 1;
+    z-index: 10;
+}
+
+/* Window Menus (Shop, Highscore, Game Over) */
+.window-menu {
+    background-color: var(--bg-dark);
+    backdrop-filter: blur(5px);
+}
+
+.window-menu h2 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0px #000;
+    color: var(--gold);
+}
+
+/* == Hauptmenü Spezifisch == */
+.game-title {
+    font-size: 5rem;
+    text-transform: uppercase;
+    text-shadow: 4px 4px 0px #000, 0 0 20px rgba(255, 87, 34, 0.5);
+    text-align: center;
+    margin-bottom: 40px;
+    transform: rotate(-2deg);
+}
+
+.game-title span {
+    color: var(--gold);
+    font-size: 3rem;
+    display: block;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 50px;
+    color: white;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+    box-shadow: 0 6px 0px rgba(0,0,0,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-transform: uppercase;
+    min-width: 250px;
+}
+
+.btn:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0px rgba(0,0,0,0.3);
+    filter: brightness(1.1);
+}
+
+.btn:active {
+    transform: translateY(6px);
+    box-shadow: 0 0px 0px rgba(0,0,0,0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(180deg, #ff9800, #ff5722);
+}
+
+.btn-secondary {
+    background: linear-gradient(180deg, #4caf50, #2e7d32);
+}
+
+.currency-display {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2rem;
+    background: rgba(0,0,0,0.5);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 2px solid var(--gold);
+}
+
+/* == In-Game HUD == */
+#hud {
+    pointer-events: none; /* Während des Spiels HUD ignorieren für Klicks */
+    justify-content: space-between;
+}
+
+.hud-top {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 0px #000;
+}
+
+.score-container { color: white; }
+.time-container { color: var(--gold); }
+
+.hud-bottom {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 30px;
+    gap: 10px;
+}
+
+.ammo-container {
+    display: flex;
+    gap: 10px;
+}
+
+.bullet {
+    width: 20px;
+    height: 50px;
+    background: linear-gradient(to right, #d4af37, #ffd700, #d4af37);
+    border-radius: 10px 10px 2px 2px;
+    border: 2px solid #000;
+    box-shadow: inset -3px 0 5px rgba(0,0,0,0.3), 2px 2px 5px rgba(0,0,0,0.5);
+    transition: opacity 0.1s, transform 0.1s;
+}
+
+.bullet.empty {
+    opacity: 0.3;
+    background: #555;
+    border-color: #222;
+}
+
+#reload-hint {
+    color: #ff5252;
+    font-size: 1.5rem;
+    text-shadow: 2px 2px 0px #000;
+    animation: blink 1s infinite alternate;
+}
+
+@keyframes blink {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* == Custom Cursor == */
+#custom-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    /* Ein einfaches Fadenkreuz als CSS zum Start, später ggf. ein Bild */
+    border: 2px solid rgba(255, 0, 0, 0.8);
+    border-radius: 50%;
+    transition: transform 0.05s ease-out; /* Leichtes Smoothen */
+}
+
+#custom-cursor::before, #custom-cursor::after {
+    content: '';
+    position: absolute;
+    background-color: rgba(255, 0, 0, 0.8);
+}
+
+#custom-cursor::before {
+    top: -10px; bottom: -10px; left: 18px; width: 2px;
+}
+
+#custom-cursor::after {
+    left: -10px; right: -10px; top: 18px; height: 2px;
+}
+
+/* Schuss Animation Fadenkreuz */
+#custom-cursor.shoot {
+    transform: translate(-50%, -50%) scale(1.3);
+    border-color: yellow;
+}
+#custom-cursor.shoot::before, #custom-cursor.shoot::after {
+    background-color: yellow;
+}
+
+/* == Helpers == */
+.mt-20 { margin-top: 20px; }
+.highlight { color: #ffeb3b; }
+.highlight-gold { color: var(--gold); font-size: 2rem; animation: pulse 2s infinite; }
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Shop Items */
+.shop-items {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 800px;
+    margin: 20px;
+}
+
+.shop-item {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #555;
+    border-radius: 15px;
+    padding: 15px;
+    width: 220px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.shop-item:hover {
+    transform: scale(1.05);
+    border-color: var(--secondary-color);
+}
+
+.shop-item h3 { color: var(--gold); margin-bottom: 10px;}
+.shop-item p { font-size: 0.9rem; margin-bottom: 15px; color: #ccc;}
+.shop-item .price { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;}
+
+/* Highscore List */
+.highscore-list {
+    list-style: none;
+    width: 400px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.highscore-list li {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.5rem;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.highscore-list li:last-child {
+    border-bottom: none;
+}
