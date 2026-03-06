@@ -370,6 +370,36 @@ body {
     border-bottom: none;
 }
 
+/* == Advertisement Slots == */
+.ad-slot {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.ad-slot::after {
+    content: 'Werbung (AdSense Placeholder)';
+}
+
+.ad-banner {
+    width: 728px;
+    height: 90px;
+    max-width: 95vw;
+}
+
+.ad-rectangle {
+    width: 300px;
+    height: 250px;
+    max-width: 90vw;
+}
+
 /* == Name Input (Game Over) == */
 .name-input {
     font-family: 'Fredoka One', cursive;
@@ -391,10 +421,8 @@ body {
 /* == Mobile Reload Button == */
 .btn-reload {
     position: fixed;
-    bottom: 120px;
-    /* Weiter oben, damit er nicht abgeschnitten wird */
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 30px;
+    right: 30px;
     font-family: 'Fredoka One', cursive;
     font-size: 1.4rem;
     padding: 15px 40px;
@@ -475,6 +503,10 @@ body {
     .btn-reload {
         font-size: 1rem;
         padding: 10px 20px;
+        bottom: 20px;
+        right: 20px;
+        transform: none;
+        /* Reset transform since we are not centering anymore */
     }
 
     /* Window Menus */
