@@ -34,10 +34,8 @@
                 <!-- Ad Slot: Main Menu Banner -->
                 <div class="ad-slot ad-banner" style="position: absolute; bottom: 20px;">
                     <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8627539976573147"
-                        data-ad-slot="7256299336" data-ad-format="auto" data-full-width-responsive="true"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
+                        data-ad-slot="7256299336" data-ad-format="auto" data-full-width-responsive="true"
+                        id="ad-main-menu"></ins>
                 </div>
             </div>
 
@@ -97,10 +95,8 @@
                     <!-- Ad Slot: Game Over Rectangle -->
                     <div class="ad-slot ad-rectangle">
                         <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8627539976573147"
-                            data-ad-slot="7256299336" data-ad-format="auto" data-full-width-responsive="true"></ins>
-                        <script>
-                            (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
+                            data-ad-slot="7256299336" data-ad-format="auto" data-full-width-responsive="true"
+                            id="ad-game-over"></ins>
                     </div>
                 </div>
 
@@ -134,6 +130,44 @@
     <div id="custom-cursor" class="crosshair"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        function initAdWhenReady(adElementId, maxAttempts = 40, delayMs = 250) {
+            const adElement = document.getElementById(adElementId);
+            if (!adElement) return;
+
+            let attempts = 0;
+
+            const tryInit = () => {
+                attempts++;
+
+                if (adElement.getAttribute('data-adsbygoogle-status')) {
+                    return;
+                }
+
+                const availableWidth = adElement.offsetWidth || (adElement.parentElement && adElement.parentElement.offsetWidth) || 0;
+
+                if (availableWidth > 0) {
+                    try {
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                        return;
+                    } catch (e) {
+                        // Retry while layout/SDK is settling.
+                    }
+                }
+
+                if (attempts < maxAttempts) {
+                    setTimeout(tryInit, delayMs);
+                }
+            };
+
+            tryInit();
+        }
+
+        window.addEventListener('load', () => {
+            initAdWhenReady('ad-main-menu');
+            initAdWhenReady('ad-game-over');
+        });
+    </script>
     <script src="js/audioManager.js"></script>
     <script src="js/supabase-db.js"></script>
     <script src="js/game.js"></script>
