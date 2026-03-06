@@ -19,9 +19,25 @@ class Target {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
 
-        // Zufaellige Groesse = Punkte (kleiner = mehr Punkte)
-        this.size = Math.random() * 40 + 30; // 30 bis 70
-        this.points = Math.floor((100 - this.size) / 5) * 5; // 5 bis 15 Punkte
+        // Entfernungs-Tiers (wie im Original)
+        // 0 = Vorne (Groß, langsam), 1 = Mitte, 2 = Hinten (Klein, extrem schnell)
+        const rand = Math.random();
+        if (rand < 0.2) {
+            this.tier = 0; // Vorne
+            this.size = 80;
+            this.points = 5;
+            this.baseSpeed = 1.5;
+        } else if (rand < 0.7) {
+            this.tier = 1; // Mitte
+            this.size = 45;
+            this.points = 10;
+            this.baseSpeed = 3.5;
+        } else {
+            this.tier = 2; // Hinten
+            this.size = 20;
+            this.points = 25;
+            this.baseSpeed = 7.0;
+        }
 
         // Startposition (links oder rechts außerhalb vom Bild)
         this.direction = Math.random() > 0.5 ? 1 : -1;
@@ -30,8 +46,8 @@ class Target {
         // Hoehe (nicht zu tief)
         this.y = Math.random() * (canvasHeight * 0.6) + 50;
 
-        // Geschwindigkeit abbhängig von Groesse
-        this.speedX = (Math.random() * 2 + 2) * this.direction * (80 / this.size);
+        // Geschwindigkeit abhänging von Tier und Richtung
+        this.speedX = (this.baseSpeed + Math.random() * (this.tier + 1)) * this.direction;
         this.speedY = (Math.random() - 0.5) * 1;
 
         this.markedForDeletion = false;
@@ -634,16 +650,61 @@ class Landscape {
             });
         }
 
+        // Interaktive Elemente State
+        this.windmill = {
+            rotation: 0.4,
+            spinSpeed: 0,
+            x: this.width * 0.85,
+            y: this.height * 0.76 - 75 // Zentrum der Flügel
+        };
+
+        this.signpost = {
+            x: this.width * 0.25,
+            y: this.height * 0.85
+        };
+
+        this.sun = {
+            hit: false,
+            x: this.width * 0.8,
+            y: this.height * 0.15,
+            radius: 60
+        };
+
+        this.tree = {
+            shakeTimer: 0,
+            x: this.width * 0.12,
+            y: this.height * 0.78 - 150, // Mitte der Krone
+            radius: 50
+        };
+
+        this.scarecrow = {
+            spinSpeed: 0,
+            rotation: 0,
+            x: this.width * 0.65,
+            y: this.height * 0.65
+        };
+
         // Hindernisse/Verstecke (Positionen relativ zur Canvas-Größe)
         this.updateObstaclePositions();
     }
 
     updateObstaclePositions() {
+        this.windmill.x = this.width * 0.85;
+        this.windmill.y = this.height * 0.76 - 75;
+        this.signpost.x = this.width * 0.25;
+        this.signpost.y = this.height * 0.85;
+        this.sun.x = this.width * 0.8;
+        this.sun.y = this.height * 0.15;
+        this.tree.x = this.width * 0.12;
+        this.tree.y = this.height * 0.78 - 150;
+        this.scarecrow.x = this.width * 0.65;
+        this.scarecrow.y = this.height * 0.65;
+
         // Positionen der Verstecke, relativ zur Canvas-Größe
         this.obstacles = [
-            { id: 'tree', x: this.width * 0.12, y: this.height * 0.72, popDirection: 'right' },  // Hinter dem Baum
-            { id: 'rock', x: this.width * 0.5, y: this.height * 0.82, popDirection: 'up' },     // Hinter dem Felsen
-            { id: 'woodpile', x: this.width * 0.85, y: this.height * 0.75, popDirection: 'left' }, // Hinter dem Holzstapel
+            { id: 'tree', x: this.width * 0.12, y: this.height * 0.72, popDirection: 'right' },
+            { id: 'rock', x: this.width * 0.5, y: this.height * 0.82, popDirection: 'up' },
+            { id: 'windmill', x: this.width * 0.85, y: this.height * 0.75, popDirection: 'left' },
         ];
     }
 
@@ -661,12 +722,79 @@ class Landscape {
         // Wolken ziehen lassen
         this.clouds.forEach(c => {
             c.x -= c.speed * (deltaTime / 1000);
-            // Wenn Wolke links rausfliegt, rechts wieder reinholen
             if (c.x < -c.size * 2) {
                 c.x = this.width + c.size * 2;
                 c.y = Math.random() * (this.height * 0.4);
             }
         });
+
+        // Windmühle drehen lassen wenn abgeschossen
+        if (this.windmill.spinSpeed > 0) {
+            this.windmill.rotation += this.windmill.spinSpeed * (deltaTime / 16);
+            this.windmill.spinSpeed *= 0.99; // Langsam wieder auslaufen
+            if (this.windmill.spinSpeed < 0.001) this.windmill.spinSpeed = 0;
+        }
+
+        // Baum wackeln lassen
+        if (this.tree && this.tree.shakeTimer > 0) {
+            this.tree.shakeTimer -= (deltaTime / 16);
+            if (this.tree.shakeTimer < 0) this.tree.shakeTimer = 0;
+        }
+
+        // Vogelscheuche drehen lassen
+        if (this.scarecrow && this.scarecrow.spinSpeed > 0) {
+            this.scarecrow.rotation += this.scarecrow.spinSpeed * (deltaTime / 16);
+            this.scarecrow.spinSpeed *= 0.95; // Reibung
+            if (this.scarecrow.spinSpeed < 0.001) this.scarecrow.spinSpeed = 0;
+        }
+    }
+
+    // Prüft ob bestimmte Landschaftselemente (Windmühle, Schild) getroffen wurden
+    // Gibt false oder ein Objekt { points: 50, type: 'windmill' } zurück
+    checkHits(px, py) {
+        // 1. Windmühlenflügel prüfen
+        const dxW = px - this.windmill.x;
+        const dyW = py - this.windmill.y;
+        if (dxW * dxW + dyW * dyW < 60 * 60) { // Radius 60
+            this.windmill.spinSpeed = 0.2; // Anschubsen
+            return { points: 50, type: 'windmill', x: this.windmill.x, y: this.windmill.y };
+        }
+
+        // 2. Schild prüfen (Moorhuhn Jagd verboten!)
+        const signTopY = this.signpost.y - 40;
+        if (px > this.signpost.x - 30 && px < this.signpost.x + 30 && py > signTopY - 20 && py < signTopY + 20) {
+            return { points: -25, type: 'sign', x: this.signpost.x, y: signTopY };
+        }
+
+        // 3. Coole Sonne prüfen
+        if (!this.sun.hit) {
+            const dxS = px - this.sun.x;
+            const dyS = py - this.sun.y;
+            if (dxS * dxS + dyS * dyS < this.sun.radius * this.sun.radius) {
+                this.sun.hit = true;
+                return { points: 50, type: 'sun', x: this.sun.x, y: this.sun.y };
+            }
+        }
+
+        // 4. Baumkrone prüfen
+        if (this.tree && this.tree.shakeTimer <= 0) { // Cooldown
+            const dxT = px - this.tree.x;
+            const dyT = py - this.tree.y;
+            // Etwas größere Hitbox, weil die Krone aus mehreren Kreisen besteht
+            if (dxT * dxT + dyT * dyT < (this.tree.radius + 30) * (this.tree.radius + 30)) {
+                this.tree.shakeTimer = 30; // ~ 0.5s wackeln
+                return { points: 10, type: 'tree', x: this.tree.x, y: this.tree.y };
+            }
+        }
+
+        // 5. Vogelscheuche prüfen
+        const scTopY = this.scarecrow.y - 60;
+        if (px > this.scarecrow.x - 25 && px < this.scarecrow.x + 25 && py > scTopY - 10 && py < scTopY + 80) {
+            this.scarecrow.spinSpeed = 1.0; // Kräftiger Anstoß
+            return { points: 25, type: 'scarecrow', x: this.scarecrow.x, y: scTopY };
+        }
+
+        return null;
     }
 
     draw(ctx) {
@@ -678,10 +806,47 @@ class Landscape {
         ctx.fillRect(0, 0, this.width, this.height);
 
         // 2. Sonne
+        ctx.save();
+        ctx.translate(this.sun.x, this.sun.y);
+
         ctx.fillStyle = '#FFF9D0';
+        if (this.sun.hit) {
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 20;
+        }
         ctx.beginPath();
-        ctx.arc(this.width * 0.8, this.height * 0.15, 60, 0, Math.PI * 2);
+        ctx.arc(0, 0, this.sun.radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0; // reset
+
+        // Sonnenbrille zeichnen wenn getroffen
+        if (this.sun.hit) {
+            ctx.fillStyle = '#111'; // Schwarz
+            ctx.beginPath();
+            // Linkes Glas
+            ctx.arc(-20, -10, 18, 0, Math.PI);
+            // Rechtes Glas
+            ctx.arc(20, -10, 18, 0, Math.PI);
+            ctx.fill();
+
+            // Steg
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-10, -10);
+            ctx.lineTo(10, -10);
+            ctx.stroke();
+
+            // Glanz auf der Brille
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath();
+            ctx.arc(-25, -15, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(15, -15, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
 
         // 3. Bergkette im Hintergrund
         ctx.fillStyle = '#6D8A96';
@@ -741,14 +906,90 @@ class Landscape {
 
     // Vordergrund-Objekte (werden NACH den Hühnern gezeichnet, damit sie davor liegen)
     drawForeground(ctx) {
+        this._drawScarecrow(ctx);
         this._drawTree(ctx);
         this._drawRock(ctx);
         this._drawWindmill(ctx);
+        this._drawSignpost(ctx);
+    }
+
+    _drawScarecrow(ctx) {
+        const x = this.scarecrow.x;
+        const groundY = this.scarecrow.y;
+
+        ctx.save();
+        ctx.translate(x, groundY - 40);
+
+        // Der Pfosten bleibt starr
+        ctx.fillStyle = '#5D4037';
+        ctx.fillRect(-3, 0, 6, 45);
+
+        // Rotation auf den Rest (Körper) anwenden, es dreht sich um die Y-Achse (Simuliert durch ScaleX und Translation)
+        // Einfache 2D-Flip Animation
+        const spinScale = Math.cos(this.scarecrow.rotation);
+        ctx.scale(spinScale, 1);
+
+        // Querpfosten (Arme)
+        ctx.fillRect(-25, -15, 50, 4);
+
+        // Stroh an den Armen
+        ctx.fillStyle = '#EBC034';
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+            ctx.moveTo(-25 + i * 3, -15); ctx.lineTo(-30 + i * 5, 0);
+            ctx.moveTo(25 - i * 3, -15); ctx.lineTo(30 - i * 5, 0);
+        }
+        ctx.stroke();
+
+        // Hemd
+        ctx.fillStyle = '#d35400';
+        ctx.beginPath();
+        ctx.moveTo(-15, -15);
+        ctx.lineTo(15, -15);
+        ctx.lineTo(20, 10);
+        ctx.lineTo(-20, 10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Kopf
+        ctx.fillStyle = '#EDC9AF';
+        ctx.beginPath();
+        ctx.arc(0, -30, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#D4A373';
+        ctx.stroke();
+
+        // Gesicht
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-4, -32, 2, 0, Math.PI * 2);
+        ctx.arc(4, -32, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-5, -27);
+        ctx.lineTo(5, -27);
+        ctx.stroke();
+
+        // Hut
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(-18, -42, 36, 4); // Krempe
+        ctx.fillRect(-10, -55, 20, 15); // Zylinder
+        ctx.fillStyle = '#D2691E';
+        ctx.fillRect(-10, -45, 20, 3); // Band
+
+        ctx.restore();
     }
 
     _drawTree(ctx) {
         const x = this.width * 0.12;
         const groundY = this.height * 0.78;
+
+        ctx.save();
+        // Baum wackeln lassen wenn getroffen
+        if (this.tree && this.tree.shakeTimer > 0) {
+            const shakeAmount = Math.sin(this.tree.shakeTimer * 50) * 3;
+            ctx.translate(shakeAmount, 0);
+        }
 
         // Stamm
         ctx.fillStyle = '#5D4037';
@@ -768,7 +1009,7 @@ class Landscape {
             ctx.stroke();
         }
 
-        // Krone (mehrere überlappende Kreise = buschiger Baum)
+        // Krone
         ctx.fillStyle = '#2E7D32';
         ctx.beginPath();
         ctx.arc(x - 40, groundY - 150, 45, 0, Math.PI * 2);
@@ -781,19 +1022,18 @@ class Landscape {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Hellere Highlights auf der Krone
         ctx.fillStyle = '#43A047';
         ctx.beginPath();
         ctx.arc(x - 30, groundY - 180, 20, 0, Math.PI * 2);
         ctx.arc(x + 15, groundY - 195, 18, 0, Math.PI * 2);
         ctx.fill();
-    }
 
+        ctx.restore();
+    }
     _drawRock(ctx) {
         const x = this.width * 0.5;
         const groundY = this.height * 0.83;
 
-        // Großer Fels
         ctx.fillStyle = '#78909C';
         ctx.beginPath();
         ctx.moveTo(x - 60, groundY + 20);
@@ -809,7 +1049,6 @@ class Landscape {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Felshighlight
         ctx.fillStyle = '#90A4AE';
         ctx.beginPath();
         ctx.moveTo(x - 30, groundY - 45);
@@ -819,15 +1058,15 @@ class Landscape {
         ctx.closePath();
         ctx.fill();
 
-        // Moos auf dem Stein
         ctx.fillStyle = '#558B2F';
         ctx.beginPath();
         ctx.ellipse(x - 20, groundY - 45, 15, 5, -0.3, 0, Math.PI * 2);
         ctx.fill();
     }
 
+
     _drawWindmill(ctx) {
-        const x = this.width * 0.85;
+        const x = this.windmill.x;
         const groundY = this.height * 0.76;
 
         // Turm
@@ -851,13 +1090,13 @@ class Landscape {
         ctx.closePath();
         ctx.fill();
 
-        // Flügel (stillstehend für den Hindernis-Vibe)
+        // Rotierende Flügel
         ctx.strokeStyle = '#D7CCC8';
         ctx.lineWidth = 4;
         for (let i = 0; i < 4; i++) {
             ctx.save();
-            ctx.translate(x, groundY - 75);
-            ctx.rotate(i * Math.PI / 2 + 0.4);
+            ctx.translate(this.windmill.x, this.windmill.y);
+            ctx.rotate(i * Math.PI / 2 + this.windmill.rotation);
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.lineTo(0, 60);
@@ -870,6 +1109,34 @@ class Landscape {
             ctx.stroke();
             ctx.restore();
         }
+    }
+
+    _drawSignpost(ctx) {
+        const x = this.signpost.x;
+        const groundY = this.signpost.y;
+
+        // Pfosten
+        ctx.fillStyle = '#5D4037';
+        ctx.fillRect(x - 4, groundY - 40, 8, 40);
+
+        // Schild
+        const signTopY = groundY - 40;
+        ctx.fillStyle = '#E0E0E0';
+        ctx.fillRect(x - 30, signTopY - 20, 60, 40);
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 30, signTopY - 20, 60, 40);
+        // Roter Rand (Verbotsschild-Style)
+        ctx.strokeStyle = '#D32F2F';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(x, signTopY, 15, 0, Math.PI * 2);
+        ctx.stroke();
+        // Diagonale Linie
+        ctx.beginPath();
+        ctx.moveTo(x - 10, signTopY - 10);
+        ctx.lineTo(x + 10, signTopY + 10);
+        ctx.stroke();
     }
 }
 
@@ -900,6 +1167,7 @@ class Game {
         this.activeBuffs = {
             machinegun: 0, // Zeit in ms
             slowmo: 0,
+            shotgun: 0
         };
 
         this.targets = [];
@@ -963,7 +1231,8 @@ class Game {
             upgrades: {
                 magazine: 0, // +x capacity
                 reloadSpeed: 0, // Level
-                timeBonus: 0 // +x seconds
+                timeBonus: 0, // +x seconds
+                shotgun: 0 // +x seconds duration
             }
         };
     }
@@ -1110,7 +1379,8 @@ class Game {
         const items = [
             { id: 'magazine', name: 'Zusatzmagazin', desc: '+2 Schuss Kapazität', cost: 100 * (this.meta.upgrades.magazine + 1), max: 3, current: this.meta.upgrades.magazine },
             { id: 'reloadSpeed', name: 'Schnelllader', desc: '15% schneller nachladen', cost: 150 * (this.meta.upgrades.reloadSpeed + 1), max: 3, current: this.meta.upgrades.reloadSpeed },
-            { id: 'timeBonus', name: 'Stoppuhr', desc: '+10 Sekunden Spielzeit', cost: 200 * (this.meta.upgrades.timeBonus + 1), max: 3, current: this.meta.upgrades.timeBonus }
+            { id: 'timeBonus', name: 'Stoppuhr', desc: '+10 Sekunden Spielzeit', cost: 200 * (this.meta.upgrades.timeBonus + 1), max: 3, current: this.meta.upgrades.timeBonus },
+            { id: 'shotgun', name: 'Schrotflinte', desc: '+2s Dauer (Ballon)', cost: 250 * ((this.meta.upgrades.shotgun || 0) + 1), max: 3, current: this.meta.upgrades.shotgun || 0 }
         ];
 
         items.forEach(item => {
@@ -1172,7 +1442,7 @@ class Game {
         this.maxAmmo = DEFAULT_AMMO + (this.meta.upgrades.magazine * 2);
         this.ammo = this.maxAmmo;
         this.isReloading = false;
-        this.activeBuffs = { machinegun: 0, slowmo: 0 };
+        this.activeBuffs = { machinegun: 0, slowmo: 0, shotgun: 0 };
 
         this.targets = [];
         this.particles = [];
@@ -1211,7 +1481,25 @@ class Game {
         let buffsHtml = '';
         if (this.activeBuffs.machinegun > 0) buffsHtml += `<span style="color:#e74c3c;">MG-Modus (${(this.activeBuffs.machinegun / 1000).toFixed(1)}s)</span><br>`;
         if (this.activeBuffs.slowmo > 0) buffsHtml += `<span style="color:#9b59b6;">SlowMo (${(this.activeBuffs.slowmo / 1000).toFixed(1)}s)</span><br>`;
+        if (this.activeBuffs.shotgun > 0) buffsHtml += `<span style="color:#f1c40f;">Shotgun (${(this.activeBuffs.shotgun / 1000).toFixed(1)}s)</span><br>`;
         this.ui.buffsContainer.innerHTML = buffsHtml;
+
+        // Fadenkreuz anpassen
+        if (this.activeBuffs.shotgun > 0) {
+            this.ui.cursor.style.width = '120px';
+            this.ui.cursor.style.height = '120px';
+            this.ui.cursor.style.marginLeft = '-60px';
+            this.ui.cursor.style.marginTop = '-60px';
+            this.ui.cursor.style.borderColor = 'rgba(241, 196, 15, 0.8)';
+            this.ui.cursor.style.borderWidth = '4px';
+        } else {
+            this.ui.cursor.style.width = '40px';
+            this.ui.cursor.style.height = '40px';
+            this.ui.cursor.style.marginLeft = '-20px';
+            this.ui.cursor.style.marginTop = '-20px';
+            this.ui.cursor.style.borderColor = 'rgba(255, 0, 0, 0.8)';
+            this.ui.cursor.style.borderWidth = '2px';
+        }
     }
 
     shoot(x, y) {
@@ -1255,11 +1543,28 @@ class Game {
     }
 
     checkHits(x, y) {
-        // Rückwärts iterieren, um überlappende Objekte richtig zu treffen (oberste zuerst)
+        let hitSomething = false;
+        const isShotgun = this.activeBuffs.shotgun > 0;
+        const hitRadius = isShotgun ? 60 : 1; // Shotgun hat 60px Radius = riesige Hitbox
+
+        // 1. Zuerst normale Ziele prüfen (Rückwärts wegen Überlappung)
         for (let i = this.targets.length - 1; i >= 0; i--) {
             const t = this.targets[i];
-            if (!t.markedForDeletion && t.checkHit(x, y)) {
+
+            // Erweiterte Hit-Logik für Shotgun:
+            let isHit = false;
+            if (isShotgun) {
+                // Fallback Hit-Check mit extra Radius
+                const dx = x - t.x;
+                const dy = y - t.y;
+                isHit = (dx * dx + dy * dy) < ((t.size + hitRadius) * (t.size + hitRadius));
+            } else {
+                isHit = t.checkHit(x, y);
+            }
+
+            if (!t.markedForDeletion && isHit) {
                 t.markedForDeletion = true;
+                hitSomething = true;
 
                 // Effekte spawnen
                 this.createExplosion(t.x, t.y, t instanceof InGameUpgrade ? '#3498db' : '#8B4513');
@@ -1270,18 +1575,61 @@ class Game {
                     this.popups.push(new ScorePopup(t.x, t.y, 'BUFF!', '#3498db'));
                 } else {
                     this.audio.playChickenHit();
-                    this.score += t.points;
-                    this.popups.push(new ScorePopup(t.x, t.y, `+${t.points}`));
+                    // Shotgun gibt nur halbe Punkte weil es zu einfach ist
+                    const pointsGained = isShotgun ? Math.max(1, Math.floor(t.points / 2)) : t.points;
+                    this.score += pointsGained;
+                    this.popups.push(new ScorePopup(t.x, t.y, `+${pointsGained}`));
                 }
 
+                if (!isShotgun) {
+                    break; // Normal weicht ein Ziel durch den Schuss aus / blockt ihn. Shotgun durchdringt / trifft mehrere.
+                }
+            }
+        }
+
+        // 2. Wenn kein Ziel getroffen wurde (oder Shotgun), Umgebung prüfen (Geheimnisse)
+        if (!hitSomething || isShotgun) {
+            const sceneryHit = this.landscape.checkHits(x, y);
+            if (sceneryHit) {
+                this.score += sceneryHit.points;
+
+                // Farbe für Popup: Rot bei Minus, Gold bei Plus
+                const color = sceneryHit.points > 0 ? '#ffd700' : '#e74c3c';
+                const prefix = sceneryHit.points > 0 ? '+' : '';
+                this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y, `${prefix}${sceneryHit.points}`, color));
+
+                // Partikel für spezifische Umgebungsobjekte
+                if (sceneryHit.type === 'tree') {
+                    for (let i = 0; i < 8; i++) {
+                        const px = sceneryHit.x + (Math.random() - 0.5) * 80;
+                        const py = sceneryHit.y + (Math.random() - 0.5) * 80;
+                        const leaf = new Particle(px, py, ['#2E7D32', '#43A047', '#81C784'][Math.floor(Math.random() * 3)]);
+                        leaf.speedX = (Math.random() - 0.5) * 2;
+                        leaf.speedY = Math.random() * 3 + 2;
+                        this.particles.push(leaf);
+                    }
+                } else if (sceneryHit.type === 'scarecrow') {
+                    for (let i = 0; i < 10; i++) {
+                        const px = sceneryHit.x + (Math.random() - 0.5) * 40;
+                        const py = sceneryHit.y - 40 + (Math.random() - 0.5) * 40;
+                        const straw = new Particle(px, py, '#EBC034'); // Stroh-Farbe
+                        this.particles.push(straw);
+                    }
+                }
+
+                // Einfacher "Pluck" Sound für Umgebungstreffer
+                this.audio.playEmptyClick();
                 this.updateHUD();
-                break; // Nur ein Ziel pro Schuss treffen
             }
         }
 
         // Schuss-Partikel
-        for (let i = 0; i < 3; i++) {
-            this.particles.push(new Particle(x, y, '#fff'));
+        const particleCount = isShotgun ? 8 : 3;
+        const spread = isShotgun ? hitRadius : 0;
+        for (let i = 0; i < particleCount; i++) {
+            const px = x + (Math.random() - 0.5) * spread * 2;
+            const py = y + (Math.random() - 0.5) * spread * 2;
+            this.particles.push(new Particle(px, py, '#fff'));
         }
     }
 
@@ -1293,6 +1641,8 @@ class Game {
             this.ammo = this.maxAmmo; // Magazin füllen
         } else if (type === 'slowmo') {
             this.activeBuffs.slowmo = 8000; // 8 sekunden
+        } else if (type === 'shotgun') {
+            this.activeBuffs.shotgun = 6000 + ((this.meta.upgrades.shotgun || 0) * 2000); // 6 sek + 2 sek pro Level
         }
     }
 
@@ -1420,6 +1770,9 @@ class Game {
         if (this.activeBuffs.slowmo > 0) {
             this.activeBuffs.slowmo -= deltaTime;
         }
+        if (this.activeBuffs.shotgun > 0) {
+            this.activeBuffs.shotgun -= deltaTime;
+        }
 
         // Update HUD min. jeden Frame wg Buff-Timer
         this.updateHUD();
@@ -1445,7 +1798,7 @@ class Game {
         if (this.upgradeSpawnTimer > 8000) { // Alle ~8 Sekunden
             this.upgradeSpawnTimer = 0;
             if (Math.random() > 0.5) { // 50% chance
-                const types = ['time', 'machinegun', 'slowmo'];
+                const types = ['time', 'machinegun', 'slowmo', 'shotgun'];
                 const t = types[Math.floor(Math.random() * types.length)];
                 this.targets.push(new InGameUpgrade(this.canvas.width, this.canvas.height, t));
             }
