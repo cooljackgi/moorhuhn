@@ -118,13 +118,16 @@ class AudioManager {
         this.bgmPlaying = true;
         let noteIndex = 0;
 
-        // Simples C-Dur / Pentatonik Arpeggio für "Upbeat" Country/Folk Vibe
+        // Bouncy "Country / Yankee Doodle" Vibe
+        // Springt auf und ab, klingt viel fröhlicher
         const notes = [
-            261.63, 329.63, 392.00, 523.25, // C E G C
-            392.00, 329.63, 261.63, 196.00  // G E C G(low)
+            261.63, 329.63, 392.00, 523.25, // C E G C (hoch)
+            440.00, 392.00, 329.63, 261.63, // A G E C (runter)
+            293.66, 349.23, 440.00, 392.00, // D F A G (hoch)
+            349.23, 293.66, 246.94, 196.00  // F D B G(low) (wieder runter)
         ];
 
-        const tempo = 180; // BPM (bisschen schneller)
+        const tempo = 220; // Etwas schneller für den "peppy" Vibe
         const beatLength = 60 / tempo;
 
         const scheduleNotes = () => {
@@ -136,12 +139,12 @@ class AudioManager {
             const gain = this.ctx.createGain();
 
             osc.frequency.value = notes[noteIndex];
-            osc.type = 'triangle'; // Weicherer Sound
+            osc.type = 'triangle'; // Weicherer, holziger Sound
 
-            // Sehr leise, damit es nicht nervt (Hintergrundgedudel)
+            // Kurzer "Pluck"-Sound für Bounciness
             gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(0.03, time + 0.05);
-            gain.gain.linearRampToValueAtTime(0, time + beatLength * 0.9);
+            gain.gain.linearRampToValueAtTime(0.04, time + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + beatLength * 0.8);
 
             osc.connect(gain);
             gain.connect(this.ctx.destination);
