@@ -268,6 +268,115 @@ class ScorePopup {
 
 // --- Hauptspiel Logik ---
 
+class Landscape {
+    constructor(canvasWidth, canvasHeight) {
+        this.width = canvasWidth;
+        this.height = canvasHeight;
+
+        // Wolken generieren (Parallax Layer 1)
+        this.clouds = [];
+        for (let i = 0; i < 6; i++) {
+            this.clouds.push({
+                x: Math.random() * this.width,
+                y: Math.random() * (this.height * 0.4), // Obere Hälfte
+                size: Math.random() * 40 + 30,
+                speed: Math.random() * 10 + 5 // Langsame Bewegung
+            });
+        }
+    }
+
+    resize(canvasWidth, canvasHeight) {
+        this.width = canvasWidth;
+        this.height = canvasHeight;
+    }
+
+    update(deltaTime) {
+        // Wolken ziehen lassen
+        this.clouds.forEach(c => {
+            c.x -= c.speed * (deltaTime / 1000);
+            // Wenn Wolke links rausfliegt, rechts wieder reinholen
+            if (c.x < -c.size * 2) {
+                c.x = this.width + c.size * 2;
+                c.y = Math.random() * (this.height * 0.4);
+            }
+        });
+    }
+
+    draw(ctx) {
+        // 1. Himmel (Linear Gradient)
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, this.height);
+        skyGradient.addColorStop(0, '#5DBCD2'); // Helleres Blau oben
+        skyGradient.addColorStop(0.6, '#BCE6E9'); // Noch heller Richtung Horizont
+        skyGradient.addColorStop(1, '#8AB870'); // Grasgrün als harter Cut ganz unten (wird übermalt)
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        // 2. Sonne
+        ctx.fillStyle = '#FFF5B8';
+        ctx.beginPath();
+        // Packen wir die Sonne relativ weit oben rechts hin
+        ctx.arc(this.width * 0.8, this.height * 0.2, 50, 0, Math.PI * 2);
+        ctx.fill();
+        // Sonnen-Glow
+        const glow = ctx.createRadialGradient(
+            this.width * 0.8, this.height * 0.2, 50,
+            this.width * 0.8, this.height * 0.2, 120
+        );
+        glow.addColorStop(0, 'rgba(255, 245, 184, 0.4)');
+        glow.addColorStop(1, 'rgba(255, 245, 184, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(this.width * 0.8, this.height * 0.2, 120, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Bergkette im Hintergrund
+        ctx.fillStyle = '#659D96'; // Bläulich-Grau-Grün für Ferne
+        ctx.beginPath();
+        ctx.moveTo(0, this.height); // Start unten links
+        ctx.lineTo(0, this.height * 0.5); // Berg 1
+        ctx.lineTo(this.width * 0.2, this.height * 0.3);
+        ctx.lineTo(this.width * 0.4, this.height * 0.6); // Tal
+        ctx.lineTo(this.width * 0.65, this.height * 0.25); // Berg 2 (höher)
+        ctx.lineTo(this.width * 0.9, this.height * 0.55); // Tal
+        ctx.lineTo(this.width, this.height * 0.4); // Berg 3
+        ctx.lineTo(this.width, this.height); // Runter rechts
+        ctx.closePath();
+        ctx.fill();
+
+        // 4. Hügelkette (Middleground)
+        ctx.fillStyle = '#5A9652'; // Dunkleres Grün
+        ctx.beginPath();
+        ctx.moveTo(0, this.height);
+        // Wir nutzen quadratische Kurven für weiche Hügel
+        ctx.lineTo(0, this.height * 0.65);
+        ctx.quadraticCurveTo(this.width * 0.25, this.height * 0.45, this.width * 0.5, this.height * 0.6);
+        ctx.quadraticCurveTo(this.width * 0.8, this.height * 0.75, this.width, this.height * 0.5);
+        ctx.lineTo(this.width, this.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // 5. Vordergrund-Wiese
+        ctx.fillStyle = '#7CB342'; // Kräftiges Grasgrün
+        ctx.beginPath();
+        ctx.moveTo(0, this.height * 0.8);
+        ctx.quadraticCurveTo(this.width * 0.5, this.height * 0.7, this.width, this.height * 0.85);
+        ctx.lineTo(this.width, this.height);
+        ctx.lineTo(0, this.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // 6. Wolken zeichnen (über den Bergen, im Himmel)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        this.clouds.forEach(c => {
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+            ctx.arc(c.x + c.size * 0.8, c.y - c.size * 0.3, c.size * 0.8, 0, Math.PI * 2);
+            ctx.arc(c.x + c.size * 1.6, c.y, c.size * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+}
+
 class Game {
     constructor() {
         this.canvas = document.getElementById('game-canvas');
@@ -275,6 +384,8 @@ class Game {
         this.audio = new AudioManager();
 
         this.state = GameState.MENU;
+
+        this.landscape = new Landscape(this.canvas.width, this.canvas.height);
 
         // Spieler Stats (Meta Progression)
         this.meta = this.loadMeta();
@@ -365,6 +476,9 @@ class Game {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        if (this.landscape) {
+            this.landscape.resize(this.canvas.width, this.canvas.height);
+        }
     }
 
     initEvents() {
@@ -764,6 +878,9 @@ class Game {
             return;
         }
 
+        // Umgebungs-Updates (geht auch im Menü, wenn wir dort Bewegung haben wollen)
+        this.landscape.update(deltaTime);
+
         // Buff Timers
         if (this.activeBuffs.machinegun > 0) {
             this.activeBuffs.machinegun -= deltaTime;
@@ -809,10 +926,11 @@ class Game {
     }
 
     draw() {
-        // Clear (Hintergrund ist über CSS gesetzt, canvas ist transparent)
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Hintergrundlandschaft immer zeichnen (auch im Menü)
+        this.landscape.draw(this.ctx);
 
-        // Im Menü passiert nichts auf dem Canvas, wir lassen es leer
+        // Im Menü passiert nichts auf dem Canvas bzgl Targets, wir brechen hier ab. 
+        // Die Landschaft ist schon gerendert und bleibt als cooles Menü-Hintergrundbild.
         if (this.state !== GameState.PLAYING && this.targets.length === 0 && this.particles.length === 0) return;
 
         // Entities zeichnen
