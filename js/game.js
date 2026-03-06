@@ -1920,6 +1920,11 @@ class Game {
         this.ui.btnReload.classList.add('hidden');
         this.ui.btnReload.classList.remove('visible');
         this.updateMenuUI();
+
+        // Initialize main menu ad once the menu is visible and layout has settled.
+        if (typeof window.initAdWhenReady === 'function') {
+            setTimeout(() => window.initAdWhenReady('ad-main-menu', 20, 250), 0);
+        }
     }
 
     hideAllScreens() {
@@ -2287,6 +2292,11 @@ class Game {
         this.hideAllScreens();
         this.ui.gameOver.classList.remove('hidden');
         this.ui.gameOver.classList.add('active');
+
+        // Initialize game-over ad only when the screen is actually shown.
+        if (typeof window.initAdWhenReady === 'function') {
+            setTimeout(() => window.initAdWhenReady('ad-game-over', 20, 250), 0);
+        }
 
         this.ui.cursor.style.display = 'none';
         document.body.style.cursor = 'default';
