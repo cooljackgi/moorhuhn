@@ -2281,7 +2281,7 @@ class Game {
         }
     }
 
-    endGame() {
+    async endGame() {
         this.state = GameState.GAMEOVER;
         this.audio.stopBGM();
         this.hideAllScreens();
@@ -2325,7 +2325,28 @@ class Game {
             this.ui.scoreSubmitMsg.classList.add('hidden');
             this.ui.playerNameInput.value = localStorage.getItem('moorhuhn_last_name') || '';
         } else {
-            this.ui.highscoreSubmissionDiv.style.display = 'none'; // Keine 0 Punkte eintragen lassen
+            this.ui.highscoreSubmissionDiv.style.display = 'none';
+        }
+
+        // Highscores laden und anzeigen
+        const hsList = document.getElementById('gameover-hs-list');
+        hsList.innerHTML = '<li style="color:#aaa;">Lade...</li>';
+        try {
+            const scores = await window.db.getHighscores();
+            hsList.innerHTML = '';
+            if (scores.length === 0) {
+                hsList.innerHTML = '<li style="color:#aaa;">Noch keine Eintr\u00e4ge.</li>';
+            } else {
+                scores.slice(0, 5).forEach((hs, i) => {
+                    const li = document.createElement('li');
+                    const isYou = hs.score === this.score;
+                    li.innerHTML = `<span>${isYou ? '\u27a1\ufe0f ' : ''}#${i + 1} <b>${hs.name}</b></span> <span>${hs.score} Pkt</span>`;
+                    if (isYou) li.style.color = '#ffd700';
+                    hsList.appendChild(li);
+                });
+            }
+        } catch (e) {
+            hsList.innerHTML = '<li style="color:#e74c3c;">Fehler beim Laden.</li>';
         }
     }
 
