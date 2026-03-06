@@ -684,6 +684,75 @@ class Landscape {
             y: this.height * 0.65
         };
 
+        this.zeppelin = {
+            active: true,
+            x: -100,
+            y: this.height * 0.25,
+            speed: 20 // sehr langsam
+        };
+
+        this.church = {
+            x: this.width * 0.45,
+            y: this.height * 0.42,
+            ringing: 0 // Timer für den Glocken-Effekt
+        };
+
+        this.mole = {
+            x: this.width * 0.35,
+            y: this.height * 0.82,
+            state: 'hidden', // hidden, peeking
+            timer: 0,
+            angryTimer: 0 // Zum Schütteln der Faust
+        };
+
+        this.rainCloud = {
+            x: this.width * 0.7,
+            y: this.height * 0.1,
+            size: 60,
+            speed: 8,
+            rainingTimer: 0
+        };
+
+        this.ufo = {
+            active: false,
+            hit: false,
+            x: -50,
+            y: this.height * 0.08,
+            speed: 400
+        };
+
+        this.coinRock = {
+            hitCount: 0,
+            cracked: false,
+            coinTimer: 0
+        };
+
+        this.frog = {
+            state: 'hidden', // hidden, jumping
+            x: this.width * 0.7,
+            y: this.height * 0.85,
+            jumpX: 0,
+            jumpY: 0,
+            jumpVX: 0,
+            jumpVY: 0,
+            timer: 0
+        };
+
+        this.chimney = {
+            x: this.width * 0.55,
+            y: this.height * 0.52,
+            hitSmoke: false,
+            smokeParticles: []
+        };
+
+        this.branch = {
+            intact: true,
+            fallY: 0,
+            fallSpeed: 0
+        };
+
+        this.signFlipped = false;
+
         // Hindernisse/Verstecke (Positionen relativ zur Canvas-Größe)
         this.updateObstaclePositions();
     }
@@ -699,6 +768,10 @@ class Landscape {
         this.tree.y = this.height * 0.78 - 150;
         this.scarecrow.x = this.width * 0.65;
         this.scarecrow.y = this.height * 0.65;
+        this.church.x = this.width * 0.45;
+        this.church.y = this.height * 0.42;
+        this.mole.x = this.width * 0.35;
+        this.mole.y = this.height * 0.82;
 
         // Positionen der Verstecke, relativ zur Canvas-Größe
         this.obstacles = [
@@ -747,6 +820,100 @@ class Landscape {
             this.scarecrow.spinSpeed *= 0.95; // Reibung
             if (this.scarecrow.spinSpeed < 0.001) this.scarecrow.spinSpeed = 0;
         }
+
+        // Zeppelin bewegen
+        if (this.zeppelin.active) {
+            this.zeppelin.x += this.zeppelin.speed * (deltaTime / 1000);
+            if (this.zeppelin.x > this.width + 100) {
+                this.zeppelin.x = -100;
+                this.zeppelin.y = this.height * (0.15 + Math.random() * 0.2);
+            }
+        }
+
+        // Kirchenglocke Timer
+        if (this.church.ringing > 0) {
+            this.church.ringing -= deltaTime;
+            if (this.church.ringing < 0) this.church.ringing = 0;
+        }
+
+        // Maulwurf Timer
+        if (this.mole.state === 'peeking') {
+            this.mole.timer -= deltaTime;
+            if (this.mole.timer <= 0) {
+                this.mole.state = 'hidden';
+                this.mole.timer = 3000 + Math.random() * 5000; // Nächstes Auftauchen
+            }
+        } else if (this.mole.state === 'hidden') {
+            this.mole.timer -= deltaTime;
+            if (this.mole.timer <= 0) {
+                this.mole.state = 'peeking';
+                this.mole.timer = 2000 + Math.random() * 2000; // Wie lange er oben bleibt
+            }
+        }
+        if (this.mole.angryTimer > 0) this.mole.angryTimer -= deltaTime;
+
+        // Regenwolke Regen-Timer
+        if (this.rainCloud.rainingTimer > 0) {
+            this.rainCloud.rainingTimer -= deltaTime;
+            if (this.rainCloud.rainingTimer < 0) this.rainCloud.rainingTimer = 0;
+        }
+
+        // Frosch Sprung-Animation
+        if (this.frog.state === 'jumping') {
+            this.frog.jumpVY += 0.3 * (deltaTime / 16); // Gravitation
+            this.frog.jumpX += this.frog.jumpVX * (deltaTime / 16);
+            this.frog.jumpY += this.frog.jumpVY * (deltaTime / 16);
+            if (this.frog.jumpY > this.frog.y) {
+                this.frog.state = 'hidden';
+                this.frog.timer = 5000 + Math.random() * 8000;
+            }
+        } else if (this.frog.state === 'hidden') {
+            this.frog.timer -= deltaTime;
+            if (this.frog.timer <= 0) {
+                // Frosch springt!
+                this.frog.state = 'jumping';
+                this.frog.jumpX = this.frog.x;
+                this.frog.jumpY = this.frog.y;
+                this.frog.jumpVX = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2);
+                this.frog.jumpVY = -(8 + Math.random() * 4);
+            }
+        }
+
+        // Rauch-Partikel vom Kamin
+        if (this.chimney) {
+            // Rauch erzeugen (wenige pro Frame)
+            if (Math.random() < 0.3) {
+                this.chimney.smokeParticles.push({
+                    x: this.chimney.x + 12,
+                    y: this.chimney.y - 25,
+                    size: 3 + Math.random() * 3,
+                    speedY: -(0.3 + Math.random() * 0.3),
+                    speedX: (Math.random() - 0.5) * 0.3,
+                    life: 1
+                });
+            }
+            // Rauch aktualisieren
+            for (let i = this.chimney.smokeParticles.length - 1; i >= 0; i--) {
+                const p = this.chimney.smokeParticles[i];
+                p.x += p.speedX * (deltaTime / 16);
+                p.y += p.speedY * (deltaTime / 16);
+                p.size += 0.05 * (deltaTime / 16);
+                p.life -= 0.01 * (deltaTime / 16);
+                if (p.life <= 0) this.chimney.smokeParticles.splice(i, 1);
+            }
+        }
+
+        // Ast fallen lassen
+        if (this.branch && !this.branch.intact && this.branch.fallY < this.height) {
+            this.branch.fallSpeed += 0.2 * (deltaTime / 16);
+            this.branch.fallY += this.branch.fallSpeed * (deltaTime / 16);
+        }
+
+        // Coin Rock Coins-Timer
+        if (this.coinRock.coinTimer > 0) {
+            this.coinRock.coinTimer -= deltaTime;
+            if (this.coinRock.coinTimer < 0) this.coinRock.coinTimer = 0;
+        }
     }
 
     // Prüft ob bestimmte Landschaftselemente (Windmühle, Schild) getroffen wurden
@@ -761,9 +928,11 @@ class Landscape {
         }
 
         // 2. Schild prüfen (Moorhuhn Jagd verboten!)
-        const signTopY = this.signpost.y - 40;
-        if (px > this.signpost.x - 30 && px < this.signpost.x + 30 && py > signTopY - 20 && py < signTopY + 20) {
-            return { points: -25, type: 'sign', x: this.signpost.x, y: signTopY };
+        if (!this.signFlipped) {
+            const signTopY = this.signpost.y - 40;
+            if (px > this.signpost.x - 30 && px < this.signpost.x + 30 && py > signTopY - 20 && py < signTopY + 20) {
+                return { points: -25, type: 'sign', x: this.signpost.x, y: signTopY };
+            }
         }
 
         // 3. Coole Sonne prüfen
@@ -790,8 +959,110 @@ class Landscape {
         // 5. Vogelscheuche prüfen
         const scTopY = this.scarecrow.y - 60;
         if (px > this.scarecrow.x - 25 && px < this.scarecrow.x + 25 && py > scTopY - 10 && py < scTopY + 80) {
-            this.scarecrow.spinSpeed = 1.0; // Kräftiger Anstoß
+            this.scarecrow.spinSpeed = 1.0;
             return { points: 25, type: 'scarecrow', x: this.scarecrow.x, y: scTopY };
+        }
+
+        // 6. Zeppelin prüfen (winzig, 100 Punkte)
+        if (this.zeppelin.active) {
+            if (px > this.zeppelin.x - 20 && px < this.zeppelin.x + 20 &&
+                py > this.zeppelin.y - 8 && py < this.zeppelin.y + 8) {
+                this.zeppelin.active = false; // Platzt und verschwindet
+                return { points: 100, type: 'zeppelin', x: this.zeppelin.x, y: this.zeppelin.y };
+            }
+        }
+
+        // 7. Kirchenglocke prüfen
+        if (this.church.ringing <= 0) {
+            if (px > this.church.x - 15 && px < this.church.x + 15 &&
+                py > this.church.y - 30 && py < this.church.y) {
+                this.church.ringing = 3000; // 3 Sekunden klingeln
+                return { points: 50, type: 'church', x: this.church.x, y: this.church.y - 15 };
+            }
+        }
+
+        // 8. Maulwurf prüfen
+        if (this.mole.state === 'peeking') {
+            const mDist = Math.sqrt((px - this.mole.x) ** 2 + (py - this.mole.y) ** 2);
+            if (mDist < 20) {
+                // Direkt getroffen = Punktabzug!
+                this.mole.state = 'hidden';
+                this.mole.timer = 8000;
+                return { points: -50, type: 'mole_hit', x: this.mole.x, y: this.mole.y };
+            } else if (mDist < 60) {
+                // Knapp daneben = Maulwurf erschreckt sich, Bonus!
+                this.mole.angryTimer = 1500;
+                this.mole.state = 'hidden';
+                this.mole.timer = 5000;
+                return { points: 25, type: 'mole_miss', x: this.mole.x, y: this.mole.y };
+            }
+        }
+
+        // 9. Regenwolke prüfen (dunkle Wolke)
+        if (this.rainCloud.rainingTimer <= 0) {
+            const rcDx = px - this.rainCloud.x;
+            const rcDy = py - this.rainCloud.y;
+            if (rcDx * rcDx + rcDy * rcDy < this.rainCloud.size * this.rainCloud.size) {
+                this.rainCloud.rainingTimer = 5000; // 5 Sek Regen
+                return { points: 15, type: 'raincloud', x: this.rainCloud.x, y: this.rainCloud.y };
+            }
+        }
+
+        // 10. Frosch im Sprung prüfen
+        if (this.frog.state === 'jumping') {
+            const fDist = Math.sqrt((px - this.frog.jumpX) ** 2 + (py - this.frog.jumpY) ** 2);
+            if (fDist < 20) {
+                this.frog.state = 'hidden';
+                this.frog.timer = 10000;
+                return { points: 20, type: 'frog', x: this.frog.jumpX, y: this.frog.jumpY };
+            }
+        }
+
+        // 11. Schornstein prüfen
+        if (!this.chimney.hitSmoke) {
+            if (px > this.chimney.x - 10 && px < this.chimney.x + 25 &&
+                py > this.chimney.y - 35 && py < this.chimney.y - 15) {
+                this.chimney.hitSmoke = true; // Rauch wird bunt
+                return { points: 30, type: 'chimney', x: this.chimney.x + 10, y: this.chimney.y - 25 };
+            }
+        }
+
+        // 12. Ast am Baum prüfen
+        if (this.branch.intact) {
+            const branchX = this.width * 0.12 + 55;
+            const branchY = this.height * 0.78 - 120;
+            if (px > branchX - 10 && px < branchX + 30 && py > branchY - 6 && py < branchY + 6) {
+                this.branch.intact = false;
+                this.branch.fallY = branchY;
+                this.branch.fallSpeed = 0;
+                return { points: 40, type: 'branch', x: branchX, y: branchY };
+            }
+        }
+
+        // 13. Schildpfahl statt Schild prüfen (flip)
+        if (!this.signFlipped) {
+            // Pfahl ist schmaler und unter dem Schild
+            if (px > this.signpost.x - 5 && px < this.signpost.x + 5 &&
+                py > this.signpost.y - 10 && py < this.signpost.y + 20) {
+                this.signFlipped = true;
+                return { points: 10, type: 'signflip', x: this.signpost.x, y: this.signpost.y };
+            }
+        }
+
+        // 14. Stein prüfen (Münz-Stein, 3x treffen für Coins)
+        const rockX = this.width * 0.5;
+        const rockY = this.height * 0.83 - 25;
+        if (!this.coinRock.cracked) {
+            const rDist = Math.sqrt((px - rockX) ** 2 + (py - rockY) ** 2);
+            if (rDist < 40) {
+                this.coinRock.hitCount++;
+                if (this.coinRock.hitCount >= 3) {
+                    this.coinRock.cracked = true;
+                    this.coinRock.coinTimer = 2000; // 2 Sek Münz-Animation
+                    return { points: 0, type: 'coinrock', x: rockX, y: rockY, coins: 50 };
+                }
+                return { points: 5, type: 'rock_hit', x: rockX, y: rockY };
+            }
         }
 
         return null;
@@ -861,6 +1132,12 @@ class Landscape {
         ctx.closePath();
         ctx.fill();
 
+        // Kirche auf dem Berg
+        this._drawChurch(ctx);
+
+        // Kleines Haus mit Kamin
+        this._drawChimney(ctx);
+
         // 4. Hügelkette (Middleground - Golden Brown)
         ctx.fillStyle = '#C28E42';
         ctx.beginPath();
@@ -902,15 +1179,301 @@ class Landscape {
             ctx.arc(c.x + c.size * 1.6, c.y, c.size * 0.9, 0, Math.PI * 2);
             ctx.fill();
         });
+
+        // Dunkle Regenwolke zeichnen
+        this._drawRainCloud(ctx);
+
+        // Zeppelin im Hintergrund
+        this._drawZeppelin(ctx);
+
+        // UFO (nur wenn aktiv)
+        this._drawUFO(ctx);
+
+        // Regen Partikel
+        this._drawRain(ctx);
     }
 
     // Vordergrund-Objekte (werden NACH den Hühnern gezeichnet, damit sie davor liegen)
     drawForeground(ctx) {
+        this._drawMoleHill(ctx);
+        this._drawFrog(ctx);
         this._drawScarecrow(ctx);
         this._drawTree(ctx);
+        this._drawBranch(ctx);
         this._drawRock(ctx);
         this._drawWindmill(ctx);
         this._drawSignpost(ctx);
+    }
+    // === NEUE SECRET DRAW METHODEN ===
+
+    _drawChurch(ctx) {
+        const x = this.church.x;
+        const y = this.church.y;
+        ctx.save();
+        // Gebäude
+        ctx.fillStyle = '#8B7D6B';
+        ctx.fillRect(x - 12, y - 15, 24, 20);
+        // Dach
+        ctx.fillStyle = '#5C4033';
+        ctx.beginPath();
+        ctx.moveTo(x - 15, y - 15);
+        ctx.lineTo(x, y - 28);
+        ctx.lineTo(x + 15, y - 15);
+        ctx.closePath();
+        ctx.fill();
+        // Turmspitze
+        ctx.fillRect(x - 3, y - 35, 6, 8);
+        // Kreuz
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 42);
+        ctx.lineTo(x, y - 35);
+        ctx.moveTo(x - 3, y - 39);
+        ctx.lineTo(x + 3, y - 39);
+        ctx.stroke();
+        // Glocken-Effekt (Wackeln/Leuchten)
+        if (this.church.ringing > 0) {
+            const glowSize = Math.sin(this.church.ringing * 0.02) * 3 + 5;
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+            ctx.beginPath();
+            ctx.arc(x, y - 38, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    _drawChimney(ctx) {
+        const x = this.chimney.x;
+        const y = this.chimney.y;
+        ctx.save();
+        // Haus
+        ctx.fillStyle = '#A0522D';
+        ctx.fillRect(x - 18, y - 12, 36, 18);
+        // Dach
+        ctx.fillStyle = '#8B0000';
+        ctx.beginPath();
+        ctx.moveTo(x - 22, y - 12);
+        ctx.lineTo(x, y - 25);
+        ctx.lineTo(x + 22, y - 12);
+        ctx.closePath();
+        ctx.fill();
+        // Schornstein
+        ctx.fillStyle = '#555';
+        ctx.fillRect(x + 8, y - 28, 8, 15);
+        // Tür
+        ctx.fillStyle = '#5C4033';
+        ctx.fillRect(x - 5, y - 3, 10, 10);
+        // Fenster
+        ctx.fillStyle = '#FFE4B5';
+        ctx.fillRect(x - 14, y - 8, 6, 5);
+        ctx.fillRect(x + 8, y - 8, 6, 5);
+        // Rauch-Partikel zeichnen
+        this.chimney.smokeParticles.forEach(p => {
+            const smokeColor = this.chimney.hitSmoke
+                ? `hsla(${(p.y * 3) % 360}, 80%, 60%, ${p.life * 0.6})`
+                : `rgba(150, 150, 150, ${p.life * 0.5})`;
+            ctx.fillStyle = smokeColor;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.restore();
+    }
+
+    _drawRainCloud(ctx) {
+        ctx.save();
+        const rc = this.rainCloud;
+        ctx.fillStyle = rc.rainingTimer > 0 ? 'rgba(60, 60, 80, 0.9)' : 'rgba(100, 100, 120, 0.7)';
+        ctx.beginPath();
+        ctx.arc(rc.x, rc.y, rc.size * 0.7, 0, Math.PI * 2);
+        ctx.arc(rc.x + rc.size * 0.5, rc.y - rc.size * 0.2, rc.size * 0.5, 0, Math.PI * 2);
+        ctx.arc(rc.x + rc.size, rc.y, rc.size * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+        // Blitz wenn gerade getroffen
+        if (rc.rainingTimer > 4500) {
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(rc.x + 10, rc.y + rc.size * 0.5);
+            ctx.lineTo(rc.x + 5, rc.y + rc.size);
+            ctx.lineTo(rc.x + 15, rc.y + rc.size);
+            ctx.lineTo(rc.x + 8, rc.y + rc.size * 1.5);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    _drawZeppelin(ctx) {
+        if (!this.zeppelin.active) return;
+        ctx.save();
+        ctx.translate(this.zeppelin.x, this.zeppelin.y);
+        // Körper (winzig!)
+        ctx.fillStyle = '#C0C0C0';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Kabine
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(-5, 6, 10, 4);
+        // Streifen
+        ctx.strokeStyle = '#d32f2f';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-10, 0); ctx.lineTo(10, 0);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    _drawUFO(ctx) {
+        if (!this.ufo.active || this.ufo.hit) return;
+        ctx.save();
+        ctx.translate(this.ufo.x, this.ufo.y);
+        // Körper
+        ctx.fillStyle = '#76ff03';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Kuppel
+        ctx.fillStyle = 'rgba(118, 255, 3, 0.5)';
+        ctx.beginPath();
+        ctx.arc(0, -5, 8, Math.PI, 0);
+        ctx.fill();
+        // Lichter
+        for (let i = -12; i <= 12; i += 6) {
+            ctx.fillStyle = `hsl(${Date.now() / 10 + i * 30}, 100%, 70%)`;
+            ctx.beginPath();
+            ctx.arc(i, 3, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    _drawRain(ctx) {
+        if (this.rainCloud.rainingTimer <= 0) return;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(100, 150, 255, 0.4)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 60; i++) {
+            const rx = Math.random() * this.width;
+            const ry = Math.random() * this.height;
+            ctx.beginPath();
+            ctx.moveTo(rx, ry);
+            ctx.lineTo(rx - 1, ry + 8);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    _drawMoleHill(ctx) {
+        const x = this.mole.x;
+        const y = this.mole.y;
+        ctx.save();
+        // Erdhaufen
+        ctx.fillStyle = '#6B4226';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 5, 25, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#8B5A2B';
+        ctx.beginPath();
+        ctx.arc(x, y + 2, 18, Math.PI, 0);
+        ctx.fill();
+        // Maulwurf wenn er rausschaut
+        if (this.mole.state === 'peeking') {
+            ctx.fillStyle = '#3E2723';
+            ctx.beginPath();
+            ctx.arc(x, y - 8, 10, 0, Math.PI * 2);
+            ctx.fill();
+            // Augen
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(x - 4, y - 10, 3, 0, Math.PI * 2);
+            ctx.arc(x + 4, y - 10, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x - 4, y - 10, 1.5, 0, Math.PI * 2);
+            ctx.arc(x + 4, y - 10, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            // Nase
+            ctx.fillStyle = '#D4A373';
+            ctx.beginPath();
+            ctx.arc(x, y - 5, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // Wütende Faust wenn angryTimer aktiv
+            if (this.mole.angryTimer > 0) {
+                const shakeX = Math.sin(this.mole.angryTimer * 0.03) * 3;
+                ctx.fillStyle = '#3E2723';
+                ctx.beginPath();
+                ctx.arc(x + 15 + shakeX, y - 18, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.restore();
+    }
+
+    _drawFrog(ctx) {
+        if (this.frog.state !== 'jumping') return;
+        ctx.save();
+        ctx.translate(this.frog.jumpX, this.frog.jumpY);
+        // Körper
+        ctx.fillStyle = '#4CAF50';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 10, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Augen
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(-5, -7, 4, 0, Math.PI * 2);
+        ctx.arc(5, -7, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-5, -7, 2, 0, Math.PI * 2);
+        ctx.arc(5, -7, 2, 0, Math.PI * 2);
+        ctx.fill();
+        // Beine
+        ctx.strokeStyle = '#388E3C';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-8, 5);
+        ctx.lineTo(-15, 12);
+        ctx.moveTo(8, 5);
+        ctx.lineTo(15, 12);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    _drawBranch(ctx) {
+        const treeX = this.width * 0.12;
+        const branchStartX = treeX + 15;
+        const branchStartY = this.height * 0.78 - 120;
+        if (this.branch.intact) {
+            // Intakter Ast (am Baum)
+            ctx.strokeStyle = '#5D4037';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(branchStartX, branchStartY);
+            ctx.lineTo(branchStartX + 35, branchStartY - 8);
+            ctx.lineTo(branchStartX + 50, branchStartY - 5);
+            ctx.stroke();
+        } else if (this.branch.fallY < this.height) {
+            // Fallender Ast
+            ctx.save();
+            ctx.translate(branchStartX + 25, this.branch.fallY);
+            ctx.rotate(this.branch.fallSpeed * 0.1);
+            ctx.strokeStyle = '#5D4037';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-20, 0);
+            ctx.lineTo(15, -5);
+            ctx.lineTo(25, -2);
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 
     _drawScarecrow(ctx) {
@@ -1121,22 +1684,48 @@ class Landscape {
 
         // Schild
         const signTopY = groundY - 40;
-        ctx.fillStyle = '#E0E0E0';
-        ctx.fillRect(x - 30, signTopY - 20, 60, 40);
-        ctx.strokeStyle = '#999';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x - 30, signTopY - 20, 60, 40);
-        // Roter Rand (Verbotsschild-Style)
-        ctx.strokeStyle = '#D32F2F';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(x, signTopY, 15, 0, Math.PI * 2);
-        ctx.stroke();
-        // Diagonale Linie
-        ctx.beginPath();
-        ctx.moveTo(x - 10, signTopY - 10);
-        ctx.lineTo(x + 10, signTopY + 10);
-        ctx.stroke();
+
+        if (this.signFlipped) {
+            // Umgedrehtes Schild: "Jagd ERLAUBT!"
+            ctx.fillStyle = '#C8E6C9'; // Grün
+            ctx.fillRect(x - 30, signTopY - 20, 60, 40);
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x - 30, signTopY - 20, 60, 40);
+            // Text
+            ctx.font = 'bold 8px sans-serif';
+            ctx.fillStyle = '#2E7D32';
+            ctx.textAlign = 'center';
+            ctx.fillText('JAGD', x, signTopY - 4);
+            ctx.fillText('ERLAUBT!', x, signTopY + 8);
+            ctx.textAlign = 'start';
+            // Häkchen
+            ctx.strokeStyle = '#2E7D32';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x - 5, signTopY + 14);
+            ctx.lineTo(x, signTopY + 18);
+            ctx.lineTo(x + 8, signTopY + 10);
+            ctx.stroke();
+        } else {
+            // Original Verbotsschild
+            ctx.fillStyle = '#E0E0E0';
+            ctx.fillRect(x - 30, signTopY - 20, 60, 40);
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x - 30, signTopY - 20, 60, 40);
+            // Roter Rand (Verbotsschild-Style)
+            ctx.strokeStyle = '#D32F2F';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(x, signTopY, 15, 0, Math.PI * 2);
+            ctx.stroke();
+            // Diagonale Linie
+            ctx.beginPath();
+            ctx.moveTo(x - 10, signTopY - 10);
+            ctx.lineTo(x + 10, signTopY + 10);
+            ctx.stroke();
+        }
     }
 }
 
@@ -1443,10 +2032,24 @@ class Game {
         this.ammo = this.maxAmmo;
         this.isReloading = false;
         this.activeBuffs = { machinegun: 0, slowmo: 0, shotgun: 0 };
+        this.chickenSpeedBoost = 0;
 
         this.targets = [];
         this.particles = [];
         this.popups = [];
+
+        // Landscape Secrets zur\u00fccksetzen
+        this.landscape.sun.hit = false;
+        this.landscape.signFlipped = false;
+        this.landscape.coinRock.hitCount = 0;
+        this.landscape.coinRock.cracked = false;
+        this.landscape.branch.intact = true;
+        this.landscape.branch.fallY = 0;
+        this.landscape.chimney.hitSmoke = false;
+        this.landscape.zeppelin.active = true;
+        this.landscape.zeppelin.x = -100;
+        this.landscape.ufo.active = false;
+        this.landscape.ufo.hit = false;
 
         this.lastTime = performance.now();
         this.updateHUD();
@@ -1612,9 +2215,31 @@ class Game {
                     for (let i = 0; i < 10; i++) {
                         const px = sceneryHit.x + (Math.random() - 0.5) * 40;
                         const py = sceneryHit.y - 40 + (Math.random() - 0.5) * 40;
-                        const straw = new Particle(px, py, '#EBC034'); // Stroh-Farbe
+                        const straw = new Particle(px, py, '#EBC034');
                         this.particles.push(straw);
                     }
+                } else if (sceneryHit.type === 'zeppelin') {
+                    // Explosion-Partikel
+                    this.createExplosion(sceneryHit.x, sceneryHit.y, '#C0C0C0');
+                } else if (sceneryHit.type === 'church') {
+                    // Kirchenglocke: Hühner erschrecken (schneller für 3s)
+                    this.chickenSpeedBoost = 3000;
+                } else if (sceneryHit.type === 'frog') {
+                    this.createExplosion(sceneryHit.x, sceneryHit.y, '#4CAF50');
+                } else if (sceneryHit.type === 'coinrock') {
+                    // +50 Münzen direkt!
+                    this.meta.coins += sceneryHit.coins;
+                    this.saveMeta();
+                    this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y - 20, '+50 Münzen!', '#FFD700'));
+                    this.createExplosion(sceneryHit.x, sceneryHit.y, '#FFD700');
+                } else if (sceneryHit.type === 'branch') {
+                    this.createExplosion(sceneryHit.x, sceneryHit.y, '#5D4037');
+                } else if (sceneryHit.type === 'signflip') {
+                    this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y - 30, 'ERLAUBT!', '#4CAF50'));
+                } else if (sceneryHit.type === 'raincloud') {
+                    this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y - 20, 'Regen!', '#64B5F6'));
+                } else if (sceneryHit.type === 'chimney') {
+                    this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y - 20, 'Bunt!', '#E91E63'));
                 }
 
                 // Einfacher "Pluck" Sound für Umgebungstreffer
@@ -1777,7 +2402,27 @@ class Game {
         // Update HUD min. jeden Frame wg Buff-Timer
         this.updateHUD();
 
-        const speedMultiplier = this.activeBuffs.slowmo > 0 ? 0.3 : 1.0;
+        const speedMultiplier = (this.activeBuffs.slowmo > 0 ? 0.3 : 1.0) * (this.chickenSpeedBoost > 0 ? 2.0 : 1.0);
+
+        // Chicken Speed Boost Timer (Kirchenglocke)
+        if (this.chickenSpeedBoost > 0) {
+            this.chickenSpeedBoost -= deltaTime;
+            if (this.chickenSpeedBoost < 0) this.chickenSpeedBoost = 0;
+        }
+
+        // UFO aktivieren bei genau 10 Sekunden
+        if (!this.landscape.ufo.hit && !this.landscape.ufo.active && this.timeRemaining <= 10 && this.timeRemaining > 9) {
+            this.landscape.ufo.active = true;
+            this.landscape.ufo.x = -50;
+            this.landscape.ufo.y = this.canvas.height * 0.08;
+        }
+        // UFO bewegen
+        if (this.landscape.ufo.active) {
+            this.landscape.ufo.x += this.landscape.ufo.speed * (deltaTime / 1000);
+            if (this.landscape.ufo.x > this.canvas.width + 50) {
+                this.landscape.ufo.active = false;
+            }
+        }
 
         // Spawnen
         this.spawnTimer += deltaTime;
