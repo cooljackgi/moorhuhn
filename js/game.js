@@ -66,144 +66,150 @@ class Target {
             ctx.scale(-1, 1);
         }
 
-        // --- Original Moorhuhn Style ---
+        // --- ORIGINAL Moorhuhn Style (riesige Glubschaugen!) ---
 
-        // Schwanzfedern (hinten, zuerst zeichnen)
+        // Füße (baumeln beim Fliegen, zuerst = hinten)
+        ctx.strokeStyle = '#D4901A';
+        ctx.lineWidth = 2.5;
+        const footDangle = Math.sin(this.flapTime / 80) * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.3);
+        ctx.lineTo(-s * 0.15, s * 0.7 + footDangle * s);
+        ctx.lineTo(-s * 0.3, s * 0.8 + footDangle * s);
+        ctx.moveTo(-s * 0.15, s * 0.7 + footDangle * s);
+        ctx.lineTo(-s * 0.05, s * 0.82 + footDangle * s);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(s * 0.1, s * 0.3);
+        ctx.lineTo(s * 0.15, s * 0.7 - footDangle * s);
+        ctx.lineTo(s * 0.0, s * 0.82 - footDangle * s);
+        ctx.moveTo(s * 0.15, s * 0.7 - footDangle * s);
+        ctx.lineTo(s * 0.3, s * 0.8 - footDangle * s);
+        ctx.stroke();
+
+        // Schwanzfedern
         ctx.fillStyle = '#5D3A1A';
         ctx.beginPath();
-        ctx.moveTo(-s * 0.8, -s * 0.1);
-        ctx.lineTo(-s * 1.2, -s * 0.5);
-        ctx.lineTo(-s * 1.0, -s * 0.15);
-        ctx.lineTo(-s * 1.3, -s * 0.3);
-        ctx.lineTo(-s * 0.9, 0);
-        ctx.lineTo(-s * 1.1, s * 0.1);
-        ctx.lineTo(-s * 0.7, s * 0.1);
+        ctx.moveTo(-s * 0.5, -s * 0.1);
+        ctx.lineTo(-s * 0.9, -s * 0.6);
+        ctx.lineTo(-s * 0.65, -s * 0.15);
+        ctx.lineTo(-s * 1.0, -s * 0.35);
+        ctx.lineTo(-s * 0.6, 0);
         ctx.closePath();
         ctx.fill();
 
-        // Flügel (animiert, hinter dem Körper)
-        const flapAngle = Math.sin(this.flapTime / 60) * 0.6;
+        // Flügel (animiert)
+        const flapAngle = Math.sin(this.flapTime / 55) * 0.7;
         ctx.save();
-        ctx.translate(0, -s * 0.1);
+        ctx.translate(-s * 0.1, s * 0.05);
         ctx.rotate(flapAngle);
-        ctx.fillStyle = '#A0522D';
+        ctx.fillStyle = '#7A5230';
         ctx.beginPath();
-        ctx.ellipse(-s * 0.1, s * 0.15, s * 0.55, s * 0.25, Math.PI / 6, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, s * 0.5, s * 0.2, Math.PI / 5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#6D3A1A';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        // Flügelfedern-Linien
         ctx.strokeStyle = '#5D3A1A';
         ctx.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(-s * 0.3 + i * s * 0.15, s * 0.05);
-            ctx.lineTo(-s * 0.4 + i * s * 0.12, s * 0.35);
-            ctx.stroke();
-        }
+        ctx.stroke();
         ctx.restore();
 
-        // Körper (rund und pummelig wie im Original)
-        ctx.fillStyle = '#8B4513';
+        // Körper (KLEIN im Verhältnis zum Kopf wie im Original)
+        ctx.fillStyle = '#9B6B42';
         ctx.beginPath();
-        ctx.ellipse(0, 0, s * 0.75, s * 0.6, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, s * 0.05, s * 0.4, s * 0.35, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#5D3010';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Bauch-Highlight
-        ctx.fillStyle = '#A0683C';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.05, s * 0.15, s * 0.45, s * 0.3, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Kopf (größer, runder)
-        ctx.fillStyle = '#8B4513';
-        ctx.beginPath();
-        ctx.arc(s * 0.55, -s * 0.35, s * 0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#5D3010';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Kamm (rot, zackig wie im Original)
-        ctx.fillStyle = '#CC0000';
-        ctx.beginPath();
-        ctx.moveTo(s * 0.35, -s * 0.7);
-        ctx.lineTo(s * 0.42, -s * 0.9);
-        ctx.lineTo(s * 0.52, -s * 0.72);
-        ctx.lineTo(s * 0.58, -s * 0.95);
-        ctx.lineTo(s * 0.68, -s * 0.75);
-        ctx.lineTo(s * 0.75, -s * 0.88);
-        ctx.lineTo(s * 0.8, -s * 0.65);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#900';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Auge (groß und ausdrucksvoll)
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.7, -s * 0.4, s * 0.16, s * 0.18, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#333';
+        ctx.strokeStyle = '#6D4020';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Pupille
+
+        // Brust (heller)
+        ctx.fillStyle = '#B8946A';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.1, s * 0.15, s * 0.25, s * 0.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Kopf (RIESIG, Hauptmerkmal!)
+        ctx.fillStyle = '#9B6B42';
+        ctx.beginPath();
+        ctx.arc(s * 0.3, -s * 0.35, s * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#6D4020';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // KAMM (hoch, rot, wie im Original - eine große Zacke)
+        ctx.fillStyle = '#DD1111';
+        ctx.beginPath();
+        ctx.moveTo(s * 0.05, -s * 0.65);
+        ctx.quadraticCurveTo(s * 0.15, -s * 1.3, s * 0.35, -s * 0.9);
+        ctx.quadraticCurveTo(s * 0.45, -s * 1.15, s * 0.55, -s * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#AA0000';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // AUGEN (RIESIG! Googly-Eyes wie im Original!)
+        // Linkes Auge
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.2, -s * 0.4, s * 0.22, s * 0.26, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // Rechtes Auge
+        ctx.beginPath();
+        ctx.ellipse(s * 0.55, -s * 0.38, s * 0.22, s * 0.26, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Pupillen (etwas schielend wie im Original)
         ctx.fillStyle = '#111';
         ctx.beginPath();
-        ctx.arc(s * 0.74, -s * 0.4, s * 0.07, 0, Math.PI * 2);
+        ctx.arc(s * 0.28, -s * 0.38, s * 0.09, 0, Math.PI * 2);
         ctx.fill();
-        // Glanzpunkt
+        ctx.beginPath();
+        ctx.arc(s * 0.5, -s * 0.36, s * 0.09, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glanzpunkte
         ctx.fillStyle = 'white';
         ctx.beginPath();
-        ctx.arc(s * 0.77, -s * 0.44, s * 0.03, 0, Math.PI * 2);
+        ctx.arc(s * 0.24, -s * 0.44, s * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s * 0.46, -s * 0.42, s * 0.04, 0, Math.PI * 2);
         ctx.fill();
 
-        // Schnabel (breiter, orange, geöffnet wie im Original)
-        ctx.fillStyle = '#E8A020';
+        // SCHNABEL (groß, gelb-orange, wie im Original)
+        ctx.fillStyle = '#F0B020';
         // Oberschnabel
         ctx.beginPath();
-        ctx.moveTo(s * 0.88, -s * 0.35);
-        ctx.lineTo(s * 1.25, -s * 0.3);
-        ctx.lineTo(s * 0.88, -s * 0.22);
+        ctx.moveTo(s * 0.6, -s * 0.25);
+        ctx.lineTo(s * 1.1, -s * 0.15);
+        ctx.lineTo(s * 0.6, -s * 0.08);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#B8780B';
+        ctx.strokeStyle = '#C8880B';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Unterschnabel (leicht geöffnet)
-        ctx.fillStyle = '#D4901A';
+        // Unterschnabel
+        ctx.fillStyle = '#E09818';
         ctx.beginPath();
-        ctx.moveTo(s * 0.88, -s * 0.2);
-        ctx.lineTo(s * 1.15, -s * 0.15);
-        ctx.lineTo(s * 0.88, -s * 0.12);
+        ctx.moveTo(s * 0.6, -s * 0.05);
+        ctx.lineTo(s * 0.95, s * 0.02);
+        ctx.lineTo(s * 0.6, s * 0.06);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Kehlwampe (rot, unter dem Schnabel)
-        ctx.fillStyle = '#CC0000';
+        // KEHLWAMPE (rot, hängt unter dem Schnabel)
+        ctx.fillStyle = '#DD1111';
         ctx.beginPath();
-        ctx.ellipse(s * 0.7, -s * 0.05, s * 0.1, s * 0.12, 0.2, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.45, s * 0.08, s * 0.08, s * 0.14, 0.3, 0, Math.PI * 2);
         ctx.fill();
-
-        // Füße (baumeln beim Fliegen)
-        ctx.strokeStyle = '#D4901A';
-        ctx.lineWidth = 2;
-        const footDangle = Math.sin(this.flapTime / 80) * 0.2;
-        // Linkes Bein
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.15, s * 0.5);
-        ctx.lineTo(-s * 0.2, s * 0.85 + footDangle * s);
-        ctx.stroke();
-        // Rechtes Bein
-        ctx.beginPath();
-        ctx.moveTo(s * 0.15, s * 0.5);
-        ctx.lineTo(s * 0.2, s * 0.85 - footDangle * s);
+        ctx.strokeStyle = '#AA0000';
+        ctx.lineWidth = 1;
         ctx.stroke();
 
         ctx.restore();
@@ -404,92 +410,91 @@ class HiddenTarget {
         ctx.translate(this.x, this.y);
         const s = this.size;
 
-        // --- Original Moorhuhn Style (sitzendes Huhn) ---
+        // --- Original Moorhuhn Style (sitzendes Huhn, Glubschaugen) ---
 
-        // Körper (rund, sitzend)
-        ctx.fillStyle = '#8B4513';
+        // Körper (klein, sitzend)
+        ctx.fillStyle = '#9B6B42';
         ctx.beginPath();
-        ctx.ellipse(0, 0, s * 0.55, s * 0.45, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, s * 0.05, s * 0.4, s * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#5D3010';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Bauch-Highlight
-        ctx.fillStyle = '#A0683C';
-        ctx.beginPath();
-        ctx.ellipse(0, s * 0.1, s * 0.35, s * 0.2, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Flügel (seitlich, nicht animiert)
-        ctx.fillStyle = '#A0522D';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.25, s * 0.05, s * 0.3, s * 0.2, 0.2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#6D3A1A';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Kopf
-        ctx.fillStyle = '#8B4513';
-        ctx.beginPath();
-        ctx.arc(0, -s * 0.45, s * 0.32, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#5D3010';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Kamm (rot, zackig)
-        ctx.fillStyle = '#CC0000';
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.15, -s * 0.7);
-        ctx.lineTo(-s * 0.08, -s * 0.9);
-        ctx.lineTo(0, -s * 0.72);
-        ctx.lineTo(s * 0.07, -s * 0.92);
-        ctx.lineTo(s * 0.15, -s * 0.73);
-        ctx.lineTo(s * 0.2, -s * 0.85);
-        ctx.lineTo(s * 0.25, -s * 0.65);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#900';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Auge (groß)
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.12, -s * 0.5, s * 0.12, s * 0.14, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#333';
+        ctx.strokeStyle = '#6D4020';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Pupille
+
+        // Flügel
+        ctx.fillStyle = '#7A5230';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.2, s * 0.05, s * 0.25, s * 0.15, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Kopf (RIESIG)
+        ctx.fillStyle = '#9B6B42';
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.35, s * 0.38, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#6D4020';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Kamm (hoch, rot)
+        ctx.fillStyle = '#DD1111';
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.15, -s * 0.6);
+        ctx.quadraticCurveTo(-s * 0.05, -s * 1.15, s * 0.08, -s * 0.75);
+        ctx.quadraticCurveTo(s * 0.18, -s * 1.0, s * 0.25, -s * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#AA0000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // AUGEN (RIESIG! Googly!)
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.ellipse(-s * 0.12, -s * 0.4, s * 0.18, s * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(s * 0.18, -s * 0.38, s * 0.18, s * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Pupillen
         ctx.fillStyle = '#111';
         ctx.beginPath();
-        ctx.arc(s * 0.15, -s * 0.5, s * 0.055, 0, Math.PI * 2);
+        ctx.arc(-s * 0.06, -s * 0.38, s * 0.07, 0, Math.PI * 2);
         ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s * 0.14, -s * 0.36, s * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+
         // Glanz
         ctx.fillStyle = 'white';
         ctx.beginPath();
-        ctx.arc(s * 0.17, -s * 0.53, s * 0.025, 0, Math.PI * 2);
+        ctx.arc(-s * 0.1, -s * 0.44, s * 0.03, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s * 0.1, -s * 0.42, s * 0.03, 0, Math.PI * 2);
         ctx.fill();
 
         // Schnabel
-        ctx.fillStyle = '#E8A020';
+        ctx.fillStyle = '#F0B020';
         ctx.beginPath();
-        ctx.moveTo(s * 0.28, -s * 0.45);
-        ctx.lineTo(s * 0.5, -s * 0.4);
-        ctx.lineTo(s * 0.28, -s * 0.35);
+        ctx.moveTo(s * 0.25, -s * 0.22);
+        ctx.lineTo(s * 0.55, -s * 0.15);
+        ctx.lineTo(s * 0.25, -s * 0.08);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#B8780B';
+        ctx.strokeStyle = '#C8880B';
         ctx.lineWidth = 1;
         ctx.stroke();
 
         // Kehlwampe
-        ctx.fillStyle = '#CC0000';
+        ctx.fillStyle = '#DD1111';
         ctx.beginPath();
-        ctx.ellipse(s * 0.15, -s * 0.25, s * 0.07, s * 0.09, 0.2, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.1, -s * 0.02, s * 0.06, s * 0.1, 0.2, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
