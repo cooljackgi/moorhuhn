@@ -80,6 +80,14 @@
                     <p>Verdiente Münzen: <span id="result-coins" class="highlight">0</span></p>
                     <p id="new-highscore-msg" class="hidden highlight-gold">Neuer Highscore!</p>
                 </div>
+                
+                <!-- Neu: Name eingeben für Global Highscore -->
+                <div id="highscore-submission" class="mt-20">
+                    <input type="text" id="player-name-input" placeholder="Dein Name (max 15 Z.)" maxlength="15" class="name-input">
+                    <button id="btn-submit-score" class="btn btn-primary" style="margin-top: 10px;">Score eintragen</button>
+                    <p id="score-submit-msg" class="hidden" style="font-size: 0.9em; margin-top: 5px;"></p>
+                </div>
+
                 <div class="menu-buttons mt-20">
                     <button id="btn-play-again" class="btn btn-primary">Nochmal spielen</button>
                     <button id="btn-gameover-menu" class="btn btn-secondary">Hauptmenü</button>
@@ -92,7 +100,9 @@
     <!-- Eigener Cursor -->
     <div id="custom-cursor" class="crosshair"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/audioManager.js"></script>
+    <script src="js/supabase-db.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>

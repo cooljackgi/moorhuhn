@@ -322,6 +322,12 @@ class Game {
             resCoins: document.getElementById('result-coins'),
             newHsMsg: document.getElementById('new-highscore-msg'),
 
+            // Global Highscore UI
+            playerNameInput: document.getElementById('player-name-input'),
+            btnSubmitScore: document.getElementById('btn-submit-score'),
+            scoreSubmitMsg: document.getElementById('score-submit-msg'),
+            highscoreSubmissionDiv: document.getElementById('highscore-submission'),
+
             cursor: document.getElementById('custom-cursor')
         };
 
@@ -401,6 +407,9 @@ class Game {
 
         document.getElementById('btn-play-again').addEventListener('click', () => this.startGame());
         document.getElementById('btn-gameover-menu').addEventListener('click', () => this.showMainMenu());
+
+        // Global Highscore Submit
+        this.ui.btnSubmitScore.addEventListener('click', () => this.submitGlobalScore());
     }
 
     updateMenuUI() {
@@ -433,19 +442,24 @@ class Game {
         this.renderShopItems();
     }
 
-    openHighscores() {
+    async openHighscores() {
         this.state = GameState.HIGHSCORES;
         this.hideAllScreens();
         this.ui.highscoreMenu.classList.remove('hidden');
         this.ui.highscoreMenu.classList.add('active');
 
+        this.ui.highscoreList.innerHTML = '<li>Lade Highscores...</li>';
+
+        const scores = await window.db.getHighscores();
+
         this.ui.highscoreList.innerHTML = '';
-        if (this.meta.highscores.length === 0) {
-            this.ui.highscoreList.innerHTML = '<li>Noch keine Einträge</li>';
+        if (scores.length === 0) {
+            this.ui.highscoreList.innerHTML = '<li>Noch keine Einträge oder Fehler beim Laden.</li>';
         } else {
-            this.meta.highscores.forEach((hs, i) => {
+            scores.forEach((hs, i) => {
                 const li = document.createElement('li');
-                li.innerHTML = `<span>#${i + 1}</span> <span>${hs} Pkt</span>`;
+                // Format: #1 Name 150 Pkt
+                li.innerHTML = `<span>#${i + 1} <b>${hs.name}</b></span> <span>${hs.score} Pkt</span>`;
                 this.ui.highscoreList.appendChild(li);
             });
         }
@@ -665,12 +679,12 @@ class Game {
         this.meta.highscores.push(this.score);
         this.meta.highscores.sort((a, b) => b - a);
 
-        // Prüfen ob es ein neuer Rekord ist (nur wenn er an pos 1 gelistet wurde und es davor schon werte gab bzw. >0)
+        // Prüfen ob es ein neuer lokaler Rekord ist
         if (this.meta.highscores[0] === this.score && this.score > 0) {
             isNewHS = true;
         }
 
-        // Behalte nur Top 5
+        // Behalte nur Top 5 lokal (für Historie/Backup falls gewünscht)
         this.meta.highscores = this.meta.highscores.slice(0, 5);
         this.saveMeta();
 
@@ -682,6 +696,48 @@ class Game {
             this.ui.newHsMsg.classList.remove('hidden');
         } else {
             this.ui.newHsMsg.classList.add('hidden');
+        }
+
+        // Reset Global Submission UI
+        if (this.score > 0) {
+            this.ui.highscoreSubmissionDiv.style.display = 'block';
+            this.ui.btnSubmitScore.disabled = false;
+            this.ui.scoreSubmitMsg.classList.add('hidden');
+            this.ui.playerNameInput.value = localStorage.getItem('moorhuhn_last_name') || '';
+        } else {
+            this.ui.highscoreSubmissionDiv.style.display = 'none'; // Keine 0 Punkte eintragen lassen
+        }
+    }
+
+    async submitGlobalScore() {
+        const name = this.ui.playerNameInput.value.trim();
+        if (this.score <= 0) return;
+
+        this.ui.btnSubmitScore.disabled = true;
+        this.ui.scoreSubmitMsg.innerText = 'Speichere...';
+        this.ui.scoreSubmitMsg.style.color = 'white';
+        this.ui.scoreSubmitMsg.classList.remove('hidden');
+
+        try {
+            const success = await window.db.saveHighscore(name, this.score);
+            if (success) {
+                this.ui.scoreSubmitMsg.innerText = 'Score gespeichert!';
+                this.ui.scoreSubmitMsg.style.color = '#2ecc71';
+                if (name) localStorage.setItem('moorhuhn_last_name', name);
+
+                // Hide inputs after 1 second
+                setTimeout(() => {
+                    this.ui.highscoreSubmissionDiv.style.display = 'none';
+                }, 1500);
+            } else {
+                this.ui.scoreSubmitMsg.innerText = 'Fehler beim Speichern!';
+                this.ui.scoreSubmitMsg.style.color = '#e74c3c';
+                this.ui.btnSubmitScore.disabled = false;
+            }
+        } catch (e) {
+            this.ui.scoreSubmitMsg.innerText = 'Fehler beim Speichern!';
+            this.ui.scoreSubmitMsg.style.color = '#e74c3c';
+            this.ui.btnSubmitScore.disabled = false;
         }
     }
 
