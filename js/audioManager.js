@@ -106,4 +106,63 @@ class AudioManager {
         osc.start();
         osc.stop(this.ctx.currentTime + 0.4);
     }
+
+    startBGM() {
+        if (!this.enabled || this.bgmPlaying) return;
+
+        // AudioContext muss evtl resume() aufgerufen werden wg Browser Policies
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        this.bgmPlaying = true;
+        let noteIndex = 0;
+
+        // Simples C-Dur / Pentatonik Arpeggio für "Upbeat" Country/Folk Vibe
+        const notes = [
+            261.63, 329.63, 392.00, 523.25, // C E G C
+            392.00, 329.63, 261.63, 196.00  // G E C G(low)
+        ];
+
+        const tempo = 180; // BPM (bisschen schneller)
+        const beatLength = 60 / tempo;
+
+        const scheduleNotes = () => {
+            if (!this.bgmPlaying) return;
+
+            const time = this.ctx.currentTime;
+
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.frequency.value = notes[noteIndex];
+            osc.type = 'triangle'; // Weicherer Sound
+
+            // Sehr leise, damit es nicht nervt (Hintergrundgedudel)
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(0.03, time + 0.05);
+            gain.gain.linearRampToValueAtTime(0, time + beatLength * 0.9);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(time);
+            osc.stop(time + beatLength);
+
+            noteIndex = (noteIndex + 1) % notes.length;
+
+            // Nächste Note im genauen Takt einplanen
+            this.bgmTimeout = setTimeout(scheduleNotes, beatLength * 1000);
+        };
+
+        scheduleNotes();
+    }
+
+    stopBGM() {
+        this.bgmPlaying = false;
+        if (this.bgmTimeout) {
+            clearTimeout(this.bgmTimeout);
+            this.bgmTimeout = null;
+        }
+    }
 }

@@ -254,28 +254,96 @@ class InGameUpgrade extends Target {
         ctx.save();
         ctx.translate(this.x, this.y);
 
-        // Ballon Rendern (Red/Black Stripes wie im Screenshot)
-        const stripeCount = 8;
-        for (let i = 0; i < stripeCount; i++) {
-            ctx.fillStyle = (i % 2 === 0) ? '#CC1111' : '#111111';
-            ctx.beginPath();
-            const startAngle = (i / stripeCount) * Math.PI * 2;
-            const endAngle = ((i + 1) / stripeCount) * Math.PI * 2;
-            ctx.moveTo(0, 0);
-            ctx.ellipse(0, 0, this.size, this.size * 1.2, 0, startAngle, endAngle);
-            ctx.fill();
-        }
+        // Fäden zum Korb
+        ctx.beginPath();
+        ctx.moveTo(-15, this.size * 0.8);
+        ctx.lineTo(-10, this.size * 1.5);
+        ctx.moveTo(15, this.size * 0.8);
+        ctx.lineTo(10, this.size * 1.5);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
-        // Moorhuhn Schriftzug auf dem Ballon (Andeutung)
-        ctx.fillStyle = '#FFD700';
+        // Korb (Basket)
+        ctx.fillStyle = '#D4A373';
+        ctx.fillRect(-15, this.size * 1.5, 30, 20);
+        ctx.strokeStyle = '#8B5A2B';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-15, this.size * 1.5, 30, 20);
+        // Korb-Muster
+        ctx.beginPath();
+        ctx.moveTo(-15, this.size * 1.5 + 5);
+        ctx.lineTo(15, this.size * 1.5 + 5);
+        ctx.moveTo(-15, this.size * 1.5 + 10);
+        ctx.lineTo(15, this.size * 1.5 + 10);
+        ctx.moveTo(-15, this.size * 1.5 + 15);
+        ctx.lineTo(15, this.size * 1.5 + 15);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Extra Kiste/Sandsack am Korb basierend auf Upgrade
+        let boxColor = '#8e44ad';
+        let boxText = '?';
+        if (this.type === 'time') { boxColor = '#3498db'; boxText = '+10s'; }
+        if (this.type === 'machinegun') { boxColor = '#e74c3c'; boxText = 'MG'; }
+        if (this.type === 'slowmo') { boxColor = '#9b59b6'; boxText = 'Slo'; }
+
+        ctx.fillStyle = boxColor;
+        ctx.fillRect(-8, this.size * 1.5 + 20, 16, 16);
+        ctx.strokeRect(-8, this.size * 1.5 + 20, 16, 16);
+
+        // Ballon-Körper Rendern (Vertikale Streifen)
+        // Wir zeichnen den Grundballon in Braun/Schwarz und legen dann rote Streifen (Arcs) darüber
+        ctx.fillStyle = '#111111'; // Dunkle Basis
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size, this.size * 1.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rote Gores (Streifen)
+        ctx.fillStyle = '#CC1111';
+        ctx.beginPath();
+        // Mittlerer Stern
+        ctx.ellipse(0, 0, this.size * 0.3, this.size * 1.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        // Linker Streifen
+        ctx.ellipse(-this.size * 0.7, 0, this.size * 0.2, this.size * 1.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        // Rechter Streifen
+        ctx.ellipse(this.size * 0.7, 0, this.size * 0.2, this.size * 1.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Dunkle Outlines zwischen den Streifen für Form
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size, this.size * 1.2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size * 0.5, this.size * 1.2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Moorhuhn Schriftzug auf dem Ballon
+        ctx.fillStyle = '#FFD700'; // Gold
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Moorhuhn', 0, 0);
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 2;
+        ctx.fillText('Moorhuhn', 0, -5);
+        ctx.shadowBlur = 0; // reset
 
-        // Glanz
+        // Text auf dem Päckchen
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px "Fredoka One"';
+        ctx.fillText(boxText, 0, this.size * 1.5 + 32);
+
+        // Glanzpunkt für den 3D-Effekt
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
         ctx.beginPath();
-        ctx.ellipse(-10, -15, 8, 12, Math.PI / 4, 0, Math.PI * 2);
+        ctx.ellipse(-this.size * 0.3, -this.size * 0.5, this.size * 0.2, this.size * 0.4, Math.PI / 6, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -985,6 +1053,7 @@ class Game {
 
     showMainMenu() {
         this.state = GameState.MENU;
+        this.audio.stopBGM();
         this.hideAllScreens();
         this.ui.mainMenu.classList.remove('hidden');
         this.ui.mainMenu.classList.add('active');
@@ -1083,6 +1152,7 @@ class Game {
         }
 
         this.state = GameState.PLAYING;
+        this.audio.startBGM();
         this.hideAllScreens();
         this.ui.hud.classList.remove('hidden');
         this.ui.hud.classList.add('active');
@@ -1238,6 +1308,7 @@ class Game {
 
     endGame() {
         this.state = GameState.GAMEOVER;
+        this.audio.stopBGM();
         this.hideAllScreens();
         this.ui.gameOver.classList.remove('hidden');
         this.ui.gameOver.classList.add('active');
