@@ -254,44 +254,28 @@ class InGameUpgrade extends Target {
         ctx.save();
         ctx.translate(this.x, this.y);
 
-        // Ballon Rendern
-        let color = '#ff0000';
-        let text = '?';
-        if (this.type === 'time') { color = '#3498db'; text = '+10s'; }
-        if (this.type === 'machinegun') { color = '#e74c3c'; text = 'MG'; }
-        if (this.type === 'slowmo') { color = '#9b59b6'; text = 'Slo'; }
+        // Ballon Rendern (Red/Black Stripes wie im Screenshot)
+        const stripeCount = 8;
+        for (let i = 0; i < stripeCount; i++) {
+            ctx.fillStyle = (i % 2 === 0) ? '#CC1111' : '#111111';
+            ctx.beginPath();
+            const startAngle = (i / stripeCount) * Math.PI * 2;
+            const endAngle = ((i + 1) / stripeCount) * Math.PI * 2;
+            ctx.moveTo(0, 0);
+            ctx.ellipse(0, 0, this.size, this.size * 1.2, 0, startAngle, endAngle);
+            ctx.fill();
+        }
 
-        // Faden
-        ctx.beginPath();
-        ctx.moveTo(0, this.size);
-        ctx.lineTo(0, this.size + 40);
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Kiste am Faden
-        ctx.fillStyle = '#8e44ad'; // Kistenfarbe
-        if (this.type === 'time') ctx.fillStyle = '#2980b9';
-        if (this.type === 'machinegun') ctx.fillStyle = '#c0392b';
-        ctx.fillRect(-15, this.size + 40, 30, 30);
-        ctx.strokeStyle = '#000';
-        ctx.strokeRect(-15, this.size + 40, 30, 30);
-
-        ctx.fillStyle = '#fff';
-        ctx.font = '12px "Fredoka One"';
+        // Moorhuhn Schriftzug auf dem Ballon (Andeutung)
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(text, 0, this.size + 60);
-
-        // Ballon
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, this.size, this.size * 1.2, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillText('Moorhuhn', 0, 0);
 
         // Glanz
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
         ctx.beginPath();
-        ctx.ellipse(-10, -15, 10, 15, Math.PI / 4, 0, Math.PI * 2);
+        ctx.ellipse(-10, -15, 8, 12, Math.PI / 4, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -618,67 +602,63 @@ class Landscape {
     }
 
     draw(ctx) {
-        // 1. Himmel (Linear Gradient)
+        // 1. Himmel
         const skyGradient = ctx.createLinearGradient(0, 0, 0, this.height);
-        skyGradient.addColorStop(0, '#5DBCD2'); // Helleres Blau oben
-        skyGradient.addColorStop(0.6, '#BCE6E9'); // Noch heller Richtung Horizont
-        skyGradient.addColorStop(1, '#8AB870'); // Grasgrün als harter Cut ganz unten (wird übermalt)
+        skyGradient.addColorStop(0, '#78AACC'); // Etwas graueres Blau
+        skyGradient.addColorStop(1, '#B0D0E0');
         ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, this.width, this.height);
 
         // 2. Sonne
-        ctx.fillStyle = '#FFF5B8';
+        ctx.fillStyle = '#FFF9D0';
         ctx.beginPath();
-        // Packen wir die Sonne relativ weit oben rechts hin
-        ctx.arc(this.width * 0.8, this.height * 0.2, 50, 0, Math.PI * 2);
-        ctx.fill();
-        // Sonnen-Glow
-        const glow = ctx.createRadialGradient(
-            this.width * 0.8, this.height * 0.2, 50,
-            this.width * 0.8, this.height * 0.2, 120
-        );
-        glow.addColorStop(0, 'rgba(255, 245, 184, 0.4)');
-        glow.addColorStop(1, 'rgba(255, 245, 184, 0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(this.width * 0.8, this.height * 0.2, 120, 0, Math.PI * 2);
+        ctx.arc(this.width * 0.8, this.height * 0.15, 60, 0, Math.PI * 2);
         ctx.fill();
 
         // 3. Bergkette im Hintergrund
-        ctx.fillStyle = '#659D96'; // Bläulich-Grau-Grün für Ferne
-        ctx.beginPath();
-        ctx.moveTo(0, this.height); // Start unten links
-        ctx.lineTo(0, this.height * 0.5); // Berg 1
-        ctx.lineTo(this.width * 0.2, this.height * 0.3);
-        ctx.lineTo(this.width * 0.4, this.height * 0.6); // Tal
-        ctx.lineTo(this.width * 0.65, this.height * 0.25); // Berg 2 (höher)
-        ctx.lineTo(this.width * 0.9, this.height * 0.55); // Tal
-        ctx.lineTo(this.width, this.height * 0.4); // Berg 3
-        ctx.lineTo(this.width, this.height); // Runter rechts
-        ctx.closePath();
-        ctx.fill();
-
-        // 4. Hügelkette (Middleground)
-        ctx.fillStyle = '#5A9652'; // Dunkleres Grün
+        ctx.fillStyle = '#6D8A96';
         ctx.beginPath();
         ctx.moveTo(0, this.height);
-        // Wir nutzen quadratische Kurven für weiche Hügel
-        ctx.lineTo(0, this.height * 0.65);
-        ctx.quadraticCurveTo(this.width * 0.25, this.height * 0.45, this.width * 0.5, this.height * 0.6);
-        ctx.quadraticCurveTo(this.width * 0.8, this.height * 0.75, this.width, this.height * 0.5);
+        ctx.lineTo(0, this.height * 0.45);
+        ctx.lineTo(this.width * 0.3, this.height * 0.35);
+        ctx.lineTo(this.width * 0.6, this.height * 0.5);
+        ctx.lineTo(this.width * 0.8, this.height * 0.3);
+        ctx.lineTo(this.width, this.height * 0.45);
         ctx.lineTo(this.width, this.height);
         ctx.closePath();
         ctx.fill();
 
-        // 5. Vordergrund-Wiese
-        ctx.fillStyle = '#7CB342'; // Kräftiges Grasgrün
+        // 4. Hügelkette (Middleground - Golden Brown)
+        ctx.fillStyle = '#C28E42';
         ctx.beginPath();
-        ctx.moveTo(0, this.height * 0.8);
-        ctx.quadraticCurveTo(this.width * 0.5, this.height * 0.7, this.width, this.height * 0.85);
+        ctx.moveTo(0, this.height);
+        ctx.lineTo(0, this.height * 0.6);
+        ctx.quadraticCurveTo(this.width * 0.3, this.height * 0.5, this.width * 0.6, this.height * 0.65);
+        ctx.quadraticCurveTo(this.width * 0.8, this.height * 0.7, this.width, this.height * 0.55);
+        ctx.lineTo(this.width, this.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // 5. Vordergrund-Weizenfeld (Vibrant Golden Yellow)
+        ctx.fillStyle = '#EBC034';
+        ctx.beginPath();
+        ctx.moveTo(0, this.height * 0.75);
+        ctx.quadraticCurveTo(this.width * 0.2, this.height * 0.68, this.width * 0.5, this.height * 0.72);
+        ctx.quadraticCurveTo(this.width * 0.8, this.height * 0.78, this.width, this.height * 0.7);
         ctx.lineTo(this.width, this.height);
         ctx.lineTo(0, this.height);
         ctx.closePath();
         ctx.fill();
+
+        // Weizen-Stoppeln/Textur
+        ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < this.width; i += 40) {
+            ctx.beginPath();
+            ctx.moveTo(i, this.height * 0.7);
+            ctx.lineTo(i + 5, this.height * 0.75);
+            ctx.stroke();
+        }
 
         // 6. Wolken zeichnen (über den Bergen, im Himmel)
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
@@ -695,7 +675,7 @@ class Landscape {
     drawForeground(ctx) {
         this._drawTree(ctx);
         this._drawRock(ctx);
-        this._drawWoodpile(ctx);
+        this._drawWindmill(ctx);
     }
 
     _drawTree(ctx) {
@@ -778,37 +758,50 @@ class Landscape {
         ctx.fill();
     }
 
-    _drawWoodpile(ctx) {
+    _drawWindmill(ctx) {
         const x = this.width * 0.85;
-        const groundY = this.height * 0.80;
+        const groundY = this.height * 0.76;
 
-        // Holzstapel (3 Stämme übereinander)
-        const logColors = ['#6D4C41', '#5D4037', '#795548'];
-        for (let i = 0; i < 3; i++) {
-            const ly = groundY - i * 25;
-            ctx.fillStyle = logColors[i];
-            ctx.beginPath();
-            ctx.ellipse(x, ly, 50, 15, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#3E2723';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Jahresringe (Stirnseite)
-            ctx.strokeStyle = '#4E342E';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.ellipse(x + 45, ly, 4, 10, 0, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-
-        // Kleiner Busch daneben
-        ctx.fillStyle = '#33691E';
+        // Turm
+        ctx.fillStyle = '#8D6E63';
         ctx.beginPath();
-        ctx.arc(x + 55, groundY - 5, 20, 0, Math.PI * 2);
-        ctx.arc(x + 70, groundY - 15, 18, 0, Math.PI * 2);
-        ctx.arc(x + 60, groundY - 25, 15, 0, Math.PI * 2);
+        ctx.moveTo(x - 25, groundY);
+        ctx.lineTo(x + 25, groundY);
+        ctx.lineTo(x + 15, groundY - 80);
+        ctx.lineTo(x - 15, groundY - 80);
+        ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = '#4E342E';
+        ctx.stroke();
+
+        // Dach
+        ctx.fillStyle = '#5D4037';
+        ctx.beginPath();
+        ctx.moveTo(x - 20, groundY - 80);
+        ctx.lineTo(x + 20, groundY - 80);
+        ctx.lineTo(x, groundY - 105);
+        ctx.closePath();
+        ctx.fill();
+
+        // Flügel (stillstehend für den Hindernis-Vibe)
+        ctx.strokeStyle = '#D7CCC8';
+        ctx.lineWidth = 4;
+        for (let i = 0; i < 4; i++) {
+            ctx.save();
+            ctx.translate(x, groundY - 75);
+            ctx.rotate(i * Math.PI / 2 + 0.4);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, 60);
+            // Flügelgitter
+            ctx.lineWidth = 2;
+            ctx.moveTo(-10, 20);
+            ctx.lineTo(10, 20);
+            ctx.moveTo(-10, 40);
+            ctx.lineTo(10, 40);
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 }
 

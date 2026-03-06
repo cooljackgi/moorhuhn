@@ -390,19 +390,24 @@ body {
 
 /* == Mobile Reload Button == */
 .btn-reload {
+    position: fixed;
+    bottom: 120px;
+    /* Weiter oben, damit er nicht abgeschnitten wird */
+    left: 50%;
+    transform: translateX(-50%);
     font-family: 'Fredoka One', cursive;
-    font-size: 1.2rem;
-    padding: 12px 30px;
+    font-size: 1.4rem;
+    padding: 15px 40px;
     border: none;
     border-radius: 50px;
     background: linear-gradient(180deg, #ff9800, #e65100);
     color: white;
     text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
-    box-shadow: 0 4px 0px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     pointer-events: auto;
     cursor: pointer;
     display: none;
-    /* Hidden by default, shown via JS on touch devices */
+    z-index: 1000;
 }
 
 .btn-reload.visible {
