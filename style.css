@@ -27,7 +27,8 @@ body {
     position: relative;
     width: 100vw;
     height: 100vh;
-    background-color: #87CEEB; /* Fallback for the sky color */
+    background-color: #87CEEB;
+    /* Fallback for the sky color */
 }
 
 #game-canvas {
@@ -367,4 +368,204 @@ body {
 
 .highscore-list li:last-child {
     border-bottom: none;
+}
+
+/* == Name Input (Game Over) == */
+.name-input {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    border: 2px solid var(--gold);
+    border-radius: 30px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    text-align: center;
+    outline: none;
+    width: 250px;
+}
+
+.name-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* == Mobile Reload Button == */
+.btn-reload {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(180deg, #ff9800, #e65100);
+    color: white;
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 0px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    cursor: pointer;
+    display: none;
+    /* Hidden by default, shown via JS on touch devices */
+}
+
+.btn-reload.visible {
+    display: block;
+}
+
+/* == Prevent overscroll on iOS / mobile == */
+html,
+body {
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
+}
+
+/* =============================================
+   RESPONSIVE: Small screens / Mobile
+   ============================================= */
+@media (max-width: 768px) {
+    .game-title {
+        font-size: 2.8rem;
+        margin-bottom: 20px;
+    }
+
+    .game-title span {
+        font-size: 1.8rem;
+    }
+
+    .btn {
+        font-size: 1rem;
+        padding: 12px 25px;
+        min-width: 180px;
+    }
+
+    .currency-display {
+        font-size: 1.2rem;
+        padding: 6px 12px;
+        top: 10px;
+        right: 10px;
+    }
+
+    /* HUD */
+    .hud-top {
+        padding: 10px 15px;
+        font-size: 1.4rem;
+    }
+
+    .hud-bottom {
+        padding-bottom: 15px;
+        gap: 5px;
+    }
+
+    .bullet {
+        width: 14px;
+        height: 35px;
+    }
+
+    .ammo-container {
+        gap: 5px;
+    }
+
+    #reload-hint {
+        font-size: 1rem;
+    }
+
+    .btn-reload {
+        font-size: 1rem;
+        padding: 10px 20px;
+    }
+
+    /* Window Menus */
+    .window-menu h2 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .results p {
+        font-size: 0.9rem;
+    }
+
+    .highlight-gold {
+        font-size: 1.3rem;
+    }
+
+    /* Shop */
+    .shop-items {
+        gap: 10px;
+        max-width: 90vw;
+        margin: 10px;
+    }
+
+    .shop-item {
+        width: 140px;
+        padding: 10px;
+    }
+
+    .shop-item h3 {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+
+    .shop-item p {
+        font-size: 0.7rem;
+        margin-bottom: 8px;
+    }
+
+    .shop-item .price {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .shop-item .btn {
+        font-size: 0.7rem;
+        padding: 8px 15px;
+        min-width: unset;
+    }
+
+    /* Highscores */
+    .highscore-list {
+        width: 90vw;
+        max-width: 350px;
+        padding: 10px;
+    }
+
+    .highscore-list li {
+        font-size: 1rem;
+        padding: 6px 0;
+    }
+
+    /* Name Input */
+    .name-input {
+        font-size: 1rem;
+        width: 200px;
+        padding: 8px 15px;
+    }
+
+    /* Hide cursor on mobile */
+    #custom-cursor {
+        display: none !important;
+    }
+}
+
+@media (max-width: 400px) {
+    .game-title {
+        font-size: 2rem;
+    }
+
+    .game-title span {
+        font-size: 1.3rem;
+    }
+
+    .btn {
+        font-size: 0.85rem;
+        padding: 10px 20px;
+        min-width: 150px;
+    }
+
+    .hud-top {
+        font-size: 1.1rem;
+        padding: 8px 10px;
+    }
+
+    .bullet {
+        width: 10px;
+        height: 25px;
+    }
 }

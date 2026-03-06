@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Moorhuhn Clone - Cartoon Style</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div id="game-container">
         <!-- Das Canvas, auf dem das eigentliche Spiel gerendert wird -->
@@ -14,7 +16,7 @@
 
         <!-- UI Overlays -->
         <div id="ui-layer">
-            
+
             <!-- Hauptmenü -->
             <div id="main-menu" class="screen active">
                 <h1 class="game-title">Moorhuhn<br><span>Madness</span></h1>
@@ -39,13 +41,15 @@
                         Zeit: <span id="hud-time">90</span>s
                     </div>
                 </div>
-                
+
                 <div class="hud-bottom">
                     <!-- Munitionsanzeige -->
                     <div id="ammo-container" class="ammo-container">
                         <!-- Patronen werden per JS generiert -->
                     </div>
-                    <div id="reload-hint" class="hidden">Rechtsklick zum Nachladen!</div>
+                    <div id="reload-hint" class="hidden">Nachladen!</div>
+                    <!-- Mobile Reload Button -->
+                    <button id="btn-reload" class="btn-reload hidden">🔄 Nachladen</button>
                     <!-- Temporäre Buffs Anzeige -->
                     <div id="buffs-container"></div>
                 </div>
@@ -80,11 +84,13 @@
                     <p>Verdiente Münzen: <span id="result-coins" class="highlight">0</span></p>
                     <p id="new-highscore-msg" class="hidden highlight-gold">Neuer Highscore!</p>
                 </div>
-                
+
                 <!-- Neu: Name eingeben für Global Highscore -->
                 <div id="highscore-submission" class="mt-20">
-                    <input type="text" id="player-name-input" placeholder="Dein Name (max 15 Z.)" maxlength="15" class="name-input">
-                    <button id="btn-submit-score" class="btn btn-primary" style="margin-top: 10px;">Score eintragen</button>
+                    <input type="text" id="player-name-input" placeholder="Dein Name (max 15 Z.)" maxlength="15"
+                        class="name-input">
+                    <button id="btn-submit-score" class="btn btn-primary" style="margin-top: 10px;">Score
+                        eintragen</button>
                     <p id="score-submit-msg" class="hidden" style="font-size: 0.9em; margin-top: 5px;"></p>
                 </div>
 
@@ -105,4 +111,5 @@
     <script src="js/supabase-db.js"></script>
     <script src="js/game.js"></script>
 </body>
+
 </html>
