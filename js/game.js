@@ -211,6 +211,159 @@ class InGameUpgrade extends Target {
     }
 }
 
+class HiddenTarget {
+    constructor(canvasWidth, canvasHeight, obstacle) {
+        this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
+        this.obstacle = obstacle; // {x, y, popDirection: 'up'|'left'|'right'}
+
+        this.size = 40;
+        this.points = 25; // Mehr Punkte weil schwerer zu treffen
+
+        // Position = am Versteck
+        this.homeX = obstacle.x;
+        this.homeY = obstacle.y;
+        this.x = this.homeX;
+        this.y = this.homeY;
+
+        // State Machine: 'hiding' -> 'popping' -> 'exposed' -> 'ducking' -> 'gone'
+        this.phase = 'hiding';
+        this.phaseTimer = 0;
+        this.popOffset = 0; // Wie weit das Huhn herausschaut (0 = versteckt, 1 = komplett draussen)
+
+        // Timing
+        this.hideDelay = Math.random() * 500 + 200; // Wartezeit bevor es rauskommt
+        this.popDuration = 400; // Wie lange das Rauskommen dauert (ms)
+        this.exposedDuration = Math.random() * 1500 + 1000; // Wie lange es sichtbar bleibt
+        this.duckDuration = 300; // Wie lange das Wegducken dauert
+
+        this.markedForDeletion = false;
+        this.flapTime = 0;
+    }
+
+    update(deltaTime) {
+        this.phaseTimer += deltaTime;
+        this.flapTime += deltaTime;
+
+        const popDistance = 70; // Pixel die es sich bewegt
+
+        switch (this.phase) {
+            case 'hiding':
+                if (this.phaseTimer > this.hideDelay) {
+                    this.phase = 'popping';
+                    this.phaseTimer = 0;
+                }
+                break;
+
+            case 'popping':
+                this.popOffset = Math.min(1, this.phaseTimer / this.popDuration);
+                // Smooth easing
+                const easeOut = 1 - Math.pow(1 - this.popOffset, 3);
+                if (this.obstacle.popDirection === 'up') {
+                    this.y = this.homeY - easeOut * popDistance;
+                } else if (this.obstacle.popDirection === 'left') {
+                    this.x = this.homeX - easeOut * popDistance;
+                } else {
+                    this.x = this.homeX + easeOut * popDistance;
+                }
+                if (this.phaseTimer >= this.popDuration) {
+                    this.phase = 'exposed';
+                    this.phaseTimer = 0;
+                }
+                break;
+
+            case 'exposed':
+                // Leichtes Wackeln
+                if (this.obstacle.popDirection === 'up') {
+                    this.y = (this.homeY - popDistance) + Math.sin(this.flapTime / 200) * 3;
+                } else {
+                    this.x = (this.obstacle.popDirection === 'left' ? this.homeX - popDistance : this.homeX + popDistance) + Math.sin(this.flapTime / 200) * 3;
+                }
+                if (this.phaseTimer >= this.exposedDuration) {
+                    this.phase = 'ducking';
+                    this.phaseTimer = 0;
+                }
+                break;
+
+            case 'ducking':
+                this.popOffset = Math.max(0, 1 - this.phaseTimer / this.duckDuration);
+                const easeIn = 1 - Math.pow(1 - this.popOffset, 2);
+                if (this.obstacle.popDirection === 'up') {
+                    this.y = this.homeY - easeIn * popDistance;
+                } else if (this.obstacle.popDirection === 'left') {
+                    this.x = this.homeX - easeIn * popDistance;
+                } else {
+                    this.x = this.homeX + easeIn * popDistance;
+                }
+                if (this.phaseTimer >= this.duckDuration) {
+                    this.phase = 'gone';
+                    this.markedForDeletion = true;
+                }
+                break;
+        }
+    }
+
+    draw(ctx) {
+        // Nicht zeichnen wenn komplett versteckt
+        if (this.phase === 'hiding' || this.phase === 'gone') return;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // Koerper
+        ctx.fillStyle = '#8B4513';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size * 0.6, this.size * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#000';
+        ctx.stroke();
+
+        // Kopf
+        ctx.fillStyle = '#8B4513';
+        ctx.beginPath();
+        ctx.arc(0, -this.size * 0.5, this.size * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Auge
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.size * 0.1, -this.size * 0.6, this.size * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(this.size * 0.13, -this.size * 0.6, this.size * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Schnabel
+        ctx.fillStyle = 'orange';
+        ctx.beginPath();
+        ctx.moveTo(this.size * 0.3, -this.size * 0.5);
+        ctx.lineTo(this.size * 0.5, -this.size * 0.45);
+        ctx.lineTo(this.size * 0.3, -this.size * 0.4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Kamm
+        ctx.fillStyle = '#cc0000';
+        ctx.beginPath();
+        ctx.arc(-this.size * 0.05, -this.size * 0.8, this.size * 0.1, 0, Math.PI * 2);
+        ctx.arc(this.size * 0.08, -this.size * 0.85, this.size * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    checkHit(px, py) {
+        // Nur treffbar wenn exposed oder popping (also sichtbar)
+        if (this.phase !== 'exposed' && this.phase !== 'popping') return false;
+        const dx = px - this.x;
+        const dy = py - this.y;
+        return (dx * dx + dy * dy) < (this.size * this.size * 1.2);
+    }
+}
+
 class Particle {
     constructor(x, y, color) {
         this.x = x;
@@ -283,11 +436,28 @@ class Landscape {
                 speed: Math.random() * 10 + 5 // Langsame Bewegung
             });
         }
+
+        // Hindernisse/Verstecke (Positionen relativ zur Canvas-Größe)
+        this.updateObstaclePositions();
+    }
+
+    updateObstaclePositions() {
+        // Positionen der Verstecke, relativ zur Canvas-Größe
+        this.obstacles = [
+            { id: 'tree', x: this.width * 0.12, y: this.height * 0.72, popDirection: 'right' },  // Hinter dem Baum
+            { id: 'rock', x: this.width * 0.5, y: this.height * 0.82, popDirection: 'up' },     // Hinter dem Felsen
+            { id: 'woodpile', x: this.width * 0.85, y: this.height * 0.75, popDirection: 'left' }, // Hinter dem Holzstapel
+        ];
+    }
+
+    getRandomObstacle() {
+        return this.obstacles[Math.floor(Math.random() * this.obstacles.length)];
     }
 
     resize(canvasWidth, canvasHeight) {
         this.width = canvasWidth;
         this.height = canvasHeight;
+        this.updateObstaclePositions();
     }
 
     update(deltaTime) {
@@ -374,6 +544,126 @@ class Landscape {
             ctx.arc(c.x + c.size * 1.6, c.y, c.size * 0.9, 0, Math.PI * 2);
             ctx.fill();
         });
+    }
+
+    // Vordergrund-Objekte (werden NACH den Hühnern gezeichnet, damit sie davor liegen)
+    drawForeground(ctx) {
+        this._drawTree(ctx);
+        this._drawRock(ctx);
+        this._drawWoodpile(ctx);
+    }
+
+    _drawTree(ctx) {
+        const x = this.width * 0.12;
+        const groundY = this.height * 0.78;
+
+        // Stamm
+        ctx.fillStyle = '#5D4037';
+        ctx.fillRect(x - 15, groundY - 160, 30, 180);
+        ctx.strokeStyle = '#3E2723';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 15, groundY - 160, 30, 180);
+
+        // Rinde Details
+        ctx.strokeStyle = '#4E342E';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 5; i++) {
+            const ry = groundY - 150 + i * 30;
+            ctx.beginPath();
+            ctx.moveTo(x - 10, ry);
+            ctx.quadraticCurveTo(x, ry + 5, x + 10, ry);
+            ctx.stroke();
+        }
+
+        // Krone (mehrere überlappende Kreise = buschiger Baum)
+        ctx.fillStyle = '#2E7D32';
+        ctx.beginPath();
+        ctx.arc(x - 40, groundY - 150, 45, 0, Math.PI * 2);
+        ctx.arc(x + 40, groundY - 155, 40, 0, Math.PI * 2);
+        ctx.arc(x, groundY - 190, 50, 0, Math.PI * 2);
+        ctx.arc(x - 20, groundY - 170, 42, 0, Math.PI * 2);
+        ctx.arc(x + 20, groundY - 170, 42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#1B5E20';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Hellere Highlights auf der Krone
+        ctx.fillStyle = '#43A047';
+        ctx.beginPath();
+        ctx.arc(x - 30, groundY - 180, 20, 0, Math.PI * 2);
+        ctx.arc(x + 15, groundY - 195, 18, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    _drawRock(ctx) {
+        const x = this.width * 0.5;
+        const groundY = this.height * 0.83;
+
+        // Großer Fels
+        ctx.fillStyle = '#78909C';
+        ctx.beginPath();
+        ctx.moveTo(x - 60, groundY + 20);
+        ctx.lineTo(x - 55, groundY - 30);
+        ctx.lineTo(x - 30, groundY - 50);
+        ctx.lineTo(x + 10, groundY - 55);
+        ctx.lineTo(x + 40, groundY - 40);
+        ctx.lineTo(x + 55, groundY - 15);
+        ctx.lineTo(x + 60, groundY + 20);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#546E7A';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Felshighlight
+        ctx.fillStyle = '#90A4AE';
+        ctx.beginPath();
+        ctx.moveTo(x - 30, groundY - 45);
+        ctx.lineTo(x - 10, groundY - 50);
+        ctx.lineTo(x + 5, groundY - 40);
+        ctx.lineTo(x - 15, groundY - 30);
+        ctx.closePath();
+        ctx.fill();
+
+        // Moos auf dem Stein
+        ctx.fillStyle = '#558B2F';
+        ctx.beginPath();
+        ctx.ellipse(x - 20, groundY - 45, 15, 5, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    _drawWoodpile(ctx) {
+        const x = this.width * 0.85;
+        const groundY = this.height * 0.80;
+
+        // Holzstapel (3 Stämme übereinander)
+        const logColors = ['#6D4C41', '#5D4037', '#795548'];
+        for (let i = 0; i < 3; i++) {
+            const ly = groundY - i * 25;
+            ctx.fillStyle = logColors[i];
+            ctx.beginPath();
+            ctx.ellipse(x, ly, 50, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Jahresringe (Stirnseite)
+            ctx.strokeStyle = '#4E342E';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.ellipse(x + 45, ly, 4, 10, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Kleiner Busch daneben
+        ctx.fillStyle = '#33691E';
+        ctx.beginPath();
+        ctx.arc(x + 55, groundY - 5, 20, 0, Math.PI * 2);
+        ctx.arc(x + 70, groundY - 15, 18, 0, Math.PI * 2);
+        ctx.arc(x + 60, groundY - 25, 15, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
@@ -900,7 +1190,13 @@ class Game {
         if (this.spawnTimer > 1000) { // Jede sekunde Chance auf neues Huhn
             this.spawnTimer = 0;
             if (Math.random() > 0.3 && this.targets.length < 8) {
-                this.targets.push(new Target(this.canvas.width, this.canvas.height));
+                // 30% Chance auf ein verstecktes Huhn, 70% fliegendes
+                if (Math.random() < 0.3) {
+                    const obstacle = this.landscape.getRandomObstacle();
+                    this.targets.push(new HiddenTarget(this.canvas.width, this.canvas.height, obstacle));
+                } else {
+                    this.targets.push(new Target(this.canvas.width, this.canvas.height));
+                }
             }
         }
 
@@ -931,10 +1227,19 @@ class Game {
 
         // Im Menü passiert nichts auf dem Canvas bzgl Targets, wir brechen hier ab. 
         // Die Landschaft ist schon gerendert und bleibt als cooles Menü-Hintergrundbild.
-        if (this.state !== GameState.PLAYING && this.targets.length === 0 && this.particles.length === 0) return;
+        if (this.state !== GameState.PLAYING && this.targets.length === 0 && this.particles.length === 0) {
+            // Trotzdem Vordergrund zeichnen (damit er auch im Menü cool aussieht)
+            this.landscape.drawForeground(this.ctx);
+            return;
+        }
 
-        // Entities zeichnen
+        // Layer-Reihenfolge:
+        // 1. Hintergrund (bereits gezeichnet oben)
+        // 2. Alle Targets (Hühner fliegen HINTER den Hindernissen)
         this.targets.forEach(t => t.draw(this.ctx));
+        // 3. Vordergrund-Objekte (Baum, Fels, Holzstapel) ÜBER den Hühnern
+        this.landscape.drawForeground(this.ctx);
+        // 4. Partikel und Popups (sollen über allem schweben)
         this.particles.forEach(p => p.draw(this.ctx));
         this.popups.forEach(p => p.draw(this.ctx));
 
