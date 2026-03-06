@@ -5,7 +5,7 @@ const SUPABASE_URL = 'https://jaeaoajtmjicwqjwtuly.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_uWXUdVQD2X1hYpdCWaxFBw_9SjrWBrT';
 
 // Initialize the Supabase client
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Fetches the top 10 highscores from the database.
@@ -13,7 +13,7 @@ const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  */
 async function getHighscores() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('highscores')
             .select('name, score, created_at')
             .order('score', { ascending: false })
@@ -43,7 +43,7 @@ async function saveHighscore(name, score) {
     }
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('highscores')
             .insert([
                 { name: name.trim().substring(0, 15), score: parseInt(score, 10) }
