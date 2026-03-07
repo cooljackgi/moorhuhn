@@ -1,6 +1,8 @@
 // --- Konfiguration und Globals ---
 const GAME_DURATION = 90; // Standard Zeit in Sekunden
 const DEFAULT_AMMO = 5;
+const KONAMI_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+const MENU_CHEAT_CODE = 'MOORHUHN';
 
 // Status Enums
 const GameState = {
@@ -303,6 +305,9 @@ class InGameUpgrade extends Target {
         if (this.type === 'time') { boxColor = '#3498db'; boxText = '+10s'; }
         if (this.type === 'machinegun') { boxColor = '#e74c3c'; boxText = 'MG'; }
         if (this.type === 'slowmo') { boxColor = '#9b59b6'; boxText = 'Slo'; }
+        if (this.type === 'shotgun') { boxColor = '#f39c12'; boxText = 'SHG'; }
+        if (this.type === 'fever') { boxColor = '#FF8C00'; boxText = 'Fvr'; }
+        if (this.type === 'coins') { boxColor = '#FFD700'; boxText = 'Coin'; }
 
         ctx.fillStyle = boxColor;
         ctx.fillRect(-8, this.size * 1.5 + 20, 16, 16);
@@ -375,6 +380,55 @@ class InGameUpgrade extends Target {
         const hitSquare = (px > this.x - 20 && px < this.x + 20 && py > this.y + this.size + 20 && py < this.y + this.size + 80);
 
         return hitBalloon || hitSquare;
+    }
+}
+
+// Seltenes goldenes Huhn (Gimmick: 18% Chance bei speziellen Spawns)
+class RareTarget extends Target {
+    constructor(canvasWidth, canvasHeight) {
+        super(canvasWidth, canvasHeight);
+        this.size = 28; // Etwas größer für bessere Sichtbarkeit
+        this.points = 75; // 3x normale Punkte
+        this.baseSpeed = 8.5; // Schneller
+        this.isRare = true;
+    }
+
+    draw(ctx) {
+        // Golden aura effect
+        ctx.save();
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Draw golden circle glow
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw the chicken body (slightly golden)
+        ctx.fillStyle = '#FDD835';
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.size * 0.7, this.size * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw head
+        ctx.fillStyle = '#FBC02D';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - this.size * 0.3, this.size * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw eyes
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(this.x - this.size * 0.25, this.y - this.size * 0.4, this.size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.x + this.size * 0.25, this.y - this.size * 0.4, this.size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
     }
 }
 
@@ -1763,6 +1817,19 @@ class Game {
         this.particles = [];
         this.popups = [];
 
+        // Gimmick-Tracking
+        this.comboCount = 0;
+        this.comboTimer = 0;
+        this.comboWindowMs = 2200;
+        this.feverModeTimer = 0;
+        this.endRushMode = false;
+        this.swarmCooldownTimer = 0;
+        this.swarmIsActive = false;
+        this.swarmSpawnTimer = 0;
+        this.konamiProgress = 0;
+        this.menuCheatProgress = 0;
+        this.unlockedAchievements = {};
+
         this.lastTime = 0;
         this.spawnTimer = 0;
         this.upgradeSpawnTimer = 0;
@@ -1867,6 +1934,8 @@ class Game {
             if (this.state === GameState.PLAYING && e.code === 'Space') {
                 this.reload();
             }
+            // Gimmick: Secret codes tracking
+            this.trackSecretCodes(e);
         });
 
         // Menü Buttons
@@ -2090,6 +2159,19 @@ class Game {
         if (this.activeBuffs.machinegun > 0) buffsHtml += `<span style="color:#e74c3c;">MG-Modus (${(this.activeBuffs.machinegun / 1000).toFixed(1)}s)</span><br>`;
         if (this.activeBuffs.slowmo > 0) buffsHtml += `<span style="color:#9b59b6;">SlowMo (${(this.activeBuffs.slowmo / 1000).toFixed(1)}s)</span><br>`;
         if (this.activeBuffs.shotgun > 0) buffsHtml += `<span style="color:#f1c40f;">Shotgun (${(this.activeBuffs.shotgun / 1000).toFixed(1)}s)</span><br>`;
+        // Gimmick: Combo anzeigen
+        if (this.comboCount > 0) {
+            const multiplier = this.getScoreMultiplier();
+            buffsHtml += `<span style="color:#FFD700; font-weight:bold;">Kombo x${this.comboCount} (${multiplier.toFixed(1)}x)</span><br>`;
+        }
+        // Gimmick: Fever anzeigen
+        if (this.feverModeTimer > 0) {
+            buffsHtml += `<span style="color:#FF8C00; font-weight:bold;">FEVER (${(this.feverModeTimer / 1000).toFixed(1)}s)</span><br>`;
+        }
+        // Gimmick: Endspurt anzeigen
+        if (this.endRushMode) {
+            buffsHtml += `<span style="color:#FF0000; font-weight:bold; text-shadow: 0 0 10px #FF0000;">⚡ ENDSPURT! ⚡</span><br>`;
+        }
         this.ui.buffsContainer.innerHTML = buffsHtml;
 
         // Fadenkreuz anpassen
@@ -2124,7 +2206,10 @@ class Game {
 
             this.audio.playShoot();
             this.updateHUD();
-            this.checkHits(x, y);
+            const hitAnything = this.checkHits(x, y);
+            if (!hitAnything && this.state === GameState.PLAYING) {
+                this.registerMiss(); // Combo wird zurückgesetzt
+            }
         } else {
             this.audio.playEmptyClick();
         }
@@ -2184,9 +2269,15 @@ class Game {
                 } else {
                     this.audio.playChickenHit();
                     // Shotgun gibt nur halbe Punkte weil es zu einfach ist
-                    const pointsGained = isShotgun ? Math.max(1, Math.floor(t.points / 2)) : t.points;
+                    const basePoints = isShotgun ? Math.max(1, Math.floor(t.points / 2)) : t.points;
+                    const multiplier = this.getScoreMultiplier();
+                    const pointsGained = Math.floor(basePoints * multiplier);
                     this.score += pointsGained;
+                    this.registerHit(); // Combo-Tracking
                     this.popups.push(new ScorePopup(t.x, t.y, `+${pointsGained}`));
+                    if (multiplier > 1) {
+                        this.popups.push(new ScorePopup(t.x, t.y - 30, `x${multiplier.toFixed(1)}`, '#FFD700'));
+                    }
                 }
 
                 if (!isShotgun) {
@@ -2261,6 +2352,8 @@ class Game {
             const py = y + (Math.random() - 0.5) * spread * 2;
             this.particles.push(new Particle(px, py, '#fff'));
         }
+
+        return hitSomething;
     }
 
     applyBuff(type) {
@@ -2273,6 +2366,13 @@ class Game {
             this.activeBuffs.slowmo = 8000; // 8 sekunden
         } else if (type === 'shotgun') {
             this.activeBuffs.shotgun = 6000 + ((this.meta.upgrades.shotgun || 0) * 2000); // 6 sek + 2 sek pro Level
+        } else if (type === 'fever') {
+            this.feverModeTimer = 10000; // 10 sekunden Fever Mode
+            this.unlockAchievement('fever', 'Fever-Mode aktiviert!');
+        } else if (type === 'coins') {
+            this.meta.coins += 50;
+            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+50 Coins!', '#FFD700'));
+            this.unlockAchievement('coins', 'Bonus-Coins gesammelt!');
         }
     }
 
@@ -2372,6 +2472,14 @@ class Game {
         try {
             const success = await window.db.saveHighscore(name, this.score);
             if (success) {
+                // ===== GIMMICK: Name Easter Egg =====
+                const upperName = name.toUpperCase();
+                if (upperName === 'ADMIN' || upperName === 'MOORHUHN') {
+                    this.meta.coins += 100;
+                    this.saveMeta();
+                    this.unlockAchievement('nameEasterEgg', '🗝️ Namens-Geheimnis (100 Coins)!');
+                }
+
                 this.ui.scoreSubmitMsg.innerText = 'Score gespeichert!';
                 this.ui.scoreSubmitMsg.style.color = '#2ecc71';
                 if (name) localStorage.setItem('moorhuhn_last_name', name);
@@ -2433,7 +2541,30 @@ class Game {
         // Update HUD min. jeden Frame wg Buff-Timer
         this.updateHUD();
 
-        const speedMultiplier = (this.activeBuffs.slowmo > 0 ? 0.3 : 1.0) * (this.chickenSpeedBoost > 0 ? 2.0 : 1.0);
+        // ===== GIMMICK: Combo Timer countdown =====
+        if (this.comboTimer > 0) {
+            this.comboTimer -= deltaTime;
+            if (this.comboTimer <= 0) {
+                this.comboCount = 0;
+                this.comboTimer = 0;
+            }
+        }
+
+        // ===== GIMMICK: Fever Mode Timer =====
+        if (this.feverModeTimer > 0) {
+            this.feverModeTimer -= deltaTime;
+        }
+
+        // ===== GIMMICK: Endspurt-Modus (Stress bei <5s) =====
+        if (this.timeRemaining < 5 && !this.endRushMode) {
+            this.endRushMode = true;
+            this.popups.push(new ScorePopup(this.canvas.width / 2, 100, 'FINALER ENDSPURT!', '#FF0000'));
+        }
+        if (this.timeRemaining >= 5) {
+            this.endRushMode = false;
+        }
+
+        const speedMultiplier = (this.activeBuffs.slowmo > 0 ? 0.3 : 1.0) * (this.chickenSpeedBoost > 0 ? 2.0 : 1.0) * (this.endRushMode ? 1.3 : 1.0);
 
         // Chicken Speed Boost Timer (Kirchenglocke)
         if (this.chickenSpeedBoost > 0) {
@@ -2474,9 +2605,34 @@ class Game {
         if (this.upgradeSpawnTimer > 8000) { // Alle ~8 Sekunden
             this.upgradeSpawnTimer = 0;
             if (Math.random() > 0.5) { // 50% chance
-                const types = ['time', 'machinegun', 'slowmo', 'shotgun'];
+                const types = ['time', 'machinegun', 'slowmo', 'shotgun', 'fever', 'coins'];
                 const t = types[Math.floor(Math.random() * types.length)];
                 this.targets.push(new InGameUpgrade(this.canvas.width, this.canvas.height, t));
+            }
+        }
+
+        // ===== GIMMICK: Swarm Event =====
+        this.swarmCooldownTimer -= deltaTime;
+        if (this.swarmCooldownTimer <= 0) {
+            if (Math.random() < 0.02) { // 2% Chance pro Frame (~100ms) = ~alle 50 Frames
+                this.swarmIsActive = true;
+                this.swarmSpawnTimer = 0;
+                this.swarmCooldownTimer = 30000; // 30s cooldown nach Swarm
+                this.popups.push(new ScorePopup(this.canvas.width / 2, 150, 'SCHWARM-EREIGNIS!', '#FF00FF'));
+            }
+        }
+
+        // Swarm spawning
+        if (this.swarmIsActive) {
+            this.swarmSpawnTimer += deltaTime;
+            // 18 Ziele auf 5 Sekunden spawnen = alle 278ms
+            if (this.swarmSpawnTimer > 278) {
+                if (this.targets.length < 18) {
+                    this.targets.push(this.createSwarmTarget());
+                    this.swarmSpawnTimer = 0; // Reset timer
+                } else {
+                    this.swarmIsActive = false;
+                }
             }
         }
 
@@ -2528,7 +2684,118 @@ class Game {
             this.ctx.fillStyle = 'rgba(155, 89, 182, 0.1)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
+
+        // Endspurt Overlay (rote Pulsierung)
+        if (this.state === GameState.PLAYING && this.endRushMode) {
+            const pulse = Math.sin(Date.now() / 100) * 0.5 + 0.5; // 0..1 pulsing
+            this.ctx.fillStyle = `rgba(255, 0, 0, ${pulse * 0.15})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
     }
+
+    // ===== GIMMICK-METHODEN =====
+    
+    getScoreMultiplier() {
+        let multiplier = 1.0;
+        if (this.comboCount >= 5) {
+            multiplier += (Math.min(this.comboCount, 20) - 5) * 0.1; // +0.1 pro Combo über 5
+        }
+        if (this.feverModeTimer > 0) {
+            multiplier += 0.5; // +50% bei Fever
+        }
+        return Math.min(multiplier, 3.0); // Max 3x
+    }
+
+    registerHit() {
+        this.comboCount++;
+        this.comboTimer = this.comboWindowMs;
+        
+        if (this.comboCount === 5) {
+            this.unlockAchievement('combo5', 'Kombo-Master 5x');
+        }
+        if (this.comboCount === 10) {
+            this.unlockAchievement('combo10', 'Kombo-Master 10x');
+        }
+    }
+
+    registerMiss() {
+        if (this.comboCount >= 5) {
+            const msg = `Kombo weg! (${this.comboCount}x)`;
+            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, msg, 'combo-break'));
+        }
+        this.comboCount = 0;
+        this.comboTimer = 0;
+    }
+
+    unlockAchievement(id, title) {
+        if (!this.unlockedAchievements[id]) {
+            this.unlockedAchievements[id] = true;
+            const msg = `🏆 ${title}!`;
+            this.popups.push(new ScorePopup(this.canvas.width / 2, 100, msg, 'achievement'));
+        }
+    }
+
+    activateKonamiBonus() {
+        this.activeBuffs.machinegun = Math.max(this.activeBuffs.machinegun, 10);
+        this.activeBuffs.shotgun = Math.max(this.activeBuffs.shotgun, 8);
+        this.timeRemaining += 15;
+        this.unlockAchievement('konami', 'Konami-Code Aktiviert!');
+    }
+
+    activateMenuCheat() {
+        // Alle Upgrades auf Maximum
+        this.meta.upgrades.magazine = 3;
+        this.meta.upgrades.reloadSpeed = 3;
+        this.meta.upgrades.timeBonus = 3;
+        this.meta.upgrades.shotgun = 3;
+        this.meta.coins += 500;
+        this.unlockAchievement('menucheat', 'Geheimcode: MOORHUHN');
+        this.saveMeta();
+    }
+
+    trackSecretCodes(e) {
+        if (this.state === GameState.PLAYING) {
+            // Konami Code tracking
+            if (e.code === KONAMI_CODE[this.konamiProgress]) {
+                this.konamiProgress++;
+                if (this.konamiProgress === KONAMI_CODE.length) {
+                    this.activateKonamiBonus();
+                    this.konamiProgress = 0;
+                }
+            } else {
+                this.konamiProgress = 0;
+            }
+        } else if (this.state === GameState.MENU) {
+            // Menu cheat code: MOORHUHN
+            const char = e.key.toUpperCase();
+            const codeChars = MENU_CHEAT_CODE.split('');
+            if (char === codeChars[this.menuCheatProgress]) {
+                this.menuCheatProgress++;
+                if (this.menuCheatProgress === codeChars.length) {
+                    this.activateMenuCheat();
+                    this.menuCheatProgress = 0;
+                }
+            } else {
+                this.menuCheatProgress = 0;
+            }
+        }
+    }
+
+    createSwarmTarget() {
+        // 18% Chance on Rare, 82% normal
+        let target;
+        if (Math.random() < 0.18) {
+            target = new RareTarget(this.canvas.width, this.canvas.height);
+            this.unlockAchievement('goldenhuhn', 'Goldhuhn erwischt!');
+        } else {
+            target = new Target(this.canvas.width, this.canvas.height);
+        }
+        // Swarm-Modifikationen: kleiner, mehr Punkte
+        target.size *= 0.75;
+        target.points = Math.floor(target.points * 1.4);
+        return target;
+    }
+
 }
 
 // Bootstrap
