@@ -686,6 +686,118 @@ class ScorePopup {
     }
 }
 
+// --- Adult Mode Effekte ---
+
+class BloodPool {
+    constructor(x, y) {
+        this.x = x + (Math.random() - 0.5) * 20;
+        this.y = y + 30 + Math.random() * 20;
+        this.rx = 15 + Math.random() * 20;
+        this.ry = 5 + Math.random() * 8;
+        this.angle = Math.random() * Math.PI;
+        this.life = 1.0;
+        this.markedForDeletion = false;
+    }
+    update(deltaTime) {
+        this.life -= 0.0015 * (deltaTime / 16);
+        if (this.life <= 0) this.markedForDeletion = true;
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life * 0.75;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = '#8B0000';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.rx, this.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+class CorpseParticle {
+    constructor(x, y, direction) {
+        this.x = x;
+        this.y = y;
+        this.vx = direction * (1 + Math.random() * 2);
+        this.vy = -(3 + Math.random() * 4);
+        this.gravity = 0.3;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.4;
+        this.size = 18 + Math.random() * 10;
+        this.life = 1.0;
+        this.markedForDeletion = false;
+    }
+    update(deltaTime) {
+        const dt = deltaTime / 16;
+        this.vy += this.gravity * dt;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.rotation += this.rotSpeed * dt;
+        this.life -= 0.008 * dt;
+        if (this.life <= 0) this.markedForDeletion = true;
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        const s = this.size;
+
+        // Toter Körper (auf Rücken, Beine hoch)
+        ctx.fillStyle = '#7A5230';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 0.5, s * 0.35, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#4A2810';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Kopf
+        ctx.fillStyle = '#9B6B42';
+        ctx.beginPath();
+        ctx.arc(s * 0.4, -s * 0.1, s * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // X-Augen (tot)
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.5;
+        [[-0.05, -0.15], [0.18, -0.12]].forEach(([ex, ey]) => {
+            ctx.beginPath();
+            ctx.moveTo(s * (ex - 0.07), s * (ey - 0.07));
+            ctx.lineTo(s * (ex + 0.07), s * (ey + 0.07));
+            ctx.moveTo(s * (ex + 0.07), s * (ey - 0.07));
+            ctx.lineTo(s * (ex - 0.07), s * (ey + 0.07));
+            ctx.stroke();
+        });
+
+        // Beine (steif nach oben)
+        ctx.strokeStyle = '#D4901A';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.2);
+        ctx.lineTo(-s * 0.2, -s * 0.5);
+        ctx.moveTo(s * 0.1, s * 0.2);
+        ctx.lineTo(s * 0.2, -s * 0.6);
+        ctx.stroke();
+
+        // Blut-Spritzer
+        ctx.fillStyle = '#CC0000';
+        for (let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.arc(
+                (Math.random() - 0.5) * s * 0.8,
+                (Math.random() - 0.5) * s * 0.8,
+                2 + Math.random() * 3, 0, Math.PI * 2
+            );
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+}
+
 // --- Hauptspiel Logik ---
 
 class Landscape {
@@ -1816,6 +1928,10 @@ class Game {
         this.targets = [];
         this.particles = [];
         this.popups = [];
+        this.bloodPools = [];
+
+        // Adult Mode
+        this.adultMode = localStorage.getItem('moorhuhn_adult') === '1';
 
         // Gimmick-Tracking
         this.comboCount = 0;
@@ -1871,6 +1987,7 @@ class Game {
         window.addEventListener('resize', () => this.resize());
 
         this.updateMenuUI();
+        this.updateModeToggleUI();
 
         // Start Loop
         requestAnimationFrame((ts) => this.gameLoop(ts));
@@ -1949,6 +2066,8 @@ class Game {
         document.getElementById('btn-play-again').addEventListener('click', () => this.startGame());
         document.getElementById('btn-gameover-menu').addEventListener('click', () => this.showMainMenu());
 
+        document.getElementById('btn-toggle-mode').addEventListener('click', () => this.toggleAdultMode());
+
         // Global Highscore Submit
         this.ui.btnSubmitScore.addEventListener('click', () => this.submitGlobalScore());
 
@@ -1976,6 +2095,24 @@ class Game {
     updateMenuUI() {
         this.ui.menuCoins.innerText = this.meta.coins;
         this.ui.shopCoins.innerText = this.meta.coins;
+    }
+
+    toggleAdultMode() {
+        this.adultMode = !this.adultMode;
+        localStorage.setItem('moorhuhn_adult', this.adultMode ? '1' : '0');
+        this.updateModeToggleUI();
+    }
+
+    updateModeToggleUI() {
+        const btn = document.getElementById('btn-toggle-mode');
+        if (!btn) return;
+        if (this.adultMode) {
+            btn.textContent = '💀 Blutig!';
+            btn.classList.add('mode-adult');
+        } else {
+            btn.textContent = '🐥 Harmlos';
+            btn.classList.remove('mode-adult');
+        }
     }
 
     showMainMenu() {
@@ -2111,6 +2248,7 @@ class Game {
         this.targets = [];
         this.particles = [];
         this.popups = [];
+        this.bloodPools = [];
 
         // Landscape Secrets zur\u00fccksetzen
         this.landscape.sun.hit = false;
@@ -2377,11 +2515,32 @@ class Game {
     }
 
     createExplosion(x, y, color) {
-        for (let i = 0; i < 15; i++) {
-            this.particles.push(new Particle(x, y, color));
-            // Ein paar Federn bei Huehnern
-            if (color === '#8B4513') {
+        const isChicken = color === '#8B4513';
+
+        if (this.adultMode && isChicken) {
+            // Blut-Partikel
+            for (let i = 0; i < 20; i++) {
+                const p = new Particle(x, y, i % 3 === 0 ? '#CC0000' : '#880000');
+                p.size = Math.random() * 10 + 3;
+                p.speedX = (Math.random() - 0.5) * 14;
+                p.speedY = (Math.random() - 0.5) * 14;
+                this.particles.push(p);
+            }
+            // Ein paar Federn trotzdem
+            for (let i = 0; i < 5; i++) {
                 this.particles.push(new Particle(x, y, '#ffffff'));
+            }
+            // Blutlache
+            this.bloodPools.push(new BloodPool(x, y));
+            // Toter Kadaver
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            this.particles.push(new CorpseParticle(x, y, dir));
+        } else {
+            for (let i = 0; i < 15; i++) {
+                this.particles.push(new Particle(x, y, color));
+                if (isChicken) {
+                    this.particles.push(new Particle(x, y, '#ffffff'));
+                }
             }
         }
     }
@@ -2640,11 +2799,13 @@ class Game {
         [this.targets, this.particles, this.popups].forEach(list => {
             list.forEach(item => item.update(deltaTime, item instanceof Target ? speedMultiplier : undefined));
         });
+        this.bloodPools.forEach(bp => bp.update(deltaTime));
 
         // Cleanup
         this.targets = this.targets.filter(t => !t.markedForDeletion);
         this.particles = this.particles.filter(p => !p.markedForDeletion);
         this.popups = this.popups.filter(p => !p.markedForDeletion);
+        this.bloodPools = this.bloodPools.filter(bp => !bp.markedForDeletion);
     }
 
     draw() {
@@ -2665,7 +2826,9 @@ class Game {
         this.targets.forEach(t => t.draw(this.ctx));
         // 3. Vordergrund-Objekte (Baum, Fels, Holzstapel) ÜBER den Hühnern
         this.landscape.drawForeground(this.ctx);
-        // 4. Partikel und Popups (sollen über allem schweben)
+        // 4. Blutlachen (unter Partikeln, damit sie auf dem Boden liegen)
+        this.bloodPools.forEach(bp => bp.draw(this.ctx));
+        // 5. Partikel und Popups (sollen über allem schweben)
         this.particles.forEach(p => p.draw(this.ctx));
         this.popups.forEach(p => p.draw(this.ctx));
 
