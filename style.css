@@ -147,6 +147,27 @@ body {
     background: linear-gradient(180deg, #4caf50, #2e7d32);
 }
 
+.btn-mode-toggle {
+    background: linear-gradient(180deg, #78909c, #37474f);
+    font-size: 1rem;
+    padding: 8px 24px;
+    min-width: 150px;
+}
+
+.btn-mode-toggle.mode-adult {
+    background: linear-gradient(180deg, #e53935, #7b0000);
+    animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 6px 0px rgba(0,0,0,0.3); }
+    50% { box-shadow: 0 6px 20px rgba(200, 0, 0, 0.7); }
+}
+
+.mode-toggle-container {
+    margin-top: 10px;
+}
+
 .currency-display {
     position: absolute;
     top: 20px;
