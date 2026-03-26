@@ -27,8 +27,8 @@ body {
     position: relative;
     width: 100vw;
     height: 100vh;
+    height: calc(var(--vh, 1vh) * 100); /* iOS-Safari Fix */
     background-color: #87CEEB;
-    /* Fallback for the sky color */
 }
 
 #game-canvas {
@@ -469,25 +469,47 @@ body {
     touch-action: manipulation;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: auto;
+    /* Dynamische Viewport-Höhe für mobile Browser mit Adressleiste */
+    height: 100%;
+}
+
+/* window-menu scrollbar auf kleinen Screens */
+.window-menu {
+    overflow-y: auto;
+    padding: 20px;
+    justify-content: flex-start;
+    padding-top: max(40px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+/* Safe Area für iPhones mit Notch */
+#game-container {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
 }
 
 /* =============================================
-   RESPONSIVE: Small screens / Mobile
+   RESPONSIVE: Portrait Mobile (≤ 768px)
    ============================================= */
 @media (max-width: 768px) {
     .game-title {
         font-size: 2.8rem;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
 
     .game-title span {
         font-size: 1.8rem;
     }
 
+    .menu-buttons {
+        gap: 10px;
+    }
+
     .btn {
-        font-size: 1rem;
-        padding: 12px 25px;
-        min-width: 180px;
+        font-size: 1.1rem;
+        padding: 14px 28px;
+        min-width: 200px;
+        min-height: 52px; /* Touch-Target-Mindestgröße */
     }
 
     .currency-display {
@@ -497,6 +519,10 @@ body {
         right: 10px;
     }
 
+    .mode-toggle-container {
+        margin-top: 8px;
+    }
+
     /* HUD */
     .hud-top {
         padding: 10px 15px;
@@ -504,7 +530,7 @@ body {
     }
 
     .hud-bottom {
-        padding-bottom: 15px;
+        padding-bottom: 20px;
         gap: 5px;
     }
 
@@ -515,44 +541,58 @@ body {
 
     .ammo-container {
         gap: 5px;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 90vw;
     }
 
     #reload-hint {
         font-size: 1rem;
     }
 
+    /* Reload Button: größer, gut erreichbar */
     .btn-reload {
-        font-size: 1rem;
-        padding: 10px 20px;
-        bottom: 20px;
+        font-size: 1.2rem;
+        padding: 16px 32px;
+        bottom: max(25px, env(safe-area-inset-bottom, 25px));
         right: 20px;
-        transform: none;
-        /* Reset transform since we are not centering anymore */
     }
 
     /* Window Menus */
+    .window-menu {
+        padding-top: max(20px, env(safe-area-inset-top));
+        justify-content: flex-start;
+        padding-top: 20px;
+    }
+
     .window-menu h2 {
         font-size: 2rem;
         margin-bottom: 10px;
     }
 
     .results p {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
 
     .highlight-gold {
         font-size: 1.3rem;
     }
 
+    /* Werbung auf Mobile ausblenden (zu groß) */
+    .ad-slot {
+        display: none;
+    }
+
     /* Shop */
     .shop-items {
         gap: 10px;
-        max-width: 90vw;
-        margin: 10px;
+        max-width: 95vw;
+        margin: 10px 0;
     }
 
     .shop-item {
-        width: 140px;
+        width: calc(50vw - 25px);
+        max-width: 180px;
         padding: 10px;
     }
 
@@ -572,9 +612,10 @@ body {
     }
 
     .shop-item .btn {
-        font-size: 0.7rem;
-        padding: 8px 15px;
+        font-size: 0.8rem;
+        padding: 10px 12px;
         min-width: unset;
+        min-height: 44px;
     }
 
     /* Highscores */
@@ -592,11 +633,11 @@ body {
     /* Name Input */
     .name-input {
         font-size: 1rem;
-        width: 200px;
-        padding: 8px 15px;
+        width: 220px;
+        padding: 10px 15px;
     }
 
-    /* Hide cursor on mobile */
+    /* Kein Custom-Cursor auf Handy */
     #custom-cursor {
         display: none !important;
     }
@@ -605,6 +646,7 @@ body {
 @media (max-width: 400px) {
     .game-title {
         font-size: 2rem;
+        margin-bottom: 10px;
     }
 
     .game-title span {
@@ -612,9 +654,9 @@ body {
     }
 
     .btn {
-        font-size: 0.85rem;
-        padding: 10px 20px;
-        min-width: 150px;
+        font-size: 0.9rem;
+        padding: 12px 20px;
+        min-width: 160px;
     }
 
     .hud-top {
@@ -625,5 +667,101 @@ body {
     .bullet {
         width: 10px;
         height: 25px;
+    }
+
+    .shop-item {
+        width: calc(50vw - 20px);
+        padding: 8px;
+    }
+}
+
+/* =============================================
+   RESPONSIVE: Landscape Mobile (Querformat)
+   ============================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+    .game-title {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+    }
+
+    .game-title span {
+        font-size: 1.2rem;
+        display: inline;
+        margin-left: 8px;
+    }
+
+    .menu-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .btn {
+        font-size: 0.9rem;
+        padding: 10px 18px;
+        min-width: 130px;
+        min-height: 44px;
+    }
+
+    .currency-display {
+        font-size: 1rem;
+        padding: 4px 10px;
+        top: 6px;
+        right: 8px;
+    }
+
+    .mode-toggle-container {
+        margin-top: 5px;
+    }
+
+    /* HUD im Querformat kompakter */
+    .hud-top {
+        padding: 5px 12px;
+        font-size: 1.1rem;
+    }
+
+    .hud-bottom {
+        padding-bottom: 10px;
+        gap: 4px;
+    }
+
+    .bullet {
+        width: 10px;
+        height: 25px;
+    }
+
+    .btn-reload {
+        font-size: 0.9rem;
+        padding: 10px 18px;
+        bottom: 10px;
+        right: 12px;
+    }
+
+    .window-menu h2 {
+        font-size: 1.5rem;
+        margin-bottom: 6px;
+    }
+
+    .ad-slot {
+        display: none;
+    }
+
+    .shop-items {
+        flex-direction: row;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        max-width: 90vw;
+        padding-bottom: 10px;
+    }
+
+    .shop-item {
+        min-width: 150px;
+        flex-shrink: 0;
+    }
+
+    .highscore-list {
+        max-height: 200px;
+        overflow-y: auto;
     }
 }

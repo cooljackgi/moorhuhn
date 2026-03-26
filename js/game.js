@@ -2018,6 +2018,8 @@ class Game {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        // iOS-Safari-Fix: --vh Variable für korrekte Viewport-Höhe (Adressleiste)
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
         if (this.landscape) {
             this.landscape.resize(this.canvas.width, this.canvas.height);
         }
@@ -2033,11 +2035,13 @@ class Game {
         });
 
         // Schießen auf dem Canvas
+        this._lastTouchTime = 0;
         this.canvas.addEventListener('mousedown', (e) => {
+            if (Date.now() - this._lastTouchTime < 600) return; // Synthetisches mousedown nach Touch ignorieren
             if (this.state === GameState.PLAYING) {
-                if (e.button === 0) { // Linksklick
+                if (e.button === 0) {
                     this.shoot(e.clientX, e.clientY);
-                } else if (e.button === 2) { // Rechtsklick
+                } else if (e.button === 2) {
                     this.reload();
                 }
             }
@@ -2075,6 +2079,7 @@ class Game {
         this.canvas.addEventListener('touchstart', (e) => {
             if (this.state === GameState.PLAYING) {
                 e.preventDefault();
+                this._lastTouchTime = Date.now();
                 const touch = e.touches[0];
                 this.shoot(touch.clientX, touch.clientY);
             }
@@ -2376,7 +2381,8 @@ class Game {
     checkHits(x, y) {
         let hitSomething = false;
         const isShotgun = this.activeBuffs.shotgun > 0;
-        const hitRadius = isShotgun ? 60 : 1; // Shotgun hat 60px Radius = riesige Hitbox
+        const touchBonus = this.isTouchDevice ? 18 : 0; // Größere Hitbox auf Handy
+        const hitRadius = isShotgun ? 60 : touchBonus;
 
         // 1. Zuerst normale Ziele prüfen (Rückwärts wegen Überlappung)
         for (let i = this.targets.length - 1; i >= 0; i--) {
@@ -2384,8 +2390,8 @@ class Game {
 
             // Erweiterte Hit-Logik für Shotgun:
             let isHit = false;
-            if (isShotgun) {
-                // Fallback Hit-Check mit extra Radius
+            if (isShotgun || touchBonus > 0) {
+                // Erweiterte Hitbox für Shotgun oder Touch-Gerät
                 const dx = x - t.x;
                 const dy = y - t.y;
                 isHit = (dx * dx + dy * dy) < ((t.size + hitRadius) * (t.size + hitRadius));
