@@ -2018,6 +2018,8 @@ class Game {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        // iOS-Safari-Fix: --vh Variable für korrekte Viewport-Höhe (Adressleiste)
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
         if (this.landscape) {
             this.landscape.resize(this.canvas.width, this.canvas.height);
         }
