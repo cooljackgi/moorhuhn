@@ -84,29 +84,47 @@ class Target {
             ctx.scale(-1, 1);
         }
 
-        // --- ORIGINAL Moorhuhn Style (riesige Glubschaugen!) ---
+        // --- HÜBSCHES Moorhuhn mit mehr Details ---
 
-        // Füße (baumeln beim Fliegen, zuerst = hinten)
+        // Schatten unter dem Huhn für Tiefe
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.1, s * 0.85, s * 0.35, s * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Füße (baumeln beim Fliegen)
         ctx.strokeStyle = '#D4901A';
         ctx.lineWidth = 2.5;
         const footDangle = Math.sin(this.flapTime / 80) * 0.15;
+        
+        // Linker Fuß mit Krallen
         ctx.beginPath();
         ctx.moveTo(-s * 0.1, s * 0.3);
         ctx.lineTo(-s * 0.15, s * 0.7 + footDangle * s);
         ctx.lineTo(-s * 0.3, s * 0.8 + footDangle * s);
         ctx.moveTo(-s * 0.15, s * 0.7 + footDangle * s);
         ctx.lineTo(-s * 0.05, s * 0.82 + footDangle * s);
+        ctx.moveTo(-s * 0.15, s * 0.7 + footDangle * s);
+        ctx.lineTo(-s * 0.2, s * 0.85 + footDangle * s);
         ctx.stroke();
+        
+        // Rechter Fuß mit Krallen
         ctx.beginPath();
         ctx.moveTo(s * 0.1, s * 0.3);
         ctx.lineTo(s * 0.15, s * 0.7 - footDangle * s);
         ctx.lineTo(s * 0.0, s * 0.82 - footDangle * s);
         ctx.moveTo(s * 0.15, s * 0.7 - footDangle * s);
         ctx.lineTo(s * 0.3, s * 0.8 - footDangle * s);
+        ctx.moveTo(s * 0.15, s * 0.7 - footDangle * s);
+        ctx.lineTo(s * 0.25, s * 0.83 - footDangle * s);
         ctx.stroke();
 
-        // Schwanzfedern
-        ctx.fillStyle = '#5D3A1A';
+        // Schwanzfedern (mehr Details)
+        const tailGrad = ctx.createLinearGradient(-s * 0.9, -s * 0.6, -s * 0.5, 0);
+        tailGrad.addColorStop(0, '#4A2D10');
+        tailGrad.addColorStop(0.5, '#5D3A1A');
+        tailGrad.addColorStop(1, '#7A5230');
+        ctx.fillStyle = tailGrad;
         ctx.beginPath();
         ctx.moveTo(-s * 0.5, -s * 0.1);
         ctx.lineTo(-s * 0.9, -s * 0.6);
@@ -115,23 +133,47 @@ class Target {
         ctx.lineTo(-s * 0.6, 0);
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = '#3E2010';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
-        // Flügel (animiert)
+        // Flügel (animiert) mit Federn-Detail
         const flapAngle = Math.sin(this.flapTime / 55) * 0.7;
         ctx.save();
         ctx.translate(-s * 0.1, s * 0.05);
         ctx.rotate(flapAngle);
-        ctx.fillStyle = '#7A5230';
+        
+        // Flügel-Gradient
+        const wingGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.5);
+        wingGrad.addColorStop(0, '#8B6340');
+        wingGrad.addColorStop(0.7, '#7A5230');
+        wingGrad.addColorStop(1, '#5D3A1A');
+        ctx.fillStyle = wingGrad;
         ctx.beginPath();
         ctx.ellipse(0, 0, s * 0.5, s * 0.2, Math.PI / 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#5D3A1A';
         ctx.lineWidth = 1;
         ctx.stroke();
+        
+        // Flügel-Federn Linien
+        ctx.strokeStyle = 'rgba(60, 30, 10, 0.3)';
+        ctx.lineWidth = 0.8;
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 0.6 - 0.3;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * s * 0.45, Math.sin(angle) * s * 0.18);
+            ctx.stroke();
+        }
         ctx.restore();
 
-        // Körper (KLEIN im Verhältnis zum Kopf wie im Original)
-        ctx.fillStyle = '#9B6B42';
+        // Körper mit Gradient für 3D-Effekt
+        const bodyGrad = ctx.createRadialGradient(-s * 0.1, -s * 0.1, 0, 0, s * 0.05, s * 0.5);
+        bodyGrad.addColorStop(0, '#B8946A');
+        bodyGrad.addColorStop(0.5, '#9B6B42');
+        bodyGrad.addColorStop(1, '#7A5230');
+        ctx.fillStyle = bodyGrad;
         ctx.beginPath();
         ctx.ellipse(0, s * 0.05, s * 0.4, s * 0.35, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -139,14 +181,34 @@ class Target {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Brust (heller)
-        ctx.fillStyle = '#B8946A';
+        // Körper-Federn Textur
+        ctx.strokeStyle = 'rgba(100, 60, 30, 0.2)';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const startX = Math.cos(angle) * s * 0.15;
+            const startY = s * 0.05 + Math.sin(angle) * s * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX + Math.cos(angle) * s * 0.2, startY + Math.sin(angle) * s * 0.15);
+            ctx.stroke();
+        }
+
+        // Brust (heller mit Gradient)
+        const breastGrad = ctx.createRadialGradient(s * 0.05, s * 0.1, 0, s * 0.1, s * 0.15, s * 0.3);
+        breastGrad.addColorStop(0, '#D4B896');
+        breastGrad.addColorStop(1, '#B8946A');
+        ctx.fillStyle = breastGrad;
         ctx.beginPath();
         ctx.ellipse(s * 0.1, s * 0.15, s * 0.25, s * 0.2, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Kopf (RIESIG, Hauptmerkmal!)
-        ctx.fillStyle = '#9B6B42';
+        // Kopf (RIESIG!) mit Gradient
+        const headGrad = ctx.createRadialGradient(s * 0.2, -s * 0.4, 0, s * 0.3, -s * 0.35, s * 0.5);
+        headGrad.addColorStop(0, '#C4A070');
+        headGrad.addColorStop(0.5, '#9B6B42');
+        headGrad.addColorStop(1, '#7A5230');
+        ctx.fillStyle = headGrad;
         ctx.beginPath();
         ctx.arc(s * 0.3, -s * 0.35, s * 0.45, 0, Math.PI * 2);
         ctx.fill();
@@ -154,34 +216,58 @@ class Target {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // KAMM (hoch, rot, wie im Original - eine große Zacke)
-        ctx.fillStyle = '#DD1111';
+        // KAMM (hoch, rot, glänzend)
+        const combGrad = ctx.createLinearGradient(s * 0.2, -s * 1.2, s * 0.5, -s * 0.7);
+        combGrad.addColorStop(0, '#FF3333');
+        combGrad.addColorStop(0.5, '#DD1111');
+        combGrad.addColorStop(1, '#AA0000');
+        ctx.fillStyle = combGrad;
         ctx.beginPath();
         ctx.moveTo(s * 0.05, -s * 0.65);
         ctx.quadraticCurveTo(s * 0.15, -s * 1.3, s * 0.35, -s * 0.9);
         ctx.quadraticCurveTo(s * 0.45, -s * 1.15, s * 0.55, -s * 0.7);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#AA0000';
+        ctx.strokeStyle = '#880000';
         ctx.lineWidth = 1.5;
         ctx.stroke();
+        
+        // Kamm-Glanz
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.moveTo(s * 0.2, -s * 1.0);
+        ctx.quadraticCurveTo(s * 0.25, -s * 1.15, s * 0.3, -s * 1.0);
+        ctx.quadraticCurveTo(s * 0.25, -s * 0.95, s * 0.2, -s * 1.0);
+        ctx.fill();
 
-        // AUGEN (RIESIG! Googly-Eyes wie im Original!)
-        // Linkes Auge
+        // AUGEN (RIESIG! Googly-Eyes!)
+        // Linkes Auge mit Schatten
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.22, -s * 0.37, s * 0.23, s * 0.27, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
         ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.ellipse(s * 0.2, -s * 0.4, s * 0.22, s * 0.26, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#222';
+        ctx.strokeStyle = '#333';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Rechtes Auge
+        
+        // Rechtes Auge mit Schatten
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.57, -s * 0.35, s * 0.23, s * 0.27, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.ellipse(s * 0.55, -s * 0.38, s * 0.22, s * 0.26, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // Pupillen (etwas schielend wie im Original)
+        // Pupillen (etwas schielend) mit Glanz
         ctx.fillStyle = '#111';
         ctx.beginPath();
         ctx.arc(s * 0.28, -s * 0.38, s * 0.09, 0, Math.PI * 2);
@@ -189,46 +275,107 @@ class Target {
         ctx.beginPath();
         ctx.arc(s * 0.5, -s * 0.36, s * 0.09, 0, Math.PI * 2);
         ctx.fill();
-
-        // Glanzpunkte
-        ctx.fillStyle = 'white';
+        
+        // Iris-Farbe (braun)
+        ctx.fillStyle = '#5D3A1A';
         ctx.beginPath();
-        ctx.arc(s * 0.24, -s * 0.44, s * 0.04, 0, Math.PI * 2);
+        ctx.arc(s * 0.28, -s * 0.38, s * 0.07, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(s * 0.46, -s * 0.42, s * 0.04, 0, Math.PI * 2);
+        ctx.arc(s * 0.5, -s * 0.36, s * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Pupillen (schwarz, kleiner)
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(s * 0.28, -s * 0.38, s * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s * 0.5, -s * 0.36, s * 0.04, 0, Math.PI * 2);
         ctx.fill();
 
-        // SCHNABEL (groß, gelb-orange, wie im Original)
-        ctx.fillStyle = '#F0B020';
+        // Glanzpunkte (größer und heller)
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.beginPath();
+        ctx.arc(s * 0.24, -s * 0.44, s * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s * 0.46, -s * 0.42, s * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Zweiter kleinerer Glanzpunkt
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.beginPath();
+        ctx.arc(s * 0.32, -s * 0.35, s * 0.02, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s * 0.54, -s * 0.33, s * 0.02, 0, Math.PI * 2);
+        ctx.fill();
+
+        // SCHNABEL (groß, gelb-orange, glänzend)
+        const beakGrad = ctx.createLinearGradient(s * 0.6, -s * 0.3, s * 1.1, -s * 0.1);
+        beakGrad.addColorStop(0, '#FFD700');
+        beakGrad.addColorStop(0.5, '#F0B020');
+        beakGrad.addColorStop(1, '#C8880B');
+        
         // Oberschnabel
+        ctx.fillStyle = beakGrad;
         ctx.beginPath();
         ctx.moveTo(s * 0.6, -s * 0.25);
         ctx.lineTo(s * 1.1, -s * 0.15);
         ctx.lineTo(s * 0.6, -s * 0.08);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#C8880B';
+        ctx.strokeStyle = '#A07008';
         ctx.lineWidth = 1.5;
         ctx.stroke();
+        
+        // Oberschnabel-Glanz
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.moveTo(s * 0.65, -s * 0.22);
+        ctx.lineTo(s * 0.95, -s * 0.16);
+        ctx.lineTo(s * 0.7, -s * 0.18);
+        ctx.closePath();
+        ctx.fill();
+        
         // Unterschnabel
-        ctx.fillStyle = '#E09818';
+        const lowerBeakGrad = ctx.createLinearGradient(s * 0.6, -s * 0.05, s * 0.95, s * 0.02);
+        lowerBeakGrad.addColorStop(0, '#E09818');
+        lowerBeakGrad.addColorStop(1, '#C07808');
+        ctx.fillStyle = lowerBeakGrad;
         ctx.beginPath();
         ctx.moveTo(s * 0.6, -s * 0.05);
         ctx.lineTo(s * 0.95, s * 0.02);
         ctx.lineTo(s * 0.6, s * 0.06);
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = '#A07008';
         ctx.stroke();
 
         // KEHLWAMPE (rot, hängt unter dem Schnabel)
-        ctx.fillStyle = '#DD1111';
+        const wattleGrad = ctx.createRadialGradient(s * 0.43, s * 0.05, 0, s * 0.45, s * 0.08, s * 0.15);
+        wattleGrad.addColorStop(0, '#FF3333');
+        wattleGrad.addColorStop(1, '#CC0000');
+        ctx.fillStyle = wattleGrad;
         ctx.beginPath();
         ctx.ellipse(s * 0.45, s * 0.08, s * 0.08, s * 0.14, 0.3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#AA0000';
+        ctx.strokeStyle = '#990000';
         ctx.lineWidth = 1;
         ctx.stroke();
+        
+        // Kehlwampe-Glanz
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.42, s * 0.02, s * 0.03, s * 0.05, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Kleine Ohr-Tüpfelchen (typisch für Hühner)
+        ctx.fillStyle = '#E8D4B8';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.12, -s * 0.25, s * 0.04, s * 0.06, -0.3, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.restore();
     }
@@ -793,8 +940,8 @@ class Landscape {
         };
 
         this.chimney = {
-            x: this.width * 0.55,
-            y: this.height * 0.52,
+            x: this.width * 0.15,
+            y: this.height * 0.78,
             hitSmoke: false,
             smokeParticles: []
         };
@@ -1301,27 +1448,27 @@ class Landscape {
         const x = this.chimney.x;
         const y = this.chimney.y;
         ctx.save();
-        // Haus
+        // Haus (vergrößert)
         ctx.fillStyle = '#A0522D';
-        ctx.fillRect(x - 18, y - 12, 36, 18);
-        // Dach
+        ctx.fillRect(x - 36, y - 24, 72, 36);
+        // Dach (vergrößert)
         ctx.fillStyle = '#8B0000';
         ctx.beginPath();
-        ctx.moveTo(x - 22, y - 12);
-        ctx.lineTo(x, y - 25);
-        ctx.lineTo(x + 22, y - 12);
+        ctx.moveTo(x - 44, y - 24);
+        ctx.lineTo(x, y - 55);
+        ctx.lineTo(x + 44, y - 24);
         ctx.closePath();
         ctx.fill();
-        // Schornstein
+        // Schornstein (vergrößert)
         ctx.fillStyle = '#555';
-        ctx.fillRect(x + 8, y - 28, 8, 15);
-        // Tür
+        ctx.fillRect(x + 20, y - 60, 14, 35);
+        // Tür (vergrößert)
         ctx.fillStyle = '#5C4033';
-        ctx.fillRect(x - 5, y - 3, 10, 10);
-        // Fenster
+        ctx.fillRect(x - 10, y - 6, 20, 18);
+        // Fenster (vergrößert)
         ctx.fillStyle = '#FFE4B5';
-        ctx.fillRect(x - 14, y - 8, 6, 5);
-        ctx.fillRect(x + 8, y - 8, 6, 5);
+        ctx.fillRect(x - 28, y - 16, 12, 10);
+        ctx.fillRect(x + 16, y - 16, 12, 10);
         // Rauch-Partikel zeichnen
         this.chimney.smokeParticles.forEach(p => {
             const smokeColor = this.chimney.hitSmoke
@@ -1362,23 +1509,32 @@ class Landscape {
         if (!this.zeppelin.active) return;
         ctx.save();
         ctx.translate(this.zeppelin.x, this.zeppelin.y);
-        // Körper (winzig!)
+        // Körper (vergrößert!)
         ctx.fillStyle = '#C0C0C0';
         ctx.beginPath();
-        ctx.ellipse(0, 0, 18, 7, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 45, 18, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#888';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         ctx.stroke();
-        // Kabine
+        // Kabine (vergrößert)
         ctx.fillStyle = '#8B4513';
-        ctx.fillRect(-5, 6, 10, 4);
+        ctx.fillRect(-12, 15, 24, 10);
+        ctx.strokeStyle = '#5D4037';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-12, 15, 24, 10);
         // Streifen
         ctx.strokeStyle = '#d32f2f';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(-10, 0); ctx.lineTo(10, 0);
+        ctx.moveTo(-30, 0); ctx.lineTo(30, 0);
         ctx.stroke();
+        // Fenster an Kabine
+        ctx.fillStyle = '#87CEEB';
+        ctx.beginPath();
+        ctx.arc(-6, 19, 3, 0, Math.PI * 2);
+        ctx.arc(6, 19, 3, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
     }
 
@@ -1953,13 +2109,32 @@ class Game {
         this.ui.btnSubmitScore.addEventListener('click', () => this.submitGlobalScore());
 
         // --- Touch Events für Mobile ---
+        this.lastTouchTime = 0;
         this.canvas.addEventListener('touchstart', (e) => {
             if (this.state === GameState.PLAYING) {
                 e.preventDefault();
+                e.stopPropagation();
+                // Nur den ersten Touch verarbeiten und Duplikate verhindern
+                const now = Date.now();
+                if (now - this.lastTouchTime < 150) return; // 150ms Debounce
+                this.lastTouchTime = now;
                 const touch = e.touches[0];
                 this.shoot(touch.clientX, touch.clientY);
             }
         }, { passive: false });
+
+        // Verhindere dass mousedown nach touchstart ausgelöst wird
+        let lastTouchEndTime = 0;
+        this.canvas.addEventListener('touchend', () => {
+            lastTouchEndTime = Date.now();
+        });
+        const originalMouseDown = this.canvas.onmousedown;
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (Date.now() - lastTouchEndTime < 300) {
+                e.stopImmediatePropagation();
+                return;
+            }
+        }, true);
 
         // Mobile Reload Button
         this.ui.btnReload.addEventListener('click', (e) => {
