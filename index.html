@@ -128,6 +128,25 @@
             </div>
 
         </div>
+
+        <!-- Cheat Menü (Backtick ` zum Öffnen/Schließen) -->
+        <div id="cheat-menu" class="cheat-menu" style="display:none">
+            <div class="cheat-menu-header">
+                <span>🎮 Cheat Menü</span>
+                <span class="cheat-hint">` schließt</span>
+            </div>
+            <div class="cheat-buttons">
+                <button onclick="window.game.cheat_addScore()">➕ +1000 Punkte</button>
+                <button onclick="window.game.cheat_addCoins()">💰 +500 Münzen</button>
+                <button onclick="window.game.cheat_addTime()">⏱️ +30 Sekunden</button>
+                <button onclick="window.game.cheat_machinegun()">🔴 MG-Modus (30s)</button>
+                <button onclick="window.game.cheat_slowmo()">🟣 SlowMo (30s)</button>
+                <button onclick="window.game.cheat_shotgun()">🟡 Shotgun (30s)</button>
+                <button onclick="window.game.cheat_fillAmmo()">🔵 Munition füllen</button>
+                <button onclick="window.game.cheat_maxUpgrades()">⭐ Alle Upgrades MAX</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Eigener Cursor -->

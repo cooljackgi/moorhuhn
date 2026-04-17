@@ -489,6 +489,66 @@ body {
 }
 
 /* =============================================
+   CHEAT MENU
+   ============================================= */
+.cheat-menu {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 99999;
+    background: rgba(10, 10, 20, 0.92);
+    border: 2px solid #ff5722;
+    border-radius: 12px;
+    padding: 10px 12px 12px;
+    min-width: 210px;
+    font-family: 'Fredoka One', cursive;
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+}
+
+.cheat-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 1rem;
+    color: #ffd700;
+    border-bottom: 1px solid rgba(255,87,34,0.4);
+    padding-bottom: 6px;
+}
+
+.cheat-hint {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.cheat-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cheat-buttons button {
+    width: 100%;
+    background: linear-gradient(180deg, #333, #222);
+    border: 1px solid rgba(255,87,34,0.5);
+    border-radius: 7px;
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.85rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.cheat-buttons button:hover {
+    background: linear-gradient(180deg, #ff9800, #ff5722);
+    border-color: #ff9800;
+}
+
+/* =============================================
    RESPONSIVE: Portrait Mobile (≤ 768px)
    ============================================= */
 @media (max-width: 768px) {

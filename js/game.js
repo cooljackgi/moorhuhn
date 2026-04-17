@@ -1,4 +1,4 @@
-// --- Konfiguration und Globals ---
+﻿// --- Konfiguration und Globals ---
 const GAME_DURATION = 90; // Standard Zeit in Sekunden
 const DEFAULT_AMMO = 5;
 const KONAMI_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
@@ -22,7 +22,7 @@ class Target {
         this.canvasHeight = canvasHeight;
 
         // Entfernungs-Tiers (wie im Original)
-        // 0 = Vorne (Groß, langsam), 1 = Mitte, 2 = Hinten (Klein, extrem schnell)
+        // 0 = Vorne (GroÃŸ, langsam), 1 = Mitte, 2 = Hinten (Klein, extrem schnell)
         const rand = Math.random();
         if (rand < 0.2) {
             this.tier = 0; // Vorne
@@ -41,20 +41,20 @@ class Target {
             this.baseSpeed = 7.0;
         }
 
-        // Startposition (links oder rechts außerhalb vom Bild)
+        // Startposition (links oder rechts auÃŸerhalb vom Bild)
         this.direction = Math.random() > 0.5 ? 1 : -1;
         this.x = this.direction === 1 ? -this.size : canvasWidth + this.size;
 
         // Hoehe (nicht zu tief)
         this.y = Math.random() * (canvasHeight * 0.6) + 50;
 
-        // Geschwindigkeit abhänging von Tier und Richtung
+        // Geschwindigkeit abhÃ¤nging von Tier und Richtung
         this.speedX = (this.baseSpeed + Math.random() * (this.tier + 1)) * this.direction;
         this.speedY = (Math.random() - 0.5) * 1;
 
         this.markedForDeletion = false;
 
-        // Animations-State (Flügelschlag Sim)
+        // Animations-State (FlÃ¼gelschlag Sim)
         this.flapTime = 0;
     }
 
@@ -84,20 +84,20 @@ class Target {
             ctx.scale(-1, 1);
         }
 
-        // --- HÜBSCHES Moorhuhn mit mehr Details ---
+        // --- HÃœBSCHES Moorhuhn mit mehr Details ---
 
-        // Schatten unter dem Huhn für Tiefe
+        // Schatten unter dem Huhn fÃ¼r Tiefe
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
         ctx.beginPath();
         ctx.ellipse(s * 0.1, s * 0.85, s * 0.35, s * 0.08, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Füße (baumeln beim Fliegen)
+        // FÃ¼ÃŸe (baumeln beim Fliegen)
         ctx.strokeStyle = '#D4901A';
         ctx.lineWidth = 2.5;
         const footDangle = Math.sin(this.flapTime / 80) * 0.15;
         
-        // Linker Fuß mit Krallen
+        // Linker FuÃŸ mit Krallen
         ctx.beginPath();
         ctx.moveTo(-s * 0.1, s * 0.3);
         ctx.lineTo(-s * 0.15, s * 0.7 + footDangle * s);
@@ -108,7 +108,7 @@ class Target {
         ctx.lineTo(-s * 0.2, s * 0.85 + footDangle * s);
         ctx.stroke();
         
-        // Rechter Fuß mit Krallen
+        // Rechter FuÃŸ mit Krallen
         ctx.beginPath();
         ctx.moveTo(s * 0.1, s * 0.3);
         ctx.lineTo(s * 0.15, s * 0.7 - footDangle * s);
@@ -137,13 +137,13 @@ class Target {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Flügel (animiert) mit Federn-Detail
+        // FlÃ¼gel (animiert) mit Federn-Detail
         const flapAngle = Math.sin(this.flapTime / 55) * 0.7;
         ctx.save();
         ctx.translate(-s * 0.1, s * 0.05);
         ctx.rotate(flapAngle);
         
-        // Flügel-Gradient
+        // FlÃ¼gel-Gradient
         const wingGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.5);
         wingGrad.addColorStop(0, '#8B6340');
         wingGrad.addColorStop(0.7, '#7A5230');
@@ -156,7 +156,7 @@ class Target {
         ctx.lineWidth = 1;
         ctx.stroke();
         
-        // Flügel-Federn Linien
+        // FlÃ¼gel-Federn Linien
         ctx.strokeStyle = 'rgba(60, 30, 10, 0.3)';
         ctx.lineWidth = 0.8;
         for (let i = 0; i < 5; i++) {
@@ -168,7 +168,7 @@ class Target {
         }
         ctx.restore();
 
-        // Körper mit Gradient für 3D-Effekt
+        // KÃ¶rper mit Gradient fÃ¼r 3D-Effekt
         const bodyGrad = ctx.createRadialGradient(-s * 0.1, -s * 0.1, 0, 0, s * 0.05, s * 0.5);
         bodyGrad.addColorStop(0, '#B8946A');
         bodyGrad.addColorStop(0.5, '#9B6B42');
@@ -181,7 +181,7 @@ class Target {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Körper-Federn Textur
+        // KÃ¶rper-Federn Textur
         ctx.strokeStyle = 'rgba(100, 60, 30, 0.2)';
         ctx.lineWidth = 0.5;
         for (let i = 0; i < 8; i++) {
@@ -216,7 +216,7 @@ class Target {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // KAMM (hoch, rot, glänzend)
+        // KAMM (hoch, rot, glÃ¤nzend)
         const combGrad = ctx.createLinearGradient(s * 0.2, -s * 1.2, s * 0.5, -s * 0.7);
         combGrad.addColorStop(0, '#FF3333');
         combGrad.addColorStop(0.5, '#DD1111');
@@ -294,7 +294,7 @@ class Target {
         ctx.arc(s * 0.5, -s * 0.36, s * 0.04, 0, Math.PI * 2);
         ctx.fill();
 
-        // Glanzpunkte (größer und heller)
+        // Glanzpunkte (grÃ¶ÃŸer und heller)
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.beginPath();
         ctx.arc(s * 0.24, -s * 0.44, s * 0.05, 0, Math.PI * 2);
@@ -312,7 +312,7 @@ class Target {
         ctx.arc(s * 0.54, -s * 0.33, s * 0.02, 0, Math.PI * 2);
         ctx.fill();
 
-        // SCHNABEL (groß, gelb-orange, glänzend)
+        // SCHNABEL (groÃŸ, gelb-orange, glÃ¤nzend)
         const beakGrad = ctx.createLinearGradient(s * 0.6, -s * 0.3, s * 1.1, -s * 0.1);
         beakGrad.addColorStop(0, '#FFD700');
         beakGrad.addColorStop(0.5, '#F0B020');
@@ -353,7 +353,7 @@ class Target {
         ctx.strokeStyle = '#A07008';
         ctx.stroke();
 
-        // KEHLWAMPE (rot, hängt unter dem Schnabel)
+        // KEHLWAMPE (rot, hÃ¤ngt unter dem Schnabel)
         const wattleGrad = ctx.createRadialGradient(s * 0.43, s * 0.05, 0, s * 0.45, s * 0.08, s * 0.15);
         wattleGrad.addColorStop(0, '#FF3333');
         wattleGrad.addColorStop(1, '#CC0000');
@@ -371,7 +371,7 @@ class Target {
         ctx.ellipse(s * 0.42, s * 0.02, s * 0.03, s * 0.05, 0.3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Kleine Ohr-Tüpfelchen (typisch für Hühner)
+        // Kleine Ohr-TÃ¼pfelchen (typisch fÃ¼r HÃ¼hner)
         ctx.fillStyle = '#E8D4B8';
         ctx.beginPath();
         ctx.ellipse(s * 0.12, -s * 0.25, s * 0.04, s * 0.06, -0.3, 0, Math.PI * 2);
@@ -381,7 +381,7 @@ class Target {
     }
 
     checkHit(px, py) {
-        // Simple kreisförmige Hitbox basierend auf size
+        // Simple kreisfÃ¶rmige Hitbox basierend auf size
         const dx = px - this.x;
         const dy = py - this.y;
         return (dx * dx + dy * dy) < (this.size * this.size * 1.5);
@@ -392,7 +392,7 @@ class InGameUpgrade extends Target {
     constructor(canvasWidth, canvasHeight, type) {
         super(canvasWidth, canvasHeight);
         this.type = type; // e.g. 'time', 'machinegun', 'slowmo'
-        this.size = 35; // Feste Gröe
+        this.size = 35; // Feste GrÃ¶e
         this.points = 0; // Bringt keine Punkte, nur den Buff
 
         // Fliegt immer von unten nach oben quer durchs Bild wie ein Ballon
@@ -406,7 +406,7 @@ class InGameUpgrade extends Target {
         this.x += this.speedX * (deltaTime / 16);
         this.y += this.speedY * (deltaTime / 16);
 
-        // Sinus-Wackeln für Ballon-Effekt
+        // Sinus-Wackeln fÃ¼r Ballon-Effekt
         this.x += Math.sin(this.y / 20) * 1.5;
 
         // Oben aus dem Bild
@@ -419,7 +419,7 @@ class InGameUpgrade extends Target {
         ctx.save();
         ctx.translate(this.x, this.y);
 
-        // Fäden zum Korb
+        // FÃ¤den zum Korb
         ctx.beginPath();
         ctx.moveTo(-15, this.size * 0.8);
         ctx.lineTo(-10, this.size * 1.5);
@@ -460,8 +460,8 @@ class InGameUpgrade extends Target {
         ctx.fillRect(-8, this.size * 1.5 + 20, 16, 16);
         ctx.strokeRect(-8, this.size * 1.5 + 20, 16, 16);
 
-        // Ballon-Körper Rendern (Vertikale Streifen)
-        // Wir zeichnen den Grundballon in Braun/Schwarz und legen dann rote Streifen (Arcs) darüber
+        // Ballon-KÃ¶rper Rendern (Vertikale Streifen)
+        // Wir zeichnen den Grundballon in Braun/Schwarz und legen dann rote Streifen (Arcs) darÃ¼ber
         ctx.fillStyle = '#111111'; // Dunkle Basis
         ctx.beginPath();
         ctx.ellipse(0, 0, this.size, this.size * 1.2, 0, 0, Math.PI * 2);
@@ -484,7 +484,7 @@ class InGameUpgrade extends Target {
         ctx.ellipse(this.size * 0.7, 0, this.size * 0.2, this.size * 1.15, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Dunkle Outlines zwischen den Streifen für Form
+        // Dunkle Outlines zwischen den Streifen fÃ¼r Form
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -503,12 +503,12 @@ class InGameUpgrade extends Target {
         ctx.fillText('Moorhuhn', 0, -5);
         ctx.shadowBlur = 0; // reset
 
-        // Text auf dem Päckchen
+        // Text auf dem PÃ¤ckchen
         ctx.fillStyle = '#fff';
         ctx.font = '10px "Fredoka One"';
         ctx.fillText(boxText, 0, this.size * 1.5 + 32);
 
-        // Glanzpunkt für den 3D-Effekt
+        // Glanzpunkt fÃ¼r den 3D-Effekt
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
         ctx.beginPath();
         ctx.ellipse(-this.size * 0.3, -this.size * 0.5, this.size * 0.2, this.size * 0.4, Math.PI / 6, 0, Math.PI * 2);
@@ -534,7 +534,7 @@ class InGameUpgrade extends Target {
 class RareTarget extends Target {
     constructor(canvasWidth, canvasHeight) {
         super(canvasWidth, canvasHeight);
-        this.size = 28; // Etwas größer für bessere Sichtbarkeit
+        this.size = 28; // Etwas grÃ¶ÃŸer fÃ¼r bessere Sichtbarkeit
         this.points = 75; // 3x normale Punkte
         this.baseSpeed = 8.5; // Schneller
         this.isRare = true;
@@ -681,7 +681,7 @@ class HiddenTarget {
 
         // --- Original Moorhuhn Style (sitzendes Huhn, Glubschaugen) ---
 
-        // Körper (klein, sitzend)
+        // KÃ¶rper (klein, sitzend)
         ctx.fillStyle = '#9B6B42';
         ctx.beginPath();
         ctx.ellipse(0, s * 0.05, s * 0.4, s * 0.3, 0, 0, Math.PI * 2);
@@ -690,7 +690,7 @@ class HiddenTarget {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Flügel
+        // FlÃ¼gel
         ctx.fillStyle = '#7A5230';
         ctx.beginPath();
         ctx.ellipse(s * 0.2, s * 0.05, s * 0.25, s * 0.15, 0.2, 0, Math.PI * 2);
@@ -891,7 +891,7 @@ class CorpseParticle {
         ctx.rotate(this.rotation);
         const s = this.size;
 
-        // Toter Körper (auf Rücken, Beine hoch)
+        // Toter KÃ¶rper (auf RÃ¼cken, Beine hoch)
         ctx.fillStyle = '#7A5230';
         ctx.beginPath();
         ctx.ellipse(0, 0, s * 0.5, s * 0.35, 0, 0, Math.PI * 2);
@@ -957,7 +957,7 @@ class Landscape {
         for (let i = 0; i < 6; i++) {
             this.clouds.push({
                 x: Math.random() * this.width,
-                y: Math.random() * (this.height * 0.4), // Obere Hälfte
+                y: Math.random() * (this.height * 0.4), // Obere HÃ¤lfte
                 size: Math.random() * 40 + 30,
                 speed: Math.random() * 10 + 5 // Langsame Bewegung
             });
@@ -968,7 +968,7 @@ class Landscape {
             rotation: 0.4,
             spinSpeed: 0,
             x: this.width * 0.85,
-            y: this.height * 0.76 - 75 // Zentrum der Flügel
+            y: this.height * 0.76 - 75 // Zentrum der FlÃ¼gel
         };
 
         this.signpost = {
@@ -1007,7 +1007,7 @@ class Landscape {
         this.church = {
             x: this.width * 0.45,
             y: this.height * 0.42,
-            ringing: 0 // Timer für den Glocken-Effekt
+            ringing: 0 // Timer fÃ¼r den Glocken-Effekt
         };
 
         this.mole = {
@@ -1015,7 +1015,7 @@ class Landscape {
             y: this.height * 0.82,
             state: 'hidden', // hidden, peeking
             timer: 0,
-            angryTimer: 0 // Zum Schütteln der Faust
+            angryTimer: 0 // Zum SchÃ¼tteln der Faust
         };
 
         this.rainCloud = {
@@ -1066,7 +1066,7 @@ class Landscape {
 
         this.signFlipped = false;
 
-        // Hindernisse/Verstecke (Positionen relativ zur Canvas-Größe)
+        // Hindernisse/Verstecke (Positionen relativ zur Canvas-GrÃ¶ÃŸe)
         this.updateObstaclePositions();
     }
 
@@ -1086,7 +1086,7 @@ class Landscape {
         this.mole.x = this.width * 0.35;
         this.mole.y = this.height * 0.82;
 
-        // Positionen der Verstecke, relativ zur Canvas-Größe
+        // Positionen der Verstecke, relativ zur Canvas-GrÃ¶ÃŸe
         this.obstacles = [
             { id: 'tree', x: this.width * 0.12, y: this.height * 0.72, popDirection: 'right' },
             { id: 'rock', x: this.width * 0.5, y: this.height * 0.82, popDirection: 'up' },
@@ -1114,7 +1114,7 @@ class Landscape {
             }
         });
 
-        // Windmühle drehen lassen wenn abgeschossen
+        // WindmÃ¼hle drehen lassen wenn abgeschossen
         if (this.windmill.spinSpeed > 0) {
             this.windmill.rotation += this.windmill.spinSpeed * (deltaTime / 16);
             this.windmill.spinSpeed *= 0.99; // Langsam wieder auslaufen
@@ -1154,7 +1154,7 @@ class Landscape {
             this.mole.timer -= deltaTime;
             if (this.mole.timer <= 0) {
                 this.mole.state = 'hidden';
-                this.mole.timer = 3000 + Math.random() * 5000; // Nächstes Auftauchen
+                this.mole.timer = 3000 + Math.random() * 5000; // NÃ¤chstes Auftauchen
             }
         } else if (this.mole.state === 'hidden') {
             this.mole.timer -= deltaTime;
@@ -1229,10 +1229,10 @@ class Landscape {
         }
     }
 
-    // Prüft ob bestimmte Landschaftselemente (Windmühle, Schild) getroffen wurden
-    // Gibt false oder ein Objekt { points: 50, type: 'windmill' } zurück
+    // PrÃ¼ft ob bestimmte Landschaftselemente (WindmÃ¼hle, Schild) getroffen wurden
+    // Gibt false oder ein Objekt { points: 50, type: 'windmill' } zurÃ¼ck
     checkHits(px, py) {
-        // 1. Windmühlenflügel prüfen
+        // 1. WindmÃ¼hlenflÃ¼gel prÃ¼fen
         const dxW = px - this.windmill.x;
         const dyW = py - this.windmill.y;
         if (dxW * dxW + dyW * dyW < 60 * 60) { // Radius 60
@@ -1240,7 +1240,7 @@ class Landscape {
             return { points: 50, type: 'windmill', x: this.windmill.x, y: this.windmill.y };
         }
 
-        // 2. Schild prüfen (Moorhuhn Jagd verboten!)
+        // 2. Schild prÃ¼fen (Moorhuhn Jagd verboten!)
         if (!this.signFlipped) {
             const signTopY = this.signpost.y - 40;
             if (px > this.signpost.x - 30 && px < this.signpost.x + 30 && py > signTopY - 20 && py < signTopY + 20) {
@@ -1248,7 +1248,7 @@ class Landscape {
             }
         }
 
-        // 3. Coole Sonne prüfen
+        // 3. Coole Sonne prÃ¼fen
         if (!this.sun.hit) {
             const dxS = px - this.sun.x;
             const dyS = py - this.sun.y;
@@ -1258,25 +1258,25 @@ class Landscape {
             }
         }
 
-        // 4. Baumkrone prüfen
+        // 4. Baumkrone prÃ¼fen
         if (this.tree && this.tree.shakeTimer <= 0) { // Cooldown
             const dxT = px - this.tree.x;
             const dyT = py - this.tree.y;
-            // Etwas größere Hitbox, weil die Krone aus mehreren Kreisen besteht
+            // Etwas grÃ¶ÃŸere Hitbox, weil die Krone aus mehreren Kreisen besteht
             if (dxT * dxT + dyT * dyT < (this.tree.radius + 30) * (this.tree.radius + 30)) {
                 this.tree.shakeTimer = 30; // ~ 0.5s wackeln
                 return { points: 10, type: 'tree', x: this.tree.x, y: this.tree.y };
             }
         }
 
-        // 5. Vogelscheuche prüfen
+        // 5. Vogelscheuche prÃ¼fen
         const scTopY = this.scarecrow.y - 60;
         if (px > this.scarecrow.x - 25 && px < this.scarecrow.x + 25 && py > scTopY - 10 && py < scTopY + 80) {
             this.scarecrow.spinSpeed = 1.0;
             return { points: 25, type: 'scarecrow', x: this.scarecrow.x, y: scTopY };
         }
 
-        // 6. Zeppelin prüfen (winzig, 100 Punkte)
+        // 6. Zeppelin prÃ¼fen (winzig, 100 Punkte)
         if (this.zeppelin.active) {
             if (px > this.zeppelin.x - 20 && px < this.zeppelin.x + 20 &&
                 py > this.zeppelin.y - 8 && py < this.zeppelin.y + 8) {
@@ -1285,7 +1285,7 @@ class Landscape {
             }
         }
 
-        // 7. Kirchenglocke prüfen
+        // 7. Kirchenglocke prÃ¼fen
         if (this.church.ringing <= 0) {
             if (px > this.church.x - 15 && px < this.church.x + 15 &&
                 py > this.church.y - 30 && py < this.church.y) {
@@ -1294,7 +1294,7 @@ class Landscape {
             }
         }
 
-        // 8. Maulwurf prüfen
+        // 8. Maulwurf prÃ¼fen
         if (this.mole.state === 'peeking') {
             const mDist = Math.sqrt((px - this.mole.x) ** 2 + (py - this.mole.y) ** 2);
             if (mDist < 20) {
@@ -1311,7 +1311,7 @@ class Landscape {
             }
         }
 
-        // 9. Regenwolke prüfen (dunkle Wolke)
+        // 9. Regenwolke prÃ¼fen (dunkle Wolke)
         if (this.rainCloud.rainingTimer <= 0) {
             const rcDx = px - this.rainCloud.x;
             const rcDy = py - this.rainCloud.y;
@@ -1321,7 +1321,7 @@ class Landscape {
             }
         }
 
-        // 10. Frosch im Sprung prüfen
+        // 10. Frosch im Sprung prÃ¼fen
         if (this.frog.state === 'jumping') {
             const fDist = Math.sqrt((px - this.frog.jumpX) ** 2 + (py - this.frog.jumpY) ** 2);
             if (fDist < 20) {
@@ -1331,7 +1331,7 @@ class Landscape {
             }
         }
 
-        // 11. Schornstein prüfen
+        // 11. Schornstein prÃ¼fen
         if (!this.chimney.hitSmoke) {
             if (px > this.chimney.x - 10 && px < this.chimney.x + 25 &&
                 py > this.chimney.y - 35 && py < this.chimney.y - 15) {
@@ -1340,7 +1340,7 @@ class Landscape {
             }
         }
 
-        // 12. Ast am Baum prüfen
+        // 12. Ast am Baum prÃ¼fen
         if (this.branch.intact) {
             const branchX = this.width * 0.12 + 55;
             const branchY = this.height * 0.78 - 120;
@@ -1352,7 +1352,7 @@ class Landscape {
             }
         }
 
-        // 13. Schildpfahl statt Schild prüfen (flip)
+        // 13. Schildpfahl statt Schild prÃ¼fen (flip)
         if (!this.signFlipped) {
             // Pfahl ist schmaler und unter dem Schild
             if (px > this.signpost.x - 5 && px < this.signpost.x + 5 &&
@@ -1362,7 +1362,7 @@ class Landscape {
             }
         }
 
-        // 14. Stein prüfen (Münz-Stein, 3x treffen für Coins)
+        // 14. Stein prÃ¼fen (MÃ¼nz-Stein, 3x treffen fÃ¼r Coins)
         const rockX = this.width * 0.5;
         const rockY = this.height * 0.83 - 25;
         if (!this.coinRock.cracked) {
@@ -1371,7 +1371,7 @@ class Landscape {
                 this.coinRock.hitCount++;
                 if (this.coinRock.hitCount >= 3) {
                     this.coinRock.cracked = true;
-                    this.coinRock.coinTimer = 2000; // 2 Sek Münz-Animation
+                    this.coinRock.coinTimer = 2000; // 2 Sek MÃ¼nz-Animation
                     return { points: 0, type: 'coinrock', x: rockX, y: rockY, coins: 50 };
                 }
                 return { points: 5, type: 'rock_hit', x: rockX, y: rockY };
@@ -1451,7 +1451,7 @@ class Landscape {
         // Kleines Haus mit Kamin
         this._drawChimney(ctx);
 
-        // 4. Hügelkette (Middleground - Golden Brown)
+        // 4. HÃ¼gelkette (Middleground - Golden Brown)
         ctx.fillStyle = '#C28E42';
         ctx.beginPath();
         ctx.moveTo(0, this.height);
@@ -1483,7 +1483,7 @@ class Landscape {
             ctx.stroke();
         }
 
-        // 6. Wolken zeichnen (über den Bergen, im Himmel)
+        // 6. Wolken zeichnen (Ã¼ber den Bergen, im Himmel)
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         this.clouds.forEach(c => {
             ctx.beginPath();
@@ -1506,7 +1506,7 @@ class Landscape {
         this._drawRain(ctx);
     }
 
-    // Vordergrund-Objekte (werden NACH den Hühnern gezeichnet, damit sie davor liegen)
+    // Vordergrund-Objekte (werden NACH den HÃ¼hnern gezeichnet, damit sie davor liegen)
     drawForeground(ctx) {
         this._drawMoleHill(ctx);
         this._drawFrog(ctx);
@@ -1523,7 +1523,7 @@ class Landscape {
         const x = this.church.x;
         const y = this.church.y;
         ctx.save();
-        // Gebäude
+        // GebÃ¤ude
         ctx.fillStyle = '#8B7D6B';
         ctx.fillRect(x - 12, y - 15, 24, 20);
         // Dach
@@ -1560,10 +1560,10 @@ class Landscape {
         const x = this.chimney.x;
         const y = this.chimney.y;
         ctx.save();
-        // Haus (vergrößert)
+        // Haus (vergrÃ¶ÃŸert)
         ctx.fillStyle = '#A0522D';
         ctx.fillRect(x - 36, y - 24, 72, 36);
-        // Dach (vergrößert)
+        // Dach (vergrÃ¶ÃŸert)
         ctx.fillStyle = '#8B0000';
         ctx.beginPath();
         ctx.moveTo(x - 44, y - 24);
@@ -1571,13 +1571,13 @@ class Landscape {
         ctx.lineTo(x + 44, y - 24);
         ctx.closePath();
         ctx.fill();
-        // Schornstein (vergrößert)
+        // Schornstein (vergrÃ¶ÃŸert)
         ctx.fillStyle = '#555';
         ctx.fillRect(x + 20, y - 60, 14, 35);
-        // Tür (vergrößert)
+        // TÃ¼r (vergrÃ¶ÃŸert)
         ctx.fillStyle = '#5C4033';
         ctx.fillRect(x - 10, y - 6, 20, 18);
-        // Fenster (vergrößert)
+        // Fenster (vergrÃ¶ÃŸert)
         ctx.fillStyle = '#FFE4B5';
         ctx.fillRect(x - 28, y - 16, 12, 10);
         ctx.fillRect(x + 16, y - 16, 12, 10);
@@ -1621,7 +1621,7 @@ class Landscape {
         if (!this.zeppelin.active) return;
         ctx.save();
         ctx.translate(this.zeppelin.x, this.zeppelin.y);
-        // Körper (vergrößert!)
+        // KÃ¶rper (vergrÃ¶ÃŸert!)
         ctx.fillStyle = '#C0C0C0';
         ctx.beginPath();
         ctx.ellipse(0, 0, 45, 18, 0, 0, Math.PI * 2);
@@ -1629,7 +1629,7 @@ class Landscape {
         ctx.strokeStyle = '#888';
         ctx.lineWidth = 2;
         ctx.stroke();
-        // Kabine (vergrößert)
+        // Kabine (vergrÃ¶ÃŸert)
         ctx.fillStyle = '#8B4513';
         ctx.fillRect(-12, 15, 24, 10);
         ctx.strokeStyle = '#5D4037';
@@ -1654,7 +1654,7 @@ class Landscape {
         if (!this.ufo.active || this.ufo.hit) return;
         ctx.save();
         ctx.translate(this.ufo.x, this.ufo.y);
-        // Körper
+        // KÃ¶rper
         ctx.fillStyle = '#76ff03';
         ctx.beginPath();
         ctx.ellipse(0, 0, 20, 6, 0, 0, Math.PI * 2);
@@ -1725,7 +1725,7 @@ class Landscape {
             ctx.beginPath();
             ctx.arc(x, y - 5, 3, 0, Math.PI * 2);
             ctx.fill();
-            // Wütende Faust wenn angryTimer aktiv
+            // WÃ¼tende Faust wenn angryTimer aktiv
             if (this.mole.angryTimer > 0) {
                 const shakeX = Math.sin(this.mole.angryTimer * 0.03) * 3;
                 ctx.fillStyle = '#3E2723';
@@ -1741,7 +1741,7 @@ class Landscape {
         if (this.frog.state !== 'jumping') return;
         ctx.save();
         ctx.translate(this.frog.jumpX, this.frog.jumpY);
-        // Körper
+        // KÃ¶rper
         ctx.fillStyle = '#4CAF50';
         ctx.beginPath();
         ctx.ellipse(0, 0, 10, 7, 0, 0, Math.PI * 2);
@@ -1809,7 +1809,7 @@ class Landscape {
         ctx.fillStyle = '#5D4037';
         ctx.fillRect(-3, 0, 6, 45);
 
-        // Rotation auf den Rest (Körper) anwenden, es dreht sich um die Y-Achse (Simuliert durch ScaleX und Translation)
+        // Rotation auf den Rest (KÃ¶rper) anwenden, es dreht sich um die Y-Achse (Simuliert durch ScaleX und Translation)
         // Einfache 2D-Flip Animation
         const spinScale = Math.cos(this.scarecrow.rotation);
         ctx.scale(spinScale, 1);
@@ -1975,7 +1975,7 @@ class Landscape {
         ctx.closePath();
         ctx.fill();
 
-        // Rotierende Flügel
+        // Rotierende FlÃ¼gel
         ctx.strokeStyle = '#D7CCC8';
         ctx.lineWidth = 4;
         for (let i = 0; i < 4; i++) {
@@ -1985,7 +1985,7 @@ class Landscape {
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.lineTo(0, 60);
-            // Flügelgitter
+            // FlÃ¼gelgitter
             ctx.lineWidth = 2;
             ctx.moveTo(-10, 20);
             ctx.lineTo(10, 20);
@@ -2009,7 +2009,7 @@ class Landscape {
 
         if (this.signFlipped) {
             // Umgedrehtes Schild: "Jagd ERLAUBT!"
-            ctx.fillStyle = '#C8E6C9'; // Grün
+            ctx.fillStyle = '#C8E6C9'; // GrÃ¼n
             ctx.fillRect(x - 30, signTopY - 20, 60, 40);
             ctx.strokeStyle = '#4CAF50';
             ctx.lineWidth = 2;
@@ -2021,7 +2021,7 @@ class Landscape {
             ctx.fillText('JAGD', x, signTopY - 4);
             ctx.fillText('ERLAUBT!', x, signTopY + 8);
             ctx.textAlign = 'start';
-            // Häkchen
+            // HÃ¤kchen
             ctx.strokeStyle = '#2E7D32';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -2101,6 +2101,7 @@ class Game {
         this.konamiProgress = 0;
         this.menuCheatProgress = 0;
         this.unlockedAchievements = {};
+        this.cheatMenuOpen = false;
 
         this.lastTime = 0;
         this.spawnTimer = 0;
@@ -2135,7 +2136,8 @@ class Game {
             highscoreSubmissionDiv: document.getElementById('highscore-submission'),
 
             cursor: document.getElementById('custom-cursor'),
-            btnReload: document.getElementById('btn-reload')
+            btnReload: document.getElementById('btn-reload'),
+            cheatMenu: document.getElementById('cheat-menu')
         };
 
         this.initEvents();
@@ -2174,7 +2176,7 @@ class Game {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        // iOS-Safari-Fix: --vh Variable für korrekte Viewport-Höhe (Adressleiste)
+        // iOS-Safari-Fix: --vh Variable fÃ¼r korrekte Viewport-HÃ¶he (Adressleiste)
         document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
         if (this.landscape) {
             this.landscape.resize(this.canvas.width, this.canvas.height);
@@ -2182,7 +2184,7 @@ class Game {
     }
 
     initEvents() {
-        // Mausbewegung für Fadenkreuz (Canvas und UI)
+        // Mausbewegung fÃ¼r Fadenkreuz (Canvas und UI)
         document.addEventListener('mousemove', (e) => {
             if (this.state === GameState.PLAYING) {
                 this.ui.cursor.style.left = e.clientX + 'px';
@@ -2190,7 +2192,7 @@ class Game {
             }
         });
 
-        // Schießen auf dem Canvas
+        // SchieÃŸen auf dem Canvas
         this._lastTouchTime = 0;
         this.canvas.addEventListener('mousedown', (e) => {
             if (Date.now() - this._lastTouchTime < 600) return; // Synthetisches mousedown nach Touch ignorieren
@@ -2203,11 +2205,15 @@ class Game {
             }
         });
 
-        // Verhindere Kontextmenü für Rechtsklick
+        // Verhindere KontextmenÃ¼ fÃ¼r Rechtsklick
         window.addEventListener('contextmenu', e => e.preventDefault());
 
         // Tastatur Nachladen
         window.addEventListener('keydown', (e) => {
+            if (e.key === '`') {
+                this.toggleCheatMenu();
+                return;
+            }
             if (this.state === GameState.PLAYING && e.code === 'Space') {
                 this.reload();
             }
@@ -2215,7 +2221,7 @@ class Game {
             this.trackSecretCodes(e);
         });
 
-        // Menü Buttons
+        // MenÃ¼ Buttons
         document.getElementById('btn-start').addEventListener('click', () => this.startGame());
         document.getElementById('btn-shop').addEventListener('click', () => this.openShop());
         document.getElementById('btn-highscores').addEventListener('click', () => this.openHighscores());
@@ -2231,7 +2237,7 @@ class Game {
         // Global Highscore Submit
         this.ui.btnSubmitScore.addEventListener('click', () => this.submitGlobalScore());
 
-        // --- Touch Events für Mobile ---
+        // --- Touch Events fÃ¼r Mobile ---
         this.lastTouchTime = 0;
         this.canvas.addEventListener('touchstart', (e) => {
             if (this.state === GameState.PLAYING) {
@@ -2247,7 +2253,7 @@ class Game {
             }
         }, { passive: false });
 
-        // Verhindere dass mousedown nach touchstart ausgelöst wird
+        // Verhindere dass mousedown nach touchstart ausgelÃ¶st wird
         let lastTouchEndTime = 0;
         this.canvas.addEventListener('touchend', () => {
             lastTouchEndTime = Date.now();
@@ -2287,10 +2293,10 @@ class Game {
         const btn = document.getElementById('btn-toggle-mode');
         if (!btn) return;
         if (this.adultMode) {
-            btn.textContent = '💀 Blutig!';
+            btn.textContent = 'ðŸ’€ Blutig!';
             btn.classList.add('mode-adult');
         } else {
-            btn.textContent = '🐥 Harmlos';
+            btn.textContent = 'ðŸ¥ Harmlos';
             btn.classList.remove('mode-adult');
         }
     }
@@ -2301,7 +2307,7 @@ class Game {
         this.hideAllScreens();
         this.ui.mainMenu.classList.remove('hidden');
         this.ui.mainMenu.classList.add('active');
-        this.ui.cursor.style.display = 'none'; // Normaler cursor im Menü
+        this.ui.cursor.style.display = 'none'; // Normaler cursor im MenÃ¼
         document.body.style.cursor = 'default';
         this.ui.btnReload.classList.add('hidden');
         this.ui.btnReload.classList.remove('visible');
@@ -2340,7 +2346,7 @@ class Game {
 
         this.ui.highscoreList.innerHTML = '';
         if (scores.length === 0) {
-            this.ui.highscoreList.innerHTML = '<li>Noch keine Einträge oder Fehler beim Laden.</li>';
+            this.ui.highscoreList.innerHTML = '<li>Noch keine EintrÃ¤ge oder Fehler beim Laden.</li>';
         } else {
             scores.forEach((hs, i) => {
                 const li = document.createElement('li');
@@ -2357,7 +2363,7 @@ class Game {
 
         // Definiere Shop Items
         const items = [
-            { id: 'magazine', name: 'Zusatzmagazin', desc: '+2 Schuss Kapazität', cost: 100 * (this.meta.upgrades.magazine + 1), max: 3, current: this.meta.upgrades.magazine },
+            { id: 'magazine', name: 'Zusatzmagazin', desc: '+2 Schuss KapazitÃ¤t', cost: 100 * (this.meta.upgrades.magazine + 1), max: 3, current: this.meta.upgrades.magazine },
             { id: 'reloadSpeed', name: 'Schnelllader', desc: '15% schneller nachladen', cost: 150 * (this.meta.upgrades.reloadSpeed + 1), max: 3, current: this.meta.upgrades.reloadSpeed },
             { id: 'timeBonus', name: 'Stoppuhr', desc: '+10 Sekunden Spielzeit', cost: 200 * (this.meta.upgrades.timeBonus + 1), max: 3, current: this.meta.upgrades.timeBonus },
             { id: 'shotgun', name: 'Schrotflinte', desc: '+2s Dauer (Ballon)', cost: 250 * ((this.meta.upgrades.shotgun || 0) + 1), max: 3, current: this.meta.upgrades.shotgun || 0 }
@@ -2378,7 +2384,7 @@ class Game {
             div.innerHTML = `
                 <h3>${item.name} (Lvl ${item.current}/${item.max})</h3>
                 <p>${item.desc}</p>
-                <div class="price">💰 ${item.current >= item.max ? '-' : item.cost}</div>
+                <div class="price">ðŸ’° ${item.current >= item.max ? '-' : item.cost}</div>
                 ${btnHtml}
             `;
             container.appendChild(div);
@@ -2488,7 +2494,7 @@ class Game {
         }
         // Gimmick: Endspurt anzeigen
         if (this.endRushMode) {
-            buffsHtml += `<span style="color:#FF0000; font-weight:bold; text-shadow: 0 0 10px #FF0000;">⚡ ENDSPURT! ⚡</span><br>`;
+            buffsHtml += `<span style="color:#FF0000; font-weight:bold; text-shadow: 0 0 10px #FF0000;">âš¡ ENDSPURT! âš¡</span><br>`;
         }
         this.ui.buffsContainer.innerHTML = buffsHtml;
 
@@ -2526,7 +2532,7 @@ class Game {
             this.updateHUD();
             const hitAnything = this.checkHits(x, y);
             if (!hitAnything && this.state === GameState.PLAYING) {
-                this.registerMiss(); // Combo wird zurückgesetzt
+                this.registerMiss(); // Combo wird zurÃ¼ckgesetzt
             }
         } else {
             this.audio.playEmptyClick();
@@ -2541,7 +2547,7 @@ class Game {
         this.ui.reloadHint.classList.add('hidden');
         this.audio.playReload();
 
-        // Basiszeit 1000ms, abzüglich 15% pro Upgrade Level
+        // Basiszeit 1000ms, abzÃ¼glich 15% pro Upgrade Level
         const reloadTime = 1000 * (1 - (this.meta.upgrades.reloadSpeed * 0.15));
 
         setTimeout(() => {
@@ -2556,17 +2562,17 @@ class Game {
     checkHits(x, y) {
         let hitSomething = false;
         const isShotgun = this.activeBuffs.shotgun > 0;
-        const touchBonus = this.isTouchDevice ? 18 : 0; // Größere Hitbox auf Handy
+        const touchBonus = this.isTouchDevice ? 18 : 0; // GrÃ¶ÃŸere Hitbox auf Handy
         const hitRadius = isShotgun ? 60 : touchBonus;
 
-        // 1. Zuerst normale Ziele prüfen (Rückwärts wegen Überlappung)
+        // 1. Zuerst normale Ziele prÃ¼fen (RÃ¼ckwÃ¤rts wegen Ãœberlappung)
         for (let i = this.targets.length - 1; i >= 0; i--) {
             const t = this.targets[i];
 
-            // Erweiterte Hit-Logik für Shotgun:
+            // Erweiterte Hit-Logik fÃ¼r Shotgun:
             let isHit = false;
             if (isShotgun || touchBonus > 0) {
-                // Erweiterte Hitbox für Shotgun oder Touch-Gerät
+                // Erweiterte Hitbox fÃ¼r Shotgun oder Touch-GerÃ¤t
                 const dx = x - t.x;
                 const dy = y - t.y;
                 isHit = (dx * dx + dy * dy) < ((t.size + hitRadius) * (t.size + hitRadius));
@@ -2605,18 +2611,18 @@ class Game {
             }
         }
 
-        // 2. Wenn kein Ziel getroffen wurde (oder Shotgun), Umgebung prüfen (Geheimnisse)
+        // 2. Wenn kein Ziel getroffen wurde (oder Shotgun), Umgebung prÃ¼fen (Geheimnisse)
         if (!hitSomething || isShotgun) {
             const sceneryHit = this.landscape.checkHits(x, y);
             if (sceneryHit) {
                 this.score += sceneryHit.points;
 
-                // Farbe für Popup: Rot bei Minus, Gold bei Plus
+                // Farbe fÃ¼r Popup: Rot bei Minus, Gold bei Plus
                 const color = sceneryHit.points > 0 ? '#ffd700' : '#e74c3c';
                 const prefix = sceneryHit.points > 0 ? '+' : '';
                 this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y, `${prefix}${sceneryHit.points}`, color));
 
-                // Partikel für spezifische Umgebungsobjekte
+                // Partikel fÃ¼r spezifische Umgebungsobjekte
                 if (sceneryHit.type === 'tree') {
                     for (let i = 0; i < 8; i++) {
                         const px = sceneryHit.x + (Math.random() - 0.5) * 80;
@@ -2637,15 +2643,15 @@ class Game {
                     // Explosion-Partikel
                     this.createExplosion(sceneryHit.x, sceneryHit.y, '#C0C0C0');
                 } else if (sceneryHit.type === 'church') {
-                    // Kirchenglocke: Hühner erschrecken (schneller für 3s)
+                    // Kirchenglocke: HÃ¼hner erschrecken (schneller fÃ¼r 3s)
                     this.chickenSpeedBoost = 3000;
                 } else if (sceneryHit.type === 'frog') {
                     this.createExplosion(sceneryHit.x, sceneryHit.y, '#4CAF50');
                 } else if (sceneryHit.type === 'coinrock') {
-                    // +50 Münzen direkt!
+                    // +50 MÃ¼nzen direkt!
                     this.meta.coins += sceneryHit.coins;
                     this.saveMeta();
-                    this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y - 20, '+50 Münzen!', '#FFD700'));
+                    this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y - 20, '+50 MÃ¼nzen!', '#FFD700'));
                     this.createExplosion(sceneryHit.x, sceneryHit.y, '#FFD700');
                 } else if (sceneryHit.type === 'branch') {
                     this.createExplosion(sceneryHit.x, sceneryHit.y, '#5D4037');
@@ -2657,7 +2663,7 @@ class Game {
                     this.popups.push(new ScorePopup(sceneryHit.x, sceneryHit.y - 20, 'Bunt!', '#E91E63'));
                 }
 
-                // Einfacher "Pluck" Sound für Umgebungstreffer
+                // Einfacher "Pluck" Sound fÃ¼r Umgebungstreffer
                 this.audio.playEmptyClick();
                 this.updateHUD();
             }
@@ -2680,7 +2686,7 @@ class Game {
             this.timeRemaining += 10;
         } else if (type === 'machinegun') {
             this.activeBuffs.machinegun = 5000; // 5 sekunden
-            this.ammo = this.maxAmmo; // Magazin füllen
+            this.ammo = this.maxAmmo; // Magazin fÃ¼llen
         } else if (type === 'slowmo') {
             this.activeBuffs.slowmo = 8000; // 8 sekunden
         } else if (type === 'shotgun') {
@@ -2741,7 +2747,7 @@ class Game {
         this.ui.cursor.style.display = 'none';
         document.body.style.cursor = 'default';
 
-        // Calc Coins (z.B. 10 Punkte = 1 Münze)
+        // Calc Coins (z.B. 10 Punkte = 1 MÃ¼nze)
         const earnedCoins = Math.floor(this.score / 10);
         this.meta.coins += earnedCoins;
 
@@ -2749,12 +2755,12 @@ class Game {
         this.meta.highscores.push(this.score);
         this.meta.highscores.sort((a, b) => b - a);
 
-        // Prüfen ob es ein neuer lokaler Rekord ist
+        // PrÃ¼fen ob es ein neuer lokaler Rekord ist
         if (this.meta.highscores[0] === this.score && this.score > 0) {
             isNewHS = true;
         }
 
-        // Behalte nur Top 5 lokal (für Historie/Backup falls gewünscht)
+        // Behalte nur Top 5 lokal (fÃ¼r Historie/Backup falls gewÃ¼nscht)
         this.meta.highscores = this.meta.highscores.slice(0, 5);
         this.saveMeta();
 
@@ -2817,7 +2823,7 @@ class Game {
                 if (upperName === 'ADMIN' || upperName === 'MOORHUHN') {
                     this.meta.coins += 100;
                     this.saveMeta();
-                    this.unlockAchievement('nameEasterEgg', '🗝️ Namens-Geheimnis (100 Coins)!');
+                    this.unlockAchievement('nameEasterEgg', 'ðŸ—ï¸ Namens-Geheimnis (100 Coins)!');
                 }
 
                 this.ui.scoreSubmitMsg.innerText = 'Score gespeichert!';
@@ -2863,7 +2869,7 @@ class Game {
             return;
         }
 
-        // Umgebungs-Updates (geht auch im Menü, wenn wir dort Bewegung haben wollen)
+        // Umgebungs-Updates (geht auch im MenÃ¼, wenn wir dort Bewegung haben wollen)
         this.landscape.update(deltaTime);
 
         // Buff Timers
@@ -2990,30 +2996,30 @@ class Game {
     }
 
     draw() {
-        // Hintergrundlandschaft immer zeichnen (auch im Menü)
+        // Hintergrundlandschaft immer zeichnen (auch im MenÃ¼)
         this.landscape.draw(this.ctx);
 
-        // Im Menü passiert nichts auf dem Canvas bzgl Targets, wir brechen hier ab. 
-        // Die Landschaft ist schon gerendert und bleibt als cooles Menü-Hintergrundbild.
+        // Im MenÃ¼ passiert nichts auf dem Canvas bzgl Targets, wir brechen hier ab. 
+        // Die Landschaft ist schon gerendert und bleibt als cooles MenÃ¼-Hintergrundbild.
         if (this.state !== GameState.PLAYING && this.targets.length === 0 && this.particles.length === 0) {
-            // Trotzdem Vordergrund zeichnen (damit er auch im Menü cool aussieht)
+            // Trotzdem Vordergrund zeichnen (damit er auch im MenÃ¼ cool aussieht)
             this.landscape.drawForeground(this.ctx);
             return;
         }
 
         // Layer-Reihenfolge:
         // 1. Hintergrund (bereits gezeichnet oben)
-        // 2. Alle Targets (Hühner fliegen HINTER den Hindernissen)
+        // 2. Alle Targets (HÃ¼hner fliegen HINTER den Hindernissen)
         this.targets.forEach(t => t.draw(this.ctx));
-        // 3. Vordergrund-Objekte (Baum, Fels, Holzstapel) ÜBER den Hühnern
+        // 3. Vordergrund-Objekte (Baum, Fels, Holzstapel) ÃœBER den HÃ¼hnern
         this.landscape.drawForeground(this.ctx);
         // 4. Blutlachen (unter Partikeln, damit sie auf dem Boden liegen)
         this.bloodPools.forEach(bp => bp.draw(this.ctx));
-        // 5. Partikel und Popups (sollen über allem schweben)
+        // 5. Partikel und Popups (sollen Ã¼ber allem schweben)
         this.particles.forEach(p => p.draw(this.ctx));
         this.popups.forEach(p => p.draw(this.ctx));
 
-        // Optional: Vignette Effekt über das Canvas legen
+        // Optional: Vignette Effekt Ã¼ber das Canvas legen
         const gradient = this.ctx.createRadialGradient(
             this.canvas.width / 2, this.canvas.height / 2, Math.min(this.canvas.width, this.canvas.height) / 2,
             this.canvas.width / 2, this.canvas.height / 2, Math.max(this.canvas.width, this.canvas.height)
@@ -3042,7 +3048,7 @@ class Game {
     getScoreMultiplier() {
         let multiplier = 1.0;
         if (this.comboCount >= 5) {
-            multiplier += (Math.min(this.comboCount, 20) - 5) * 0.1; // +0.1 pro Combo über 5
+            multiplier += (Math.min(this.comboCount, 20) - 5) * 0.1; // +0.1 pro Combo Ã¼ber 5
         }
         if (this.feverModeTimer > 0) {
             multiplier += 0.5; // +50% bei Fever
@@ -3074,7 +3080,7 @@ class Game {
     unlockAchievement(id, title) {
         if (!this.unlockedAchievements[id]) {
             this.unlockedAchievements[id] = true;
-            const msg = `🏆 ${title}!`;
+            const msg = `ðŸ† ${title}!`;
             this.popups.push(new ScorePopup(this.canvas.width / 2, 100, msg, 'achievement'));
         }
     }
@@ -3096,6 +3102,75 @@ class Game {
         this.unlockAchievement('menucheat', 'Geheimcode: MOORHUHN');
         this.saveMeta();
     }
+
+    // =========== CHEAT MENÃœ ===========
+
+    toggleCheatMenu() {
+        this.cheatMenuOpen = !this.cheatMenuOpen;
+        this.ui.cheatMenu.style.display = this.cheatMenuOpen ? 'block' : 'none';
+    }
+
+    cheat_addScore() {
+        if (this.state !== GameState.PLAYING) return;
+        this.score += 1000;
+        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+1000 CHEAT', '#00ffaa'));
+    }
+
+    cheat_addCoins() {
+        this.meta.coins += 500;
+        this.saveMeta();
+        this.updateMenuUI();
+        if (this.state === GameState.PLAYING) {
+            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+500 MÃ¼nzen CHEAT', '#00ffaa'));
+        }
+    }
+
+    cheat_addTime() {
+        if (this.state !== GameState.PLAYING) return;
+        this.timeRemaining += 30;
+        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+30s CHEAT', '#00ffaa'));
+    }
+
+    cheat_machinegun() {
+        if (this.state !== GameState.PLAYING) return;
+        this.activeBuffs.machinegun = Math.max(this.activeBuffs.machinegun, 30000);
+        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'MG-MODUS CHEAT', '#00ffaa'));
+    }
+
+    cheat_slowmo() {
+        if (this.state !== GameState.PLAYING) return;
+        this.activeBuffs.slowmo = Math.max(this.activeBuffs.slowmo, 30000);
+        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'SLOWMO CHEAT', '#00ffaa'));
+    }
+
+    cheat_shotgun() {
+        if (this.state !== GameState.PLAYING) return;
+        this.activeBuffs.shotgun = Math.max(this.activeBuffs.shotgun, 30000);
+        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'SHOTGUN CHEAT', '#00ffaa'));
+    }
+
+    cheat_fillAmmo() {
+        if (this.state !== GameState.PLAYING) return;
+        this.ammo = this.maxAmmo;
+        this.isReloading = false;
+        this.renderAmmo();
+        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'MUNITION VOLL CHEAT', '#00ffaa'));
+    }
+
+    cheat_maxUpgrades() {
+        this.meta.upgrades.magazine = 3;
+        this.meta.upgrades.reloadSpeed = 3;
+        this.meta.upgrades.timeBonus = 3;
+        this.meta.upgrades.shotgun = 3;
+        this.meta.coins += 500;
+        this.saveMeta();
+        this.updateMenuUI();
+        if (this.state === GameState.PLAYING) {
+            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'UPGRADES MAX CHEAT', '#00ffaa'));
+        }
+    }
+
+    // =====================================
 
     trackSecretCodes(e) {
         if (this.state === GameState.PLAYING) {
@@ -3146,3 +3221,4 @@ class Game {
 window.onload = () => {
     window.game = new Game();
 };
+
