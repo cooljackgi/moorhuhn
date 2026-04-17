@@ -78,323 +78,261 @@ class Target {
         ctx.save();
         ctx.translate(this.x, this.y);
         const s = this.size;
-
         if (this.direction === -1) ctx.scale(-1, 1);
 
-        const flapAngle = Math.sin(this.flapTime / 50) * 0.65;
-        const footDangle = Math.sin(this.flapTime / 80) * 0.12;
+        const flapAngle = Math.sin(this.flapTime / 50) * 0.7;
+        const footSwing = Math.sin(this.flapTime / 80) * 0.15;
+        const lw = Math.max(1.2, s * 0.055); // Comic-Outline Dicke skaliert mit Größe
+
+        const outline = (fn) => {
+            ctx.strokeStyle = '#1A0A00';
+            ctx.lineWidth = lw;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            fn();
+            ctx.stroke();
+        };
+        const fill = (color, fn) => {
+            ctx.fillStyle = color;
+            fn();
+            ctx.fill();
+            outline(fn);
+        };
 
         // --- Schatten ---
-        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
         ctx.beginPath();
-        ctx.ellipse(s * 0.05, s * 0.9, s * 0.38, s * 0.07, 0, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.05, s * 0.82, s * 0.42, s * 0.08, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // --- Beine & Krallen ---
-        const drawFoot = (bx, by, swing) => {
-            ctx.strokeStyle = '#CF8010';
-            ctx.lineWidth = Math.max(1, s * 0.045);
-            ctx.lineCap = 'round';
+        // --- Beine ---
+        ctx.strokeStyle = '#1A0A00';
+        ctx.lineWidth = lw;
+        ctx.lineCap = 'round';
+        const drawLeg = (bx, by, swing) => {
+            const kx = bx + s * 0.04, ky = by + s * 0.42 + swing;
             ctx.beginPath();
             ctx.moveTo(bx, by);
-            const kx = bx + s * 0.05, ky = by + s * 0.38 + swing;
             ctx.lineTo(kx, ky);
             ctx.stroke();
-            [[-0.18, 0.12], [0.04, 0.14], [0.18, 0.08], [-0.06, -0.06]].forEach(([dx, dy]) => {
+            // Krallen (3 vorne, 1 hinten)
+            const claws = [[-0.22, 0.14], [0.0, 0.16], [0.2, 0.1], [-0.08, -0.08]];
+            claws.forEach(([dx, dy]) => {
                 ctx.beginPath();
                 ctx.moveTo(kx, ky);
                 ctx.lineTo(kx + dx * s, ky + dy * s);
                 ctx.stroke();
             });
-        };
-        drawFoot(-s * 0.12, s * 0.28, footDangle * s);
-        drawFoot(s * 0.08, s * 0.28, -footDangle * s);
-
-        // --- Schwanzfächer (einzelne Federn) ---
-        const tailFeathers = [
-            { angle: -2.4, len: 0.78, color: '#3A2010' },
-            { angle: -2.1, len: 0.88, color: '#4A2D14' },
-            { angle: -1.85, len: 0.92, color: '#5D3A1A' },
-            { angle: -1.65, len: 0.86, color: '#4A2D14' },
-            { angle: -1.45, len: 0.72, color: '#3A2010' },
-        ];
-        tailFeathers.forEach(f => {
-            const ex = Math.cos(f.angle) * s * f.len;
-            const ey = Math.sin(f.angle) * s * f.len;
-            const w = s * 0.12;
-            const nx = -Math.sin(f.angle) * w * 0.4;
-            const ny = Math.cos(f.angle) * w * 0.4;
-            const grad = ctx.createLinearGradient(-s * 0.42, 0, ex, ey);
-            grad.addColorStop(0, '#7A5230');
-            grad.addColorStop(1, f.color);
-            ctx.fillStyle = grad;
+            // Gelbe Füllung über den Beinen
+            ctx.strokeStyle = '#F0C030';
+            ctx.lineWidth = lw * 0.55;
             ctx.beginPath();
-            ctx.moveTo(-s * 0.42, 0);
-            ctx.quadraticCurveTo(ex * 0.5 + nx, ey * 0.5 + ny, ex, ey);
-            ctx.quadraticCurveTo(ex * 0.5 - nx, ey * 0.5 - ny, -s * 0.42, 0);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(30,10,0,0.35)';
-            ctx.lineWidth = 0.6;
+            ctx.moveTo(bx, by);
+            ctx.lineTo(kx, ky);
             ctx.stroke();
+            claws.forEach(([dx, dy]) => {
+                ctx.beginPath();
+                ctx.moveTo(kx, ky);
+                ctx.lineTo(kx + dx * s, ky + dy * s);
+                ctx.stroke();
+            });
+            ctx.strokeStyle = '#1A0A00';
+            ctx.lineWidth = lw;
+        };
+        drawLeg(-s * 0.14, s * 0.3, footSwing * s);
+        drawLeg(s * 0.06, s * 0.3, -footSwing * s);
+
+        // --- Schwanz (3 breite Federn) ---
+        const tailColors = ['#5A3010', '#7A4820', '#9A6030'];
+        [
+            { a: -2.5, l: 0.85 },
+            { a: -2.0, l: 0.95 },
+            { a: -1.6, l: 0.82 },
+        ].forEach((f, i) => {
+            const ex = Math.cos(f.a) * s * f.l;
+            const ey = Math.sin(f.a) * s * f.l;
+            const nx = -Math.sin(f.a) * s * 0.14;
+            const ny =  Math.cos(f.a) * s * 0.14;
+            fill(tailColors[i], () => {
+                ctx.beginPath();
+                ctx.moveTo(-s * 0.38, s * 0.05);
+                ctx.quadraticCurveTo(ex * 0.55 + nx, ey * 0.55 + ny, ex, ey);
+                ctx.quadraticCurveTo(ex * 0.55 - nx, ey * 0.55 - ny, -s * 0.38, s * 0.05);
+                ctx.closePath();
+            });
         });
 
-        // --- Flügel (unten, sichtbarer Hinterflügel) ---
+        // --- Hinterflügel (dunkel, schattiert) ---
         ctx.save();
-        ctx.translate(-s * 0.05, s * 0.05);
-        ctx.rotate(flapAngle * 0.4 + 0.15);
-        const wingBg = ctx.createLinearGradient(0, 0, s * 0.55, s * 0.18);
-        wingBg.addColorStop(0, '#4A2D14');
-        wingBg.addColorStop(1, '#3A2010');
-        ctx.fillStyle = wingBg;
-        ctx.beginPath();
-        ctx.ellipse(s * 0.15, s * 0.06, s * 0.52, s * 0.17, 0.25, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        // --- Körper ---
-        const bodyGrad = ctx.createRadialGradient(-s * 0.08, -s * 0.05, s * 0.04, s * 0.05, s * 0.08, s * 0.48);
-        bodyGrad.addColorStop(0, '#C8A878');
-        bodyGrad.addColorStop(0.45, '#A07848');
-        bodyGrad.addColorStop(1, '#6A4020');
-        ctx.fillStyle = bodyGrad;
-        ctx.beginPath();
-        ctx.ellipse(s * 0.02, s * 0.06, s * 0.42, s * 0.36, -0.1, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(60,30,10,0.5)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Körperfedern (schuppig)
-        ctx.save();
-        ctx.beginPath();
-        ctx.ellipse(s * 0.02, s * 0.06, s * 0.42, s * 0.36, -0.1, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.strokeStyle = 'rgba(50,25,8,0.18)';
-        ctx.lineWidth = 0.7;
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 6; col++) {
-                const fx = -s * 0.3 + col * s * 0.14 + (row % 2) * s * 0.07;
-                const fy = -s * 0.15 + row * s * 0.14;
-                ctx.beginPath();
-                ctx.arc(fx, fy, s * 0.1, 0.3, Math.PI - 0.3);
-                ctx.stroke();
-            }
-        }
-        ctx.restore();
-
-        // --- Brust (heller Bereich) ---
-        const breastGrad = ctx.createRadialGradient(s * 0.12, s * 0.12, 0, s * 0.12, s * 0.14, s * 0.32);
-        breastGrad.addColorStop(0, '#E0C898');
-        breastGrad.addColorStop(0.7, '#C8A060');
-        breastGrad.addColorStop(1, 'rgba(160,120,72,0)');
-        ctx.fillStyle = breastGrad;
-        ctx.beginPath();
-        ctx.ellipse(s * 0.12, s * 0.15, s * 0.28, s * 0.24, 0.15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // --- Flügel (Hauptflügel, animiert, mit Federform) ---
-        ctx.save();
-        ctx.translate(-s * 0.05, s * 0.0);
-        ctx.rotate(flapAngle);
-        const numFeathers = 7;
-        for (let i = 0; i < numFeathers; i++) {
-            const t = i / (numFeathers - 1);
-            const baseAngle = -0.2 + t * 0.55;
-            const len = s * (0.55 - Math.abs(t - 0.5) * 0.2);
-            const wid = s * 0.1;
-            const ex = Math.cos(baseAngle) * len;
-            const ey = Math.sin(baseAngle) * len;
-            const nx = -Math.sin(baseAngle) * wid;
-            const ny = Math.cos(baseAngle) * wid;
-            const shade = Math.floor(80 + t * 50);
-            const dark = Math.floor(40 + t * 30);
-            ctx.fillStyle = `rgb(${shade + 30},${shade},${dark})`;
+        ctx.translate(-s * 0.08, s * 0.04);
+        ctx.rotate(flapAngle * 0.35 + 0.2);
+        fill('#6B3C18', () => {
             ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(ex * 0.6 + nx * 0.8, ey * 0.6 + ny * 0.8, ex, ey);
-            ctx.quadraticCurveTo(ex * 0.6 - nx * 0.4, ey * 0.6 - ny * 0.4, 0, 0);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(30,10,0,0.25)';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+            ctx.ellipse(s * 0.18, s * 0.04, s * 0.5, s * 0.16, 0.2, 0, Math.PI * 2);
+        });
+        ctx.restore();
+
+        // --- Körper (rund & prall) ---
+        fill('#C8803A', () => {
+            ctx.beginPath();
+            ctx.ellipse(s * 0.04, s * 0.1, s * 0.44, s * 0.38, -0.08, 0, Math.PI * 2);
+        });
+
+        // Bauchfleck (heller)
+        fill('#E8B870', () => {
+            ctx.beginPath();
+            ctx.ellipse(s * 0.14, s * 0.18, s * 0.26, s * 0.22, 0.1, 0, Math.PI * 2);
+        });
+
+        // --- Hauptflügel (animiert) ---
+        ctx.save();
+        ctx.translate(-s * 0.08, s * 0.02);
+        ctx.rotate(flapAngle);
+        // 5 Comic-Federn
+        const wingFColors = ['#A05828', '#B86830', '#C87838', '#B06028', '#8A4A20'];
+        for (let i = 0; i < 5; i++) {
+            const t = i / 4;
+            const a = -0.1 + t * 0.5;
+            const len = s * (0.52 - Math.abs(t - 0.5) * 0.18);
+            const w = s * 0.13;
+            const ex = Math.cos(a) * len, ey = Math.sin(a) * len;
+            const nx = -Math.sin(a) * w, ny = Math.cos(a) * w;
+            fill(wingFColors[i], () => {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(ex * 0.5 + nx, ey * 0.5 + ny, ex, ey);
+                ctx.quadraticCurveTo(ex * 0.5 - nx * 0.3, ey * 0.5 - ny * 0.3, 0, 0);
+                ctx.closePath();
+            });
         }
-        // Deckfedern-Reihe oben
-        ctx.fillStyle = 'rgba(160,120,80,0.7)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.12, -s * 0.06, s * 0.28, s * 0.1, -0.2, 0, Math.PI * 2);
-        ctx.fill();
+        // Deckfedern
+        fill('#D09050', () => {
+            ctx.beginPath();
+            ctx.ellipse(s * 0.14, -s * 0.05, s * 0.26, s * 0.09, -0.15, 0, Math.PI * 2);
+        });
         ctx.restore();
 
         // --- Hals ---
-        const neckGrad = ctx.createLinearGradient(s * 0.18, -s * 0.08, s * 0.32, -s * 0.32);
-        neckGrad.addColorStop(0, '#A07848');
-        neckGrad.addColorStop(1, '#B89060');
-        ctx.fillStyle = neckGrad;
+        fill('#C8803A', () => {
+            ctx.beginPath();
+            ctx.moveTo(s * 0.1, -s * 0.06);
+            ctx.bezierCurveTo(s * 0.05, -s * 0.22, s * 0.2, -s * 0.32, s * 0.28, -s * 0.3);
+            ctx.bezierCurveTo(s * 0.4, -s * 0.28, s * 0.34, -s * 0.1, s * 0.28, -s * 0.04);
+            ctx.closePath();
+        });
+
+        // --- Kopf (groß & rund = Comic!) ---
+        fill('#D4904A', () => {
+            ctx.beginPath();
+            ctx.arc(s * 0.32, -s * 0.46, s * 0.4, 0, Math.PI * 2);
+        });
+
+        // Wangenröte
+        ctx.fillStyle = 'rgba(255,140,100,0.45)';
         ctx.beginPath();
-        ctx.moveTo(s * 0.12, -s * 0.05);
-        ctx.bezierCurveTo(s * 0.08, -s * 0.2, s * 0.22, -s * 0.3, s * 0.28, -s * 0.28);
-        ctx.bezierCurveTo(s * 0.38, -s * 0.26, s * 0.3, -s * 0.1, s * 0.26, -s * 0.04);
-        ctx.closePath();
+        ctx.ellipse(s * 0.52, -s * 0.36, s * 0.12, s * 0.09, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,140,100,0.45)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.14, -s * 0.38, s * 0.1, s * 0.08, -0.3, 0, Math.PI * 2);
         ctx.fill();
 
-        // --- Kopf ---
-        const headGrad = ctx.createRadialGradient(s * 0.25, -s * 0.5, s * 0.02, s * 0.3, -s * 0.42, s * 0.38);
-        headGrad.addColorStop(0, '#D4B080');
-        headGrad.addColorStop(0.5, '#A87840');
-        headGrad.addColorStop(1, '#7A5228');
-        ctx.fillStyle = headGrad;
-        ctx.beginPath();
-        ctx.arc(s * 0.32, -s * 0.44, s * 0.36, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(80,40,10,0.4)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        // --- Kamm (3 runde Noppen) ---
+        [
+            { x: s * 0.18, y: -s * 0.84, r: s * 0.11 },
+            { x: s * 0.32, y: -s * 0.96, r: s * 0.13 },
+            { x: s * 0.46, y: -s * 0.84, r: s * 0.1 },
+        ].forEach(n => {
+            fill('#FF2020', () => {
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+            });
+            // Glanz
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.beginPath();
+            ctx.ellipse(n.x - n.r * 0.3, n.y - n.r * 0.35, n.r * 0.3, n.r * 0.2, -0.4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        // Kamm-Basis (verbindet die Noppen)
+        fill('#CC1010', () => {
+            ctx.beginPath();
+            ctx.rect(s * 0.1, -s * 0.76, s * 0.44, s * 0.14);
+        });
 
-        // Wangen-Aufhellung
-        const cheekGrad = ctx.createRadialGradient(s * 0.42, -s * 0.38, 0, s * 0.42, -s * 0.38, s * 0.2);
-        cheekGrad.addColorStop(0, 'rgba(220,180,120,0.5)');
-        cheekGrad.addColorStop(1, 'rgba(220,180,120,0)');
-        ctx.fillStyle = cheekGrad;
+        // --- Ohrfleck ---
+        fill('#F0D8A8', () => {
+            ctx.beginPath();
+            ctx.ellipse(s * 0.08, -s * 0.38, s * 0.06, s * 0.08, -0.3, 0, Math.PI * 2);
+        });
+
+        // --- Auge (Comic: riesig, weiß mit dicker Outline) ---
+        // Weißes Auge
+        fill('#FFFFFF', () => {
+            ctx.beginPath();
+            ctx.ellipse(s * 0.24, -s * 0.5, s * 0.2, s * 0.2, 0, 0, Math.PI * 2);
+        });
+        // Iris (gelb-orange)
+        fill('#F0A000', () => {
+            ctx.beginPath();
+            ctx.arc(s * 0.24, -s * 0.5, s * 0.13, 0, Math.PI * 2);
+        });
+        // Pupille (schwarz, oval)
+        ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(s * 0.42, -s * 0.38, s * 0.2, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.24, -s * 0.5, s * 0.07, s * 0.09, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Glanzpunkt groß
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.17, -s * 0.57, s * 0.065, s * 0.05, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        // Glanzpunkt klein
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.arc(s * 0.3, -s * 0.44, s * 0.025, 0, Math.PI * 2);
         ctx.fill();
 
-        // --- Kamm (3 Zacken) ---
-        const combGrad = ctx.createLinearGradient(s * 0.1, -s * 0.95, s * 0.52, -s * 0.6);
-        combGrad.addColorStop(0, '#FF5050');
-        combGrad.addColorStop(0.4, '#E01010');
-        combGrad.addColorStop(1, '#AA0000');
-        ctx.fillStyle = combGrad;
-        ctx.beginPath();
-        ctx.moveTo(s * 0.1, -s * 0.68);
-        ctx.quadraticCurveTo(s * 0.14, -s * 0.95, s * 0.22, -s * 0.75);
-        ctx.quadraticCurveTo(s * 0.28, -s * 1.05, s * 0.36, -s * 0.76);
-        ctx.quadraticCurveTo(s * 0.42, -s * 0.92, s * 0.5, -s * 0.72);
-        ctx.quadraticCurveTo(s * 0.52, -s * 0.64, s * 0.48, -s * 0.62);
-        ctx.lineTo(s * 0.1, -s * 0.62);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#880000';
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-        // Glanz auf Kamm
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.3, -s * 0.88, s * 0.04, s * 0.08, -0.2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // --- Ohrfleck (weißlich) ---
-        ctx.fillStyle = 'rgba(240,220,190,0.8)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.1, -s * 0.35, s * 0.05, s * 0.07, -0.3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // --- Auge (links, Hauptauge) ---
-        // Schatten
-        ctx.fillStyle = 'rgba(0,0,0,0.12)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.24, -s * 0.47, s * 0.18, s * 0.18, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Sklera
-        ctx.fillStyle = '#F8F4EC';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.22, -s * 0.49, s * 0.17, s * 0.17, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#4A2800';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        // Iris (orangebraun)
-        const irisGrad = ctx.createRadialGradient(s * 0.22, -s * 0.49, 0, s * 0.22, -s * 0.49, s * 0.12);
-        irisGrad.addColorStop(0, '#D4780A');
-        irisGrad.addColorStop(0.6, '#A04808');
-        irisGrad.addColorStop(1, '#7A2800');
-        ctx.fillStyle = irisGrad;
-        ctx.beginPath();
-        ctx.arc(s * 0.22, -s * 0.49, s * 0.12, 0, Math.PI * 2);
-        ctx.fill();
-        // Pupille
-        ctx.fillStyle = '#0A0400';
-        ctx.beginPath();
-        ctx.arc(s * 0.22, -s * 0.49, s * 0.065, 0, Math.PI * 2);
-        ctx.fill();
-        // Hauptglanz
-        ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.165, -s * 0.535, s * 0.048, s * 0.036, -0.5, 0, Math.PI * 2);
-        ctx.fill();
-        // Kleiner Gegenglanz
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.beginPath();
-        ctx.arc(s * 0.265, -s * 0.455, s * 0.02, 0, Math.PI * 2);
-        ctx.fill();
-        // Wimpernbogen oben
-        ctx.strokeStyle = '#3A1A00';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.arc(s * 0.22, -s * 0.49, s * 0.17, -Math.PI * 0.85, -Math.PI * 0.15);
-        ctx.stroke();
-
-        // --- Schnabel ---
-        // Nasenloch
-        ctx.fillStyle = 'rgba(100,60,0,0.4)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.6, -s * 0.32, s * 0.025, s * 0.018, -0.3, 0, Math.PI * 2);
-        ctx.fill();
+        // --- Schnabel (breite Comic-Form) ---
         // Oberschnabel
-        const beakG = ctx.createLinearGradient(s * 0.5, -s * 0.38, s * 0.98, -s * 0.14);
-        beakG.addColorStop(0, '#FFE040');
-        beakG.addColorStop(0.5, '#E8A010');
-        beakG.addColorStop(1, '#B87008');
-        ctx.fillStyle = beakG;
+        fill('#FFD020', () => {
+            ctx.beginPath();
+            ctx.moveTo(s * 0.52, -s * 0.38);
+            ctx.lineTo(s * 1.05, -s * 0.22);
+            ctx.lineTo(s * 0.52, -s * 0.14);
+            ctx.closePath();
+        });
+        // Schnabel-Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
         ctx.beginPath();
-        ctx.moveTo(s * 0.5, -s * 0.36);
-        ctx.bezierCurveTo(s * 0.72, -s * 0.42, s * 0.95, -s * 0.3, s * 1.0, -s * 0.2);
-        ctx.bezierCurveTo(s * 0.92, -s * 0.14, s * 0.62, -s * 0.14, s * 0.5, -s * 0.16);
+        ctx.moveTo(s * 0.56, -s * 0.36);
+        ctx.lineTo(s * 0.88, -s * 0.26);
+        ctx.lineTo(s * 0.62, -s * 0.24);
         ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#9A6000';
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-        // Schnabel-Glanz
-        ctx.fillStyle = 'rgba(255,255,255,0.28)';
-        ctx.beginPath();
-        ctx.moveTo(s * 0.55, -s * 0.38);
-        ctx.bezierCurveTo(s * 0.72, -s * 0.42, s * 0.86, -s * 0.36, s * 0.88, -s * 0.3);
-        ctx.bezierCurveTo(s * 0.78, -s * 0.28, s * 0.6, -s * 0.32, s * 0.55, -s * 0.38);
         ctx.fill();
         // Unterschnabel
-        const lbeakG = ctx.createLinearGradient(s * 0.5, -s * 0.14, s * 0.95, s * 0.02);
-        lbeakG.addColorStop(0, '#D4900A');
-        lbeakG.addColorStop(1, '#A06005');
-        ctx.fillStyle = lbeakG;
+        fill('#E09010', () => {
+            ctx.beginPath();
+            ctx.moveTo(s * 0.52, -s * 0.12);
+            ctx.lineTo(s * 0.98, -s * 0.2);
+            ctx.lineTo(s * 0.52, -s * 0.05);
+            ctx.closePath();
+        });
+        // Schnabellinie (Mundwinkel)
+        ctx.strokeStyle = '#1A0A00';
+        ctx.lineWidth = lw * 0.7;
         ctx.beginPath();
-        ctx.moveTo(s * 0.5, -s * 0.14);
-        ctx.bezierCurveTo(s * 0.7, -s * 0.1, s * 0.9, -s * 0.08, s * 0.96, -s * 0.18);
-        ctx.bezierCurveTo(s * 0.88, -s * 0.1, s * 0.62, -s * 0.06, s * 0.5, -s * 0.05);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#8A5000';
-        ctx.lineWidth = 0.8;
+        ctx.moveTo(s * 0.52, -s * 0.14);
+        ctx.lineTo(s * 0.98, -s * 0.2);
         ctx.stroke();
 
         // --- Kehlwampe ---
-        const wG = ctx.createRadialGradient(s * 0.42, -s * 0.08, 0, s * 0.42, -s * 0.05, s * 0.14);
-        wG.addColorStop(0, '#FF6060');
-        wG.addColorStop(0.5, '#DD1818');
-        wG.addColorStop(1, '#990000');
-        ctx.fillStyle = wG;
+        fill('#EE1818', () => {
+            ctx.beginPath();
+            ctx.ellipse(s * 0.44, -s * 0.0, s * 0.1, s * 0.14, 0.15, 0, Math.PI * 2);
+        });
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
         ctx.beginPath();
-        ctx.moveTo(s * 0.36, -s * 0.12);
-        ctx.bezierCurveTo(s * 0.3, -s * 0.0, s * 0.32, s * 0.1, s * 0.42, s * 0.1);
-        ctx.bezierCurveTo(s * 0.52, s * 0.1, s * 0.55, -s * 0.0, s * 0.5, -s * 0.1);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#880000';
-        ctx.lineWidth = 0.7;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.4, -s * 0.06, s * 0.04, s * 0.06, 0.2, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.4, -s * 0.06, s * 0.04, s * 0.07, 0.2, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
