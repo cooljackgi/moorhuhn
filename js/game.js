@@ -945,12 +945,74 @@ class CorpseParticle {
     }
 }
 
+// --- Hintergrund-Themes ---
+const BACKGROUND_THEMES = [
+    {
+        id: 'classic',
+        name: 'Moorhuhn Classic',
+        sky: ['#78AACC', '#B0D0E0'],
+        mountains: '#6D8A96',
+        hills: '#C28E42',
+        field: '#EBC034',
+        fieldLines: 'rgba(0,0,0,0.05)',
+        sunColor: '#FFF9D0',
+        cloudColor: 'rgba(255,255,255,0.8)',
+    },
+    {
+        id: 'sunset',
+        name: 'Sonnenuntergang',
+        sky: ['#FF6B35', '#FFD166'],
+        mountains: '#4A3060',
+        hills: '#8B4513',
+        field: '#C0392B',
+        fieldLines: 'rgba(255,200,0,0.08)',
+        sunColor: '#FF4500',
+        cloudColor: 'rgba(255,180,100,0.85)',
+    },
+    {
+        id: 'night',
+        name: 'Mondscheinjagd',
+        sky: ['#0A0A2E', '#1A1A5E'],
+        mountains: '#0D1B2A',
+        hills: '#1B3A2D',
+        field: '#0F2418',
+        fieldLines: 'rgba(0,255,100,0.04)',
+        sunColor: '#E8E8FF',
+        cloudColor: 'rgba(100,100,180,0.6)',
+        isNight: true,
+    },
+    {
+        id: 'spring',
+        name: 'Frühlingswiese',
+        sky: ['#87CEEB', '#E0F7FF'],
+        mountains: '#5A8A5A',
+        hills: '#7BC67E',
+        field: '#A8E063',
+        fieldLines: 'rgba(0,80,0,0.06)',
+        sunColor: '#FFFA8C',
+        cloudColor: 'rgba(255,255,255,0.9)',
+    },
+    {
+        id: 'winter',
+        name: 'Winterschnee',
+        sky: ['#B0C8D8', '#E8F0F5'],
+        mountains: '#8899AA',
+        hills: '#C8D8E8',
+        field: '#E8F0F8',
+        fieldLines: 'rgba(150,180,220,0.15)',
+        sunColor: '#FFFAF0',
+        cloudColor: 'rgba(230,240,255,0.9)',
+        isWinter: true,
+    },
+];
+
 // --- Hauptspiel Logik ---
 
 class Landscape {
-    constructor(canvasWidth, canvasHeight) {
+    constructor(canvasWidth, canvasHeight, themeIndex = 0) {
         this.width = canvasWidth;
         this.height = canvasHeight;
+        this.theme = BACKGROUND_THEMES[themeIndex % BACKGROUND_THEMES.length];
 
         // Wolken generieren (Parallax Layer 1)
         this.clouds = [];
@@ -1096,6 +1158,10 @@ class Landscape {
 
     getRandomObstacle() {
         return this.obstacles[Math.floor(Math.random() * this.obstacles.length)];
+    }
+
+    setTheme(themeIndex) {
+        this.theme = BACKGROUND_THEMES[themeIndex % BACKGROUND_THEMES.length];
     }
 
     resize(canvasWidth, canvasHeight) {
@@ -1382,18 +1448,50 @@ class Landscape {
     }
 
     draw(ctx) {
+        const t = this.theme;
+
         // 1. Himmel
         const skyGradient = ctx.createLinearGradient(0, 0, 0, this.height);
-        skyGradient.addColorStop(0, '#78AACC'); // Etwas graueres Blau
-        skyGradient.addColorStop(1, '#B0D0E0');
+        skyGradient.addColorStop(0, t.sky[0]);
+        skyGradient.addColorStop(1, t.sky[1]);
         ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, this.width, this.height);
 
-        // 2. Sonne
+        // Sterne bei Nacht
+        if (t.isNight) {
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            for (let i = 0; i < 80; i++) {
+                const sx = (Math.sin(i * 137.5) * 0.5 + 0.5) * this.width;
+                const sy = (Math.sin(i * 97.3) * 0.5 + 0.5) * this.height * 0.55;
+                const sr = 0.5 + Math.sin(i * 53.1 + Date.now() * 0.001) * 0.3;
+                ctx.beginPath();
+                ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Schneefall bei Winter
+        if (t.isWinter) {
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            for (let i = 0; i < 40; i++) {
+                const flakeX = ((Math.sin(i * 73.1) * 0.5 + 0.5) * this.width + Date.now() * 0.03 * (0.5 + (i % 3) * 0.3)) % this.width;
+                const flakeY = ((Math.sin(i * 31.7) * 0.5 + 0.5) * this.height + Date.now() * 0.02 * (0.5 + (i % 5) * 0.2)) % this.height;
+                ctx.beginPath();
+                ctx.arc(flakeX, flakeY, 1.5 + (i % 3), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 2. Sonne / Mond
         ctx.save();
         ctx.translate(this.sun.x, this.sun.y);
 
-        ctx.fillStyle = '#FFF9D0';
+        ctx.fillStyle = t.sunColor;
+        if (t.isNight) {
+            // Mond-Krater-Optik
+            ctx.shadowColor = 'rgba(200,220,255,0.5)';
+            ctx.shadowBlur = 25;
+        }
         if (this.sun.hit) {
             ctx.shadowColor = '#FFD700';
             ctx.shadowBlur = 20;
@@ -1401,6 +1499,13 @@ class Landscape {
         ctx.beginPath();
         ctx.arc(0, 0, this.sun.radius, 0, Math.PI * 2);
         ctx.fill();
+        if (t.isNight && !this.sun.hit) {
+            // Mond-Schatten (Sichel-Effekt)
+            ctx.fillStyle = t.sky[0];
+            ctx.beginPath();
+            ctx.arc(this.sun.radius * 0.3, -this.sun.radius * 0.1, this.sun.radius * 0.85, 0, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.shadowBlur = 0; // reset
 
         // Sonnenbrille zeichnen wenn getroffen
@@ -1433,7 +1538,7 @@ class Landscape {
         ctx.restore();
 
         // 3. Bergkette im Hintergrund
-        ctx.fillStyle = '#6D8A96';
+        ctx.fillStyle = t.mountains;
         ctx.beginPath();
         ctx.moveTo(0, this.height);
         ctx.lineTo(0, this.height * 0.45);
@@ -1451,8 +1556,8 @@ class Landscape {
         // Kleines Haus mit Kamin
         this._drawChimney(ctx);
 
-        // 4. Hügelkette (Middleground - Golden Brown)
-        ctx.fillStyle = '#C28E42';
+        // 4. Hügelkette (Middleground)
+        ctx.fillStyle = t.hills;
         ctx.beginPath();
         ctx.moveTo(0, this.height);
         ctx.lineTo(0, this.height * 0.6);
@@ -1462,8 +1567,8 @@ class Landscape {
         ctx.closePath();
         ctx.fill();
 
-        // 5. Vordergrund-Weizenfeld (Vibrant Golden Yellow)
-        ctx.fillStyle = '#EBC034';
+        // 5. Vordergrundfeld
+        ctx.fillStyle = t.field;
         ctx.beginPath();
         ctx.moveTo(0, this.height * 0.75);
         ctx.quadraticCurveTo(this.width * 0.2, this.height * 0.68, this.width * 0.5, this.height * 0.72);
@@ -1473,8 +1578,8 @@ class Landscape {
         ctx.closePath();
         ctx.fill();
 
-        // Weizen-Stoppeln/Textur
-        ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+        // Feld-Textur
+        ctx.strokeStyle = t.fieldLines;
         ctx.lineWidth = 1;
         for (let i = 0; i < this.width; i += 40) {
             ctx.beginPath();
@@ -1484,7 +1589,7 @@ class Landscape {
         }
 
         // 6. Wolken zeichnen (über den Bergen, im Himmel)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillStyle = t.cloudColor;
         this.clouds.forEach(c => {
             ctx.beginPath();
             ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
@@ -2062,7 +2167,8 @@ class Game {
         // Touch device detection
         this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-        this.landscape = new Landscape(this.canvas.width, this.canvas.height);
+        this.themeIndex = 0;
+        this.landscape = new Landscape(this.canvas.width, this.canvas.height, this.themeIndex);
 
         // Spieler Stats (Meta Progression)
         this.meta = this.loadMeta();
@@ -2436,7 +2542,11 @@ class Game {
         this.popups = [];
         this.bloodPools = [];
 
-        // Landscape Secrets zur\u00fccksetzen
+        // Theme beim Spielstart wechseln
+        this.themeIndex = (this.themeIndex + 1) % BACKGROUND_THEMES.length;
+        this.landscape.setTheme(this.themeIndex);
+
+        // Landscape Secrets zurücksetzen
         this.landscape.sun.hit = false;
         this.landscape.signFlipped = false;
         this.landscape.coinRock.hitCount = 0;
