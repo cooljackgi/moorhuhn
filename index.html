@@ -4,12 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="google-adsense-account" content="ca-pub-8627539976573147">
     <title>Moorhuhn Clone - Cartoon Style</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8627539976573147"
-        crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -33,13 +30,6 @@
                 </div>
                 <div class="mode-toggle-container">
                     <button id="btn-toggle-mode" class="btn btn-mode-toggle">🐥 Harmlos</button>
-                </div>
-
-                <!-- Ad Slot: Main Menu Banner -->
-                <div class="ad-slot ad-banner" style="position: absolute; bottom: 20px;">
-                    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8627539976573147"
-                        data-ad-slot="7256299336" data-ad-format="auto" data-full-width-responsive="true"
-                        id="ad-main-menu"></ins>
                 </div>
             </div>
 
@@ -95,13 +85,6 @@
                     <p>Erreichte Punkte: <span id="result-score" class="highlight">0</span></p>
                     <p>Verdiente Münzen: <span id="result-coins" class="highlight">0</span></p>
                     <p id="new-highscore-msg" class="hidden highlight-gold">Neuer Highscore!</p>
-
-                    <!-- Ad Slot: Game Over Rectangle -->
-                    <div class="ad-slot ad-rectangle">
-                        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8627539976573147"
-                            data-ad-slot="7256299336" data-ad-format="auto" data-full-width-responsive="true"
-                            id="ad-game-over"></ins>
-                    </div>
                 </div>
 
                 <!-- Neu: Name eingeben für Global Highscore -->
@@ -153,44 +136,6 @@
     <div id="custom-cursor" class="crosshair"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        function initAdWhenReady(adElementId, maxAttempts = 40, delayMs = 250) {
-            const adElement = document.getElementById(adElementId);
-            if (!adElement) return;
-
-            let attempts = 0;
-
-            const tryInit = () => {
-                attempts++;
-
-                if (adElement.getAttribute('data-adsbygoogle-status')) {
-                    return;
-                }
-
-                const availableWidth = adElement.offsetWidth || (adElement.parentElement && adElement.parentElement.offsetWidth) || 0;
-
-                if (availableWidth > 0) {
-                    try {
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                        return;
-                    } catch (e) {
-                        // Retry while layout/SDK is settling.
-                    }
-                }
-
-                if (attempts < maxAttempts) {
-                    setTimeout(tryInit, delayMs);
-                }
-            };
-
-            tryInit();
-        }
-
-        window.addEventListener('load', () => {
-            initAdWhenReady('ad-main-menu');
-            initAdWhenReady('ad-game-over');
-        });
-    </script>
     <script src="js/audioManager.js"></script>
     <script src="js/supabase-db.js"></script>
     <script src="js/game.js"></script>

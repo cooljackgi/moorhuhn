@@ -79,302 +79,322 @@ class Target {
         ctx.translate(this.x, this.y);
         const s = this.size;
 
-        // In Flugrichtung schauen
-        if (this.direction === -1) {
-            ctx.scale(-1, 1);
-        }
+        if (this.direction === -1) ctx.scale(-1, 1);
 
-        // --- HÜBSCHES Moorhuhn mit mehr Details ---
+        const flapAngle = Math.sin(this.flapTime / 50) * 0.65;
+        const footDangle = Math.sin(this.flapTime / 80) * 0.12;
 
-        // Schatten unter dem Huhn für Tiefe
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        // --- Schatten ---
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
         ctx.beginPath();
-        ctx.ellipse(s * 0.1, s * 0.85, s * 0.35, s * 0.08, 0, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.05, s * 0.9, s * 0.38, s * 0.07, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Füße (baumeln beim Fliegen)
-        ctx.strokeStyle = '#D4901A';
-        ctx.lineWidth = 2.5;
-        const footDangle = Math.sin(this.flapTime / 80) * 0.15;
-        
-        // Linker Fuß mit Krallen
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.1, s * 0.3);
-        ctx.lineTo(-s * 0.15, s * 0.7 + footDangle * s);
-        ctx.lineTo(-s * 0.3, s * 0.8 + footDangle * s);
-        ctx.moveTo(-s * 0.15, s * 0.7 + footDangle * s);
-        ctx.lineTo(-s * 0.05, s * 0.82 + footDangle * s);
-        ctx.moveTo(-s * 0.15, s * 0.7 + footDangle * s);
-        ctx.lineTo(-s * 0.2, s * 0.85 + footDangle * s);
-        ctx.stroke();
-        
-        // Rechter Fuß mit Krallen
-        ctx.beginPath();
-        ctx.moveTo(s * 0.1, s * 0.3);
-        ctx.lineTo(s * 0.15, s * 0.7 - footDangle * s);
-        ctx.lineTo(s * 0.0, s * 0.82 - footDangle * s);
-        ctx.moveTo(s * 0.15, s * 0.7 - footDangle * s);
-        ctx.lineTo(s * 0.3, s * 0.8 - footDangle * s);
-        ctx.moveTo(s * 0.15, s * 0.7 - footDangle * s);
-        ctx.lineTo(s * 0.25, s * 0.83 - footDangle * s);
-        ctx.stroke();
-
-        // Schwanzfedern (mehr Details)
-        const tailGrad = ctx.createLinearGradient(-s * 0.9, -s * 0.6, -s * 0.5, 0);
-        tailGrad.addColorStop(0, '#4A2D10');
-        tailGrad.addColorStop(0.5, '#5D3A1A');
-        tailGrad.addColorStop(1, '#7A5230');
-        ctx.fillStyle = tailGrad;
-        ctx.beginPath();
-        ctx.moveTo(-s * 0.5, -s * 0.1);
-        ctx.lineTo(-s * 0.9, -s * 0.6);
-        ctx.lineTo(-s * 0.65, -s * 0.15);
-        ctx.lineTo(-s * 1.0, -s * 0.35);
-        ctx.lineTo(-s * 0.6, 0);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#3E2010';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Flügel (animiert) mit Federn-Detail
-        const flapAngle = Math.sin(this.flapTime / 55) * 0.7;
-        ctx.save();
-        ctx.translate(-s * 0.1, s * 0.05);
-        ctx.rotate(flapAngle);
-        
-        // Flügel-Gradient
-        const wingGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.5);
-        wingGrad.addColorStop(0, '#8B6340');
-        wingGrad.addColorStop(0.7, '#7A5230');
-        wingGrad.addColorStop(1, '#5D3A1A');
-        ctx.fillStyle = wingGrad;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, s * 0.5, s * 0.2, Math.PI / 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#5D3A1A';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        
-        // Flügel-Federn Linien
-        ctx.strokeStyle = 'rgba(60, 30, 10, 0.3)';
-        ctx.lineWidth = 0.8;
-        for (let i = 0; i < 5; i++) {
-            const angle = (i / 5) * Math.PI * 0.6 - 0.3;
+        // --- Beine & Krallen ---
+        const drawFoot = (bx, by, swing) => {
+            ctx.strokeStyle = '#CF8010';
+            ctx.lineWidth = Math.max(1, s * 0.045);
+            ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(Math.cos(angle) * s * 0.45, Math.sin(angle) * s * 0.18);
+            ctx.moveTo(bx, by);
+            const kx = bx + s * 0.05, ky = by + s * 0.38 + swing;
+            ctx.lineTo(kx, ky);
             ctx.stroke();
+            [[-0.18, 0.12], [0.04, 0.14], [0.18, 0.08], [-0.06, -0.06]].forEach(([dx, dy]) => {
+                ctx.beginPath();
+                ctx.moveTo(kx, ky);
+                ctx.lineTo(kx + dx * s, ky + dy * s);
+                ctx.stroke();
+            });
+        };
+        drawFoot(-s * 0.12, s * 0.28, footDangle * s);
+        drawFoot(s * 0.08, s * 0.28, -footDangle * s);
+
+        // --- Schwanzfächer (einzelne Federn) ---
+        const tailFeathers = [
+            { angle: -2.4, len: 0.78, color: '#3A2010' },
+            { angle: -2.1, len: 0.88, color: '#4A2D14' },
+            { angle: -1.85, len: 0.92, color: '#5D3A1A' },
+            { angle: -1.65, len: 0.86, color: '#4A2D14' },
+            { angle: -1.45, len: 0.72, color: '#3A2010' },
+        ];
+        tailFeathers.forEach(f => {
+            const ex = Math.cos(f.angle) * s * f.len;
+            const ey = Math.sin(f.angle) * s * f.len;
+            const w = s * 0.12;
+            const nx = -Math.sin(f.angle) * w * 0.4;
+            const ny = Math.cos(f.angle) * w * 0.4;
+            const grad = ctx.createLinearGradient(-s * 0.42, 0, ex, ey);
+            grad.addColorStop(0, '#7A5230');
+            grad.addColorStop(1, f.color);
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(-s * 0.42, 0);
+            ctx.quadraticCurveTo(ex * 0.5 + nx, ey * 0.5 + ny, ex, ey);
+            ctx.quadraticCurveTo(ex * 0.5 - nx, ey * 0.5 - ny, -s * 0.42, 0);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(30,10,0,0.35)';
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+        });
+
+        // --- Flügel (unten, sichtbarer Hinterflügel) ---
+        ctx.save();
+        ctx.translate(-s * 0.05, s * 0.05);
+        ctx.rotate(flapAngle * 0.4 + 0.15);
+        const wingBg = ctx.createLinearGradient(0, 0, s * 0.55, s * 0.18);
+        wingBg.addColorStop(0, '#4A2D14');
+        wingBg.addColorStop(1, '#3A2010');
+        ctx.fillStyle = wingBg;
+        ctx.beginPath();
+        ctx.ellipse(s * 0.15, s * 0.06, s * 0.52, s * 0.17, 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // --- Körper ---
+        const bodyGrad = ctx.createRadialGradient(-s * 0.08, -s * 0.05, s * 0.04, s * 0.05, s * 0.08, s * 0.48);
+        bodyGrad.addColorStop(0, '#C8A878');
+        bodyGrad.addColorStop(0.45, '#A07848');
+        bodyGrad.addColorStop(1, '#6A4020');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(s * 0.02, s * 0.06, s * 0.42, s * 0.36, -0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(60,30,10,0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Körperfedern (schuppig)
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(s * 0.02, s * 0.06, s * 0.42, s * 0.36, -0.1, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(50,25,8,0.18)';
+        ctx.lineWidth = 0.7;
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 6; col++) {
+                const fx = -s * 0.3 + col * s * 0.14 + (row % 2) * s * 0.07;
+                const fy = -s * 0.15 + row * s * 0.14;
+                ctx.beginPath();
+                ctx.arc(fx, fy, s * 0.1, 0.3, Math.PI - 0.3);
+                ctx.stroke();
+            }
         }
         ctx.restore();
 
-        // Körper mit Gradient für 3D-Effekt
-        const bodyGrad = ctx.createRadialGradient(-s * 0.1, -s * 0.1, 0, 0, s * 0.05, s * 0.5);
-        bodyGrad.addColorStop(0, '#B8946A');
-        bodyGrad.addColorStop(0.5, '#9B6B42');
-        bodyGrad.addColorStop(1, '#7A5230');
-        ctx.fillStyle = bodyGrad;
-        ctx.beginPath();
-        ctx.ellipse(0, s * 0.05, s * 0.4, s * 0.35, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#6D4020';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Körper-Federn Textur
-        ctx.strokeStyle = 'rgba(100, 60, 30, 0.2)';
-        ctx.lineWidth = 0.5;
-        for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2;
-            const startX = Math.cos(angle) * s * 0.15;
-            const startY = s * 0.05 + Math.sin(angle) * s * 0.12;
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(startX + Math.cos(angle) * s * 0.2, startY + Math.sin(angle) * s * 0.15);
-            ctx.stroke();
-        }
-
-        // Brust (heller mit Gradient)
-        const breastGrad = ctx.createRadialGradient(s * 0.05, s * 0.1, 0, s * 0.1, s * 0.15, s * 0.3);
-        breastGrad.addColorStop(0, '#D4B896');
-        breastGrad.addColorStop(1, '#B8946A');
+        // --- Brust (heller Bereich) ---
+        const breastGrad = ctx.createRadialGradient(s * 0.12, s * 0.12, 0, s * 0.12, s * 0.14, s * 0.32);
+        breastGrad.addColorStop(0, '#E0C898');
+        breastGrad.addColorStop(0.7, '#C8A060');
+        breastGrad.addColorStop(1, 'rgba(160,120,72,0)');
         ctx.fillStyle = breastGrad;
         ctx.beginPath();
-        ctx.ellipse(s * 0.1, s * 0.15, s * 0.25, s * 0.2, 0, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.12, s * 0.15, s * 0.28, s * 0.24, 0.15, 0, Math.PI * 2);
         ctx.fill();
 
-        // Kopf (RIESIG!) mit Gradient
-        const headGrad = ctx.createRadialGradient(s * 0.2, -s * 0.4, 0, s * 0.3, -s * 0.35, s * 0.5);
-        headGrad.addColorStop(0, '#C4A070');
-        headGrad.addColorStop(0.5, '#9B6B42');
-        headGrad.addColorStop(1, '#7A5230');
+        // --- Flügel (Hauptflügel, animiert, mit Federform) ---
+        ctx.save();
+        ctx.translate(-s * 0.05, s * 0.0);
+        ctx.rotate(flapAngle);
+        const numFeathers = 7;
+        for (let i = 0; i < numFeathers; i++) {
+            const t = i / (numFeathers - 1);
+            const baseAngle = -0.2 + t * 0.55;
+            const len = s * (0.55 - Math.abs(t - 0.5) * 0.2);
+            const wid = s * 0.1;
+            const ex = Math.cos(baseAngle) * len;
+            const ey = Math.sin(baseAngle) * len;
+            const nx = -Math.sin(baseAngle) * wid;
+            const ny = Math.cos(baseAngle) * wid;
+            const shade = Math.floor(80 + t * 50);
+            const dark = Math.floor(40 + t * 30);
+            ctx.fillStyle = `rgb(${shade + 30},${shade},${dark})`;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(ex * 0.6 + nx * 0.8, ey * 0.6 + ny * 0.8, ex, ey);
+            ctx.quadraticCurveTo(ex * 0.6 - nx * 0.4, ey * 0.6 - ny * 0.4, 0, 0);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(30,10,0,0.25)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+        }
+        // Deckfedern-Reihe oben
+        ctx.fillStyle = 'rgba(160,120,80,0.7)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.12, -s * 0.06, s * 0.28, s * 0.1, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // --- Hals ---
+        const neckGrad = ctx.createLinearGradient(s * 0.18, -s * 0.08, s * 0.32, -s * 0.32);
+        neckGrad.addColorStop(0, '#A07848');
+        neckGrad.addColorStop(1, '#B89060');
+        ctx.fillStyle = neckGrad;
+        ctx.beginPath();
+        ctx.moveTo(s * 0.12, -s * 0.05);
+        ctx.bezierCurveTo(s * 0.08, -s * 0.2, s * 0.22, -s * 0.3, s * 0.28, -s * 0.28);
+        ctx.bezierCurveTo(s * 0.38, -s * 0.26, s * 0.3, -s * 0.1, s * 0.26, -s * 0.04);
+        ctx.closePath();
+        ctx.fill();
+
+        // --- Kopf ---
+        const headGrad = ctx.createRadialGradient(s * 0.25, -s * 0.5, s * 0.02, s * 0.3, -s * 0.42, s * 0.38);
+        headGrad.addColorStop(0, '#D4B080');
+        headGrad.addColorStop(0.5, '#A87840');
+        headGrad.addColorStop(1, '#7A5228');
         ctx.fillStyle = headGrad;
         ctx.beginPath();
-        ctx.arc(s * 0.3, -s * 0.35, s * 0.45, 0, Math.PI * 2);
+        ctx.arc(s * 0.32, -s * 0.44, s * 0.36, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#6D4020';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(80,40,10,0.4)';
+        ctx.lineWidth = 1;
         ctx.stroke();
 
-        // KAMM (hoch, rot, glänzend)
-        const combGrad = ctx.createLinearGradient(s * 0.2, -s * 1.2, s * 0.5, -s * 0.7);
-        combGrad.addColorStop(0, '#FF3333');
-        combGrad.addColorStop(0.5, '#DD1111');
+        // Wangen-Aufhellung
+        const cheekGrad = ctx.createRadialGradient(s * 0.42, -s * 0.38, 0, s * 0.42, -s * 0.38, s * 0.2);
+        cheekGrad.addColorStop(0, 'rgba(220,180,120,0.5)');
+        cheekGrad.addColorStop(1, 'rgba(220,180,120,0)');
+        ctx.fillStyle = cheekGrad;
+        ctx.beginPath();
+        ctx.arc(s * 0.42, -s * 0.38, s * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- Kamm (3 Zacken) ---
+        const combGrad = ctx.createLinearGradient(s * 0.1, -s * 0.95, s * 0.52, -s * 0.6);
+        combGrad.addColorStop(0, '#FF5050');
+        combGrad.addColorStop(0.4, '#E01010');
         combGrad.addColorStop(1, '#AA0000');
         ctx.fillStyle = combGrad;
         ctx.beginPath();
-        ctx.moveTo(s * 0.05, -s * 0.65);
-        ctx.quadraticCurveTo(s * 0.15, -s * 1.3, s * 0.35, -s * 0.9);
-        ctx.quadraticCurveTo(s * 0.45, -s * 1.15, s * 0.55, -s * 0.7);
+        ctx.moveTo(s * 0.1, -s * 0.68);
+        ctx.quadraticCurveTo(s * 0.14, -s * 0.95, s * 0.22, -s * 0.75);
+        ctx.quadraticCurveTo(s * 0.28, -s * 1.05, s * 0.36, -s * 0.76);
+        ctx.quadraticCurveTo(s * 0.42, -s * 0.92, s * 0.5, -s * 0.72);
+        ctx.quadraticCurveTo(s * 0.52, -s * 0.64, s * 0.48, -s * 0.62);
+        ctx.lineTo(s * 0.1, -s * 0.62);
         ctx.closePath();
         ctx.fill();
         ctx.strokeStyle = '#880000';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 0.8;
         ctx.stroke();
-        
-        // Kamm-Glanz
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        // Glanz auf Kamm
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
         ctx.beginPath();
-        ctx.moveTo(s * 0.2, -s * 1.0);
-        ctx.quadraticCurveTo(s * 0.25, -s * 1.15, s * 0.3, -s * 1.0);
-        ctx.quadraticCurveTo(s * 0.25, -s * 0.95, s * 0.2, -s * 1.0);
+        ctx.ellipse(s * 0.3, -s * 0.88, s * 0.04, s * 0.08, -0.2, 0, Math.PI * 2);
         ctx.fill();
 
-        // AUGEN (RIESIG! Googly-Eyes!)
-        // Linkes Auge mit Schatten
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        // --- Ohrfleck (weißlich) ---
+        ctx.fillStyle = 'rgba(240,220,190,0.8)';
         ctx.beginPath();
-        ctx.ellipse(s * 0.22, -s * 0.37, s * 0.23, s * 0.27, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.2, -s * 0.4, s * 0.22, s * 0.26, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        
-        // Rechtes Auge mit Schatten
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.57, -s * 0.35, s * 0.23, s * 0.27, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.55, -s * 0.38, s * 0.22, s * 0.26, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // Pupillen (etwas schielend) mit Glanz
-        ctx.fillStyle = '#111';
-        ctx.beginPath();
-        ctx.arc(s * 0.28, -s * 0.38, s * 0.09, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(s * 0.5, -s * 0.36, s * 0.09, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Iris-Farbe (braun)
-        ctx.fillStyle = '#5D3A1A';
-        ctx.beginPath();
-        ctx.arc(s * 0.28, -s * 0.38, s * 0.07, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(s * 0.5, -s * 0.36, s * 0.07, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Pupillen (schwarz, kleiner)
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(s * 0.28, -s * 0.38, s * 0.04, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(s * 0.5, -s * 0.36, s * 0.04, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.1, -s * 0.35, s * 0.05, s * 0.07, -0.3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Glanzpunkte (größer und heller)
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        // --- Auge (links, Hauptauge) ---
+        // Schatten
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
         ctx.beginPath();
-        ctx.arc(s * 0.24, -s * 0.44, s * 0.05, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.24, -s * 0.47, s * 0.18, s * 0.18, 0, 0, Math.PI * 2);
         ctx.fill();
+        // Sklera
+        ctx.fillStyle = '#F8F4EC';
         ctx.beginPath();
-        ctx.arc(s * 0.46, -s * 0.42, s * 0.05, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.22, -s * 0.49, s * 0.17, s * 0.17, 0, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Zweiter kleinerer Glanzpunkt
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.beginPath();
-        ctx.arc(s * 0.32, -s * 0.35, s * 0.02, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(s * 0.54, -s * 0.33, s * 0.02, 0, Math.PI * 2);
-        ctx.fill();
-
-        // SCHNABEL (groß, gelb-orange, glänzend)
-        const beakGrad = ctx.createLinearGradient(s * 0.6, -s * 0.3, s * 1.1, -s * 0.1);
-        beakGrad.addColorStop(0, '#FFD700');
-        beakGrad.addColorStop(0.5, '#F0B020');
-        beakGrad.addColorStop(1, '#C8880B');
-        
-        // Oberschnabel
-        ctx.fillStyle = beakGrad;
-        ctx.beginPath();
-        ctx.moveTo(s * 0.6, -s * 0.25);
-        ctx.lineTo(s * 1.1, -s * 0.15);
-        ctx.lineTo(s * 0.6, -s * 0.08);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#A07008';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        
-        // Oberschnabel-Glanz
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.beginPath();
-        ctx.moveTo(s * 0.65, -s * 0.22);
-        ctx.lineTo(s * 0.95, -s * 0.16);
-        ctx.lineTo(s * 0.7, -s * 0.18);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Unterschnabel
-        const lowerBeakGrad = ctx.createLinearGradient(s * 0.6, -s * 0.05, s * 0.95, s * 0.02);
-        lowerBeakGrad.addColorStop(0, '#E09818');
-        lowerBeakGrad.addColorStop(1, '#C07808');
-        ctx.fillStyle = lowerBeakGrad;
-        ctx.beginPath();
-        ctx.moveTo(s * 0.6, -s * 0.05);
-        ctx.lineTo(s * 0.95, s * 0.02);
-        ctx.lineTo(s * 0.6, s * 0.06);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#A07008';
-        ctx.stroke();
-
-        // KEHLWAMPE (rot, hängt unter dem Schnabel)
-        const wattleGrad = ctx.createRadialGradient(s * 0.43, s * 0.05, 0, s * 0.45, s * 0.08, s * 0.15);
-        wattleGrad.addColorStop(0, '#FF3333');
-        wattleGrad.addColorStop(1, '#CC0000');
-        ctx.fillStyle = wattleGrad;
-        ctx.beginPath();
-        ctx.ellipse(s * 0.45, s * 0.08, s * 0.08, s * 0.14, 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#990000';
+        ctx.strokeStyle = '#4A2800';
         ctx.lineWidth = 1;
         ctx.stroke();
-        
-        // Kehlwampe-Glanz
+        // Iris (orangebraun)
+        const irisGrad = ctx.createRadialGradient(s * 0.22, -s * 0.49, 0, s * 0.22, -s * 0.49, s * 0.12);
+        irisGrad.addColorStop(0, '#D4780A');
+        irisGrad.addColorStop(0.6, '#A04808');
+        irisGrad.addColorStop(1, '#7A2800');
+        ctx.fillStyle = irisGrad;
+        ctx.beginPath();
+        ctx.arc(s * 0.22, -s * 0.49, s * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+        // Pupille
+        ctx.fillStyle = '#0A0400';
+        ctx.beginPath();
+        ctx.arc(s * 0.22, -s * 0.49, s * 0.065, 0, Math.PI * 2);
+        ctx.fill();
+        // Hauptglanz
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.165, -s * 0.535, s * 0.048, s * 0.036, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        // Kleiner Gegenglanz
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.beginPath();
+        ctx.arc(s * 0.265, -s * 0.455, s * 0.02, 0, Math.PI * 2);
+        ctx.fill();
+        // Wimpernbogen oben
+        ctx.strokeStyle = '#3A1A00';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(s * 0.22, -s * 0.49, s * 0.17, -Math.PI * 0.85, -Math.PI * 0.15);
+        ctx.stroke();
+
+        // --- Schnabel ---
+        // Nasenloch
+        ctx.fillStyle = 'rgba(100,60,0,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(s * 0.6, -s * 0.32, s * 0.025, s * 0.018, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        // Oberschnabel
+        const beakG = ctx.createLinearGradient(s * 0.5, -s * 0.38, s * 0.98, -s * 0.14);
+        beakG.addColorStop(0, '#FFE040');
+        beakG.addColorStop(0.5, '#E8A010');
+        beakG.addColorStop(1, '#B87008');
+        ctx.fillStyle = beakG;
+        ctx.beginPath();
+        ctx.moveTo(s * 0.5, -s * 0.36);
+        ctx.bezierCurveTo(s * 0.72, -s * 0.42, s * 0.95, -s * 0.3, s * 1.0, -s * 0.2);
+        ctx.bezierCurveTo(s * 0.92, -s * 0.14, s * 0.62, -s * 0.14, s * 0.5, -s * 0.16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#9A6000';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        // Schnabel-Glanz
+        ctx.fillStyle = 'rgba(255,255,255,0.28)';
+        ctx.beginPath();
+        ctx.moveTo(s * 0.55, -s * 0.38);
+        ctx.bezierCurveTo(s * 0.72, -s * 0.42, s * 0.86, -s * 0.36, s * 0.88, -s * 0.3);
+        ctx.bezierCurveTo(s * 0.78, -s * 0.28, s * 0.6, -s * 0.32, s * 0.55, -s * 0.38);
+        ctx.fill();
+        // Unterschnabel
+        const lbeakG = ctx.createLinearGradient(s * 0.5, -s * 0.14, s * 0.95, s * 0.02);
+        lbeakG.addColorStop(0, '#D4900A');
+        lbeakG.addColorStop(1, '#A06005');
+        ctx.fillStyle = lbeakG;
+        ctx.beginPath();
+        ctx.moveTo(s * 0.5, -s * 0.14);
+        ctx.bezierCurveTo(s * 0.7, -s * 0.1, s * 0.9, -s * 0.08, s * 0.96, -s * 0.18);
+        ctx.bezierCurveTo(s * 0.88, -s * 0.1, s * 0.62, -s * 0.06, s * 0.5, -s * 0.05);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#8A5000';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        // --- Kehlwampe ---
+        const wG = ctx.createRadialGradient(s * 0.42, -s * 0.08, 0, s * 0.42, -s * 0.05, s * 0.14);
+        wG.addColorStop(0, '#FF6060');
+        wG.addColorStop(0.5, '#DD1818');
+        wG.addColorStop(1, '#990000');
+        ctx.fillStyle = wG;
+        ctx.beginPath();
+        ctx.moveTo(s * 0.36, -s * 0.12);
+        ctx.bezierCurveTo(s * 0.3, -s * 0.0, s * 0.32, s * 0.1, s * 0.42, s * 0.1);
+        ctx.bezierCurveTo(s * 0.52, s * 0.1, s * 0.55, -s * 0.0, s * 0.5, -s * 0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#880000';
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
         ctx.beginPath();
-        ctx.ellipse(s * 0.42, s * 0.02, s * 0.03, s * 0.05, 0.3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Kleine Ohr-Tüpfelchen (typisch für Hühner)
-        ctx.fillStyle = '#E8D4B8';
-        ctx.beginPath();
-        ctx.ellipse(s * 0.12, -s * 0.25, s * 0.04, s * 0.06, -0.3, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.4, -s * 0.06, s * 0.04, s * 0.06, 0.2, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
