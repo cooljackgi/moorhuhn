@@ -1,4 +1,4 @@
-﻿// --- Konfiguration und Globals ---
+// --- Konfiguration und Globals ---
 const GAME_DURATION = 90; // Standard Zeit in Sekunden
 const DEFAULT_AMMO = 5;
 const KONAMI_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
