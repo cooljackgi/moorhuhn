@@ -2274,7 +2274,7 @@ class Game {
 
         // Tastatur Nachladen
         window.addEventListener('keydown', (e) => {
-            if (e.key === '`') {
+            if (e.key === '`' || e.key === '^' || e.code === 'Backquote') {
                 this.toggleCheatMenu();
                 return;
             }
