@@ -413,6 +413,11 @@ class InGameUpgrade extends Target {
         if (this.type === 'shotgun') { boxColor = '#f39c12'; boxText = 'SHG'; }
         if (this.type === 'fever') { boxColor = '#FF8C00'; boxText = 'Fvr'; }
         if (this.type === 'coins') { boxColor = '#FFD700'; boxText = 'Coin'; }
+        if (this.type === 'doublescore') { boxColor = '#e91e63'; boxText = '2x'; }
+        if (this.type === 'frenzy') { boxColor = '#ff5722'; boxText = 'FRZ'; }
+        if (this.type === 'zoom') { boxColor = '#00bcd4'; boxText = 'ZOM'; }
+        if (this.type === 'shield') { boxColor = '#4caf50'; boxText = 'SCH'; }
+        if (this.type === 'bomb') { boxColor = '#37474f'; boxText = '💥'; }
 
         ctx.fillStyle = boxColor;
         ctx.fillRect(-8, this.size * 1.5 + 20, 16, 16);
@@ -2126,7 +2131,9 @@ class Game {
         this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
         this.themeIndex = 0;
-        this.landscape = new Landscape(this.canvas.width, this.canvas.height, this.themeIndex);
+        this.gameW = window.innerWidth;
+        this.gameH = window.innerHeight;
+        this.landscape = new Landscape(this.gameW, this.gameH, this.themeIndex);
 
         // Spieler Stats (Meta Progression)
         this.meta = this.loadMeta();
@@ -2216,20 +2223,29 @@ class Game {
     }
 
     loadMeta() {
-        const saved = localStorage.getItem('moorhuhn_meta');
-        if (saved) {
-            return JSON.parse(saved);
-        }
-        return {
+        const defaults = {
             coins: 0,
-            highscores: [], // max 5
+            highscores: [],
             upgrades: {
-                magazine: 0, // +x capacity
-                reloadSpeed: 0, // Level
-                timeBonus: 0, // +x seconds
-                shotgun: 0 // +x seconds duration
+                magazine: 0,
+                reloadSpeed: 0,
+                timeBonus: 0,
+                shotgun: 0,
+                goldgier: 0,       // +20% Münzen pro Runde
+                comboExtender: 0,  // +0.3s Combo-Fenster
+                criticalHit: 0,    // Kleine Hühner +50% Punkte
+                missShield: 0,     // Fehlschüsse brechen Combo nicht
+                eagleEye: 0        // Ballons erscheinen früher
             }
         };
+        const saved = localStorage.getItem('moorhuhn_meta');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            // Neue Upgrade-Schlüssel in bestehende Saves einmergen
+            parsed.upgrades = Object.assign({}, defaults.upgrades, parsed.upgrades);
+            return parsed;
+        }
+        return defaults;
     }
 
     saveMeta() {
@@ -2238,12 +2254,20 @@ class Game {
     }
 
     resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = window.innerWidth;
+        const cssH = window.innerHeight;
+        this.gameW = cssW;
+        this.gameH = cssH;
+        this.canvas.width = cssW * dpr;
+        this.canvas.height = cssH * dpr;
+        this.canvas.style.width = cssW + 'px';
+        this.canvas.style.height = cssH + 'px';
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         // iOS-Safari-Fix: --vh Variable für korrekte Viewport-Höhe (Adressleiste)
-        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        document.documentElement.style.setProperty('--vh', `${cssH * 0.01}px`);
         if (this.landscape) {
-            this.landscape.resize(this.canvas.width, this.canvas.height);
+            this.landscape.resize(cssW, cssH);
         }
     }
 
@@ -2340,6 +2364,18 @@ class Game {
             e.preventDefault();
             this.reload();
         }, { passive: false });
+
+        // Verhindere Scroll/Zoom während des Spiels
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        // deltaTime-Sprung nach Tab-Wechsel / Bildschirm sperren verhindern
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && this.state === GameState.PLAYING) {
+                this.lastTime = null;
+            }
+        });
     }
 
     updateMenuUI() {
@@ -2430,7 +2466,12 @@ class Game {
             { id: 'magazine', name: 'Zusatzmagazin', desc: '+2 Schuss Kapazität', cost: 100 * (this.meta.upgrades.magazine + 1), max: 3, current: this.meta.upgrades.magazine },
             { id: 'reloadSpeed', name: 'Schnelllader', desc: '15% schneller nachladen', cost: 150 * (this.meta.upgrades.reloadSpeed + 1), max: 3, current: this.meta.upgrades.reloadSpeed },
             { id: 'timeBonus', name: 'Stoppuhr', desc: '+10 Sekunden Spielzeit', cost: 200 * (this.meta.upgrades.timeBonus + 1), max: 3, current: this.meta.upgrades.timeBonus },
-            { id: 'shotgun', name: 'Schrotflinte', desc: '+2s Dauer (Ballon)', cost: 250 * ((this.meta.upgrades.shotgun || 0) + 1), max: 3, current: this.meta.upgrades.shotgun || 0 }
+            { id: 'shotgun', name: 'Schrotflinte', desc: '+2s Dauer (Ballon)', cost: 250 * ((this.meta.upgrades.shotgun || 0) + 1), max: 3, current: this.meta.upgrades.shotgun || 0 },
+            { id: 'goldgier', name: 'Goldgier', desc: '+20% Münzen am Rundenende', cost: 200 * ((this.meta.upgrades.goldgier || 0) + 1), max: 3, current: this.meta.upgrades.goldgier || 0 },
+            { id: 'comboExtender', name: 'Combo-Verlängerer', desc: '+0.3s Combo-Fenster pro Level', cost: 150 * ((this.meta.upgrades.comboExtender || 0) + 1), max: 3, current: this.meta.upgrades.comboExtender || 0 },
+            { id: 'criticalHit', name: 'Scharfschütze', desc: 'Kleine Hühner +50% Punkte pro Level', cost: 250 * ((this.meta.upgrades.criticalHit || 0) + 1), max: 3, current: this.meta.upgrades.criticalHit || 0 },
+            { id: 'missShield', name: 'Kugelsicherung', desc: '+1 Fehlschuss pro Spiel ohne Combo-Verlust', cost: 200 * ((this.meta.upgrades.missShield || 0) + 1), max: 3, current: this.meta.upgrades.missShield || 0 },
+            { id: 'eagleEye', name: 'Adlerauge', desc: 'Boni-Ballons erscheinen 1s früher pro Level', cost: 175 * ((this.meta.upgrades.eagleEye || 0) + 1), max: 3, current: this.meta.upgrades.eagleEye || 0 }
         ];
 
         items.forEach(item => {
@@ -2492,7 +2533,9 @@ class Game {
         this.maxAmmo = DEFAULT_AMMO + (this.meta.upgrades.magazine * 2);
         this.ammo = this.maxAmmo;
         this.isReloading = false;
-        this.activeBuffs = { machinegun: 0, slowmo: 0, shotgun: 0 };
+        this.activeBuffs = { machinegun: 0, slowmo: 0, shotgun: 0, doublescore: 0, frenzy: 0, zoom: 0 };
+        this.missShieldsLeft = this.meta.upgrades.missShield || 0;
+        this.comboWindowMs = 2200 + (this.meta.upgrades.comboExtender || 0) * 300;
         this.chickenSpeedBoost = 0;
 
         this.targets = [];
@@ -2551,6 +2594,10 @@ class Game {
         if (this.activeBuffs.machinegun > 0) buffsHtml += `<span style="color:#e74c3c;">MG-Modus (${(this.activeBuffs.machinegun / 1000).toFixed(1)}s)</span><br>`;
         if (this.activeBuffs.slowmo > 0) buffsHtml += `<span style="color:#9b59b6;">SlowMo (${(this.activeBuffs.slowmo / 1000).toFixed(1)}s)</span><br>`;
         if (this.activeBuffs.shotgun > 0) buffsHtml += `<span style="color:#f1c40f;">Shotgun (${(this.activeBuffs.shotgun / 1000).toFixed(1)}s)</span><br>`;
+        if (this.activeBuffs.doublescore > 0) buffsHtml += `<span style="color:#e91e63;">2x Score (${(this.activeBuffs.doublescore / 1000).toFixed(1)}s)</span><br>`;
+        if (this.activeBuffs.frenzy > 0) buffsHtml += `<span style="color:#ff5722;">Frenzy (${(this.activeBuffs.frenzy / 1000).toFixed(1)}s)</span><br>`;
+        if (this.activeBuffs.zoom > 0) buffsHtml += `<span style="color:#00bcd4;">Zoom (${(this.activeBuffs.zoom / 1000).toFixed(1)}s)</span><br>`;
+        if (this.missShieldsLeft > 0) buffsHtml += `<span style="color:#27ae60;">🛡️ Kugelsicherung x${this.missShieldsLeft}</span><br>`;
         // Gimmick: Combo anzeigen
         if (this.comboCount > 0) {
             const multiplier = this.getScoreMultiplier();
@@ -2631,7 +2678,7 @@ class Game {
         let hitSomething = false;
         const isShotgun = this.activeBuffs.shotgun > 0;
         const touchBonus = this.isTouchDevice ? 18 : 0; // Größere Hitbox auf Handy
-        const hitRadius = isShotgun ? 60 : touchBonus;
+        const hitRadius = isShotgun ? 60 : (touchBonus + (this.activeBuffs.zoom > 0 ? 15 : 0));
 
         // 1. Zuerst normale Ziele prüfen (Rückwärts wegen Überlappung)
         for (let i = this.targets.length - 1; i >= 0; i--) {
@@ -2664,12 +2711,22 @@ class Game {
                     // Shotgun gibt nur halbe Punkte weil es zu einfach ist
                     const basePoints = isShotgun ? Math.max(1, Math.floor(t.points / 2)) : t.points;
                     const multiplier = this.getScoreMultiplier();
-                    const pointsGained = Math.floor(basePoints * multiplier);
+                    // Scharfschütze: Tier-2 (kleine/schnelle) Hühner geben Bonus-Punkte
+                    let critMult = 1;
+                    if (t.tier === 2 && (this.meta.upgrades.criticalHit || 0) > 0) {
+                        critMult = 1 + (this.meta.upgrades.criticalHit * 0.5);
+                    }
+                    // Doppelpunkte-Buff
+                    const doubleScoreMult = this.activeBuffs.doublescore > 0 ? 2 : 1;
+                    const pointsGained = Math.floor(basePoints * multiplier * critMult * doubleScoreMult);
                     this.score += pointsGained;
                     this.registerHit(); // Combo-Tracking
                     this.popups.push(new ScorePopup(t.x, t.y, `+${pointsGained}`));
                     if (multiplier > 1) {
                         this.popups.push(new ScorePopup(t.x, t.y - 30, `x${multiplier.toFixed(1)}`, '#FFD700'));
+                    }
+                    if (critMult > 1) {
+                        this.popups.push(new ScorePopup(t.x, t.y - 60, '⚡ KRIT!', '#ff6b6b'));
                     }
                 }
 
@@ -2764,8 +2821,30 @@ class Game {
             this.unlockAchievement('fever', 'Fever-Mode aktiviert!');
         } else if (type === 'coins') {
             this.meta.coins += 50;
-            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+50 Coins!', '#FFD700'));
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, '+50 Coins!', '#FFD700'));
             this.unlockAchievement('coins', 'Bonus-Coins gesammelt!');
+        } else if (type === 'doublescore') {
+            this.activeBuffs.doublescore = 8000;
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, '2x PUNKTE!', '#e91e63'));
+        } else if (type === 'frenzy') {
+            this.activeBuffs.frenzy = 6000;
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'FRENZY!', '#ff5722'));
+        } else if (type === 'zoom') {
+            this.activeBuffs.zoom = 8000;
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'ZOOM!', '#00bcd4'));
+        } else if (type === 'shield') {
+            this.missShieldsLeft = (this.missShieldsLeft || 0) + 1;
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, '🛡️ +1 Kugelsicherung!', '#4caf50'));
+        } else if (type === 'bomb') {
+            let bombPoints = 0;
+            const toKill = this.targets.filter(t => !(t instanceof InGameUpgrade) && !t.markedForDeletion);
+            toKill.forEach(t => {
+                t.markedForDeletion = true;
+                bombPoints += t.points;
+                this.createExplosion(t.x, t.y, '#FF4500');
+            });
+            if (bombPoints > 0) this.score += bombPoints;
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, `💥 BOMBE! +${bombPoints}`, '#FF4500'));
         }
     }
 
@@ -2815,8 +2894,8 @@ class Game {
         this.ui.cursor.style.display = 'none';
         document.body.style.cursor = 'default';
 
-        // Calc Coins (z.B. 10 Punkte = 1 Münze)
-        const earnedCoins = Math.floor(this.score / 10);
+        // Calc Coins (z.B. 10 Punkte = 1 Münze, Goldgier gibt Bonus)
+        const earnedCoins = Math.floor(this.score / 10 * (1 + (this.meta.upgrades.goldgier || 0) * 0.2));
         this.meta.coins += earnedCoins;
 
         let isNewHS = false;
@@ -2917,6 +2996,7 @@ class Game {
     // --- Rendern & Update ---
 
     gameLoop(timestamp) {
+        if (this.lastTime == null) this.lastTime = timestamp;
         const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
 
@@ -2951,6 +3031,15 @@ class Game {
         if (this.activeBuffs.shotgun > 0) {
             this.activeBuffs.shotgun -= deltaTime;
         }
+        if (this.activeBuffs.doublescore > 0) {
+            this.activeBuffs.doublescore -= deltaTime;
+        }
+        if (this.activeBuffs.frenzy > 0) {
+            this.activeBuffs.frenzy -= deltaTime;
+        }
+        if (this.activeBuffs.zoom > 0) {
+            this.activeBuffs.zoom -= deltaTime;
+        }
 
         // Update HUD min. jeden Frame wg Buff-Timer
         this.updateHUD();
@@ -2972,7 +3061,7 @@ class Game {
         // ===== GIMMICK: Endspurt-Modus (Stress bei <5s) =====
         if (this.timeRemaining < 5 && !this.endRushMode) {
             this.endRushMode = true;
-            this.popups.push(new ScorePopup(this.canvas.width / 2, 100, 'FINALER ENDSPURT!', '#FF0000'));
+            this.popups.push(new ScorePopup(this.gameW / 2, 100, 'FINALER ENDSPURT!', '#FF0000'));
         }
         if (this.timeRemaining >= 5) {
             this.endRushMode = false;
@@ -2990,38 +3079,39 @@ class Game {
         if (!this.landscape.ufo.hit && !this.landscape.ufo.active && this.timeRemaining <= 10 && this.timeRemaining > 9) {
             this.landscape.ufo.active = true;
             this.landscape.ufo.x = -50;
-            this.landscape.ufo.y = this.canvas.height * 0.08;
+            this.landscape.ufo.y = this.gameH * 0.08;
         }
         // UFO bewegen
         if (this.landscape.ufo.active) {
             this.landscape.ufo.x += this.landscape.ufo.speed * (deltaTime / 1000);
-            if (this.landscape.ufo.x > this.canvas.width + 50) {
+            if (this.landscape.ufo.x > this.gameW + 50) {
                 this.landscape.ufo.active = false;
             }
         }
 
         // Spawnen
         this.spawnTimer += deltaTime;
-        if (this.spawnTimer > 1000) { // Jede sekunde Chance auf neues Huhn
+        if (this.spawnTimer > (this.activeBuffs.frenzy > 0 ? 500 : 1000)) { // Frenzy: doppelte Spawn-Rate
             this.spawnTimer = 0;
             if (Math.random() > 0.3 && this.targets.length < 8) {
                 // 30% Chance auf ein verstecktes Huhn, 70% fliegendes
                 if (Math.random() < 0.3) {
                     const obstacle = this.landscape.getRandomObstacle();
-                    this.targets.push(new HiddenTarget(this.canvas.width, this.canvas.height, obstacle));
+                    this.targets.push(new HiddenTarget(this.gameW, this.gameH, obstacle));
                 } else {
-                    this.targets.push(new Target(this.canvas.width, this.canvas.height));
+                    this.targets.push(new Target(this.gameW, this.gameH));
                 }
             }
         }
 
         this.upgradeSpawnTimer += deltaTime;
-        if (this.upgradeSpawnTimer > 8000) { // Alle ~8 Sekunden
+        const balloonInterval = 8000 - (this.meta.upgrades.eagleEye || 0) * 1000;
+        if (this.upgradeSpawnTimer > balloonInterval) { // Alle ~8s (Adlerauge: bis zu 5s)
             this.upgradeSpawnTimer = 0;
             if (Math.random() > 0.5) { // 50% chance
-                const types = ['time', 'machinegun', 'slowmo', 'shotgun', 'fever', 'coins'];
+                const types = ['time', 'machinegun', 'slowmo', 'shotgun', 'fever', 'coins', 'doublescore', 'frenzy', 'zoom', 'shield', 'bomb'];
                 const t = types[Math.floor(Math.random() * types.length)];
-                this.targets.push(new InGameUpgrade(this.canvas.width, this.canvas.height, t));
+                this.targets.push(new InGameUpgrade(this.gameW, this.gameH, t));
             }
         }
 
@@ -3032,7 +3122,7 @@ class Game {
                 this.swarmIsActive = true;
                 this.swarmSpawnTimer = 0;
                 this.swarmCooldownTimer = 30000; // 30s cooldown nach Swarm
-                this.popups.push(new ScorePopup(this.canvas.width / 2, 150, 'SCHWARM-EREIGNIS!', '#FF00FF'));
+                this.popups.push(new ScorePopup(this.gameW / 2, 150, 'SCHWARM-EREIGNIS!', '#FF00FF'));
             }
         }
 
@@ -3078,7 +3168,18 @@ class Game {
         // Layer-Reihenfolge:
         // 1. Hintergrund (bereits gezeichnet oben)
         // 2. Alle Targets (Hühner fliegen HINTER den Hindernissen)
-        this.targets.forEach(t => t.draw(this.ctx));
+        this.targets.forEach(t => {
+            if (this.activeBuffs.zoom > 0 && !(t instanceof InGameUpgrade)) {
+                this.ctx.save();
+                this.ctx.translate(t.x, t.y);
+                this.ctx.scale(1.35, 1.35);
+                this.ctx.translate(-t.x, -t.y);
+                t.draw(this.ctx);
+                this.ctx.restore();
+            } else {
+                t.draw(this.ctx);
+            }
+        });
         // 3. Vordergrund-Objekte (Baum, Fels, Holzstapel) ÜBER den Hühnern
         this.landscape.drawForeground(this.ctx);
         // 4. Blutlachen (unter Partikeln, damit sie auf dem Boden liegen)
@@ -3089,25 +3190,25 @@ class Game {
 
         // Optional: Vignette Effekt über das Canvas legen
         const gradient = this.ctx.createRadialGradient(
-            this.canvas.width / 2, this.canvas.height / 2, Math.min(this.canvas.width, this.canvas.height) / 2,
-            this.canvas.width / 2, this.canvas.height / 2, Math.max(this.canvas.width, this.canvas.height)
+            this.gameW / 2, this.gameH / 2, Math.min(this.gameW, this.gameH) / 2,
+            this.gameW / 2, this.gameH / 2, Math.max(this.gameW, this.gameH)
         );
         gradient.addColorStop(0, 'rgba(0,0,0,0)');
         gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
         this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, this.gameW, this.gameH);
 
         // SlowMo Overlay
         if (this.state === GameState.PLAYING && this.activeBuffs.slowmo > 0) {
             this.ctx.fillStyle = 'rgba(155, 89, 182, 0.1)';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillRect(0, 0, this.gameW, this.gameH);
         }
 
         // Endspurt Overlay (rote Pulsierung)
         if (this.state === GameState.PLAYING && this.endRushMode) {
             const pulse = Math.sin(Date.now() / 100) * 0.5 + 0.5; // 0..1 pulsing
             this.ctx.fillStyle = `rgba(255, 0, 0, ${pulse * 0.15})`;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillRect(0, 0, this.gameW, this.gameH);
         }
     }
 
@@ -3137,9 +3238,14 @@ class Game {
     }
 
     registerMiss() {
+        if (this.missShieldsLeft > 0) {
+            this.missShieldsLeft--;
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2 - 40, '🛡️ Kugelsicherung!', '#27ae60'));
+            return; // Combo bleibt erhalten
+        }
         if (this.comboCount >= 5) {
             const msg = `Kombo weg! (${this.comboCount}x)`;
-            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, msg, 'combo-break'));
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, msg, 'combo-break'));
         }
         this.comboCount = 0;
         this.comboTimer = 0;
@@ -3149,7 +3255,7 @@ class Game {
         if (!this.unlockedAchievements[id]) {
             this.unlockedAchievements[id] = true;
             const msg = `🏆 ${title}!`;
-            this.popups.push(new ScorePopup(this.canvas.width / 2, 100, msg, 'achievement'));
+            this.popups.push(new ScorePopup(this.gameW / 2, 100, msg, 'achievement'));
         }
     }
 
@@ -3166,6 +3272,11 @@ class Game {
         this.meta.upgrades.reloadSpeed = 3;
         this.meta.upgrades.timeBonus = 3;
         this.meta.upgrades.shotgun = 3;
+        this.meta.upgrades.goldgier = 3;
+        this.meta.upgrades.comboExtender = 3;
+        this.meta.upgrades.criticalHit = 3;
+        this.meta.upgrades.missShield = 3;
+        this.meta.upgrades.eagleEye = 3;
         this.meta.coins += 500;
         this.unlockAchievement('menucheat', 'Geheimcode: MOORHUHN');
         this.saveMeta();
@@ -3181,7 +3292,7 @@ class Game {
     cheat_addScore() {
         if (this.state !== GameState.PLAYING) return;
         this.score += 1000;
-        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+1000 CHEAT', '#00ffaa'));
+        this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, '+1000 CHEAT', '#00ffaa'));
     }
 
     cheat_addCoins() {
@@ -3189,32 +3300,32 @@ class Game {
         this.saveMeta();
         this.updateMenuUI();
         if (this.state === GameState.PLAYING) {
-            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+500 Münzen CHEAT', '#00ffaa'));
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, '+500 Münzen CHEAT', '#00ffaa'));
         }
     }
 
     cheat_addTime() {
         if (this.state !== GameState.PLAYING) return;
         this.timeRemaining += 30;
-        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, '+30s CHEAT', '#00ffaa'));
+        this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, '+30s CHEAT', '#00ffaa'));
     }
 
     cheat_machinegun() {
         if (this.state !== GameState.PLAYING) return;
         this.activeBuffs.machinegun = Math.max(this.activeBuffs.machinegun, 30000);
-        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'MG-MODUS CHEAT', '#00ffaa'));
+        this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'MG-MODUS CHEAT', '#00ffaa'));
     }
 
     cheat_slowmo() {
         if (this.state !== GameState.PLAYING) return;
         this.activeBuffs.slowmo = Math.max(this.activeBuffs.slowmo, 30000);
-        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'SLOWMO CHEAT', '#00ffaa'));
+        this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'SLOWMO CHEAT', '#00ffaa'));
     }
 
     cheat_shotgun() {
         if (this.state !== GameState.PLAYING) return;
         this.activeBuffs.shotgun = Math.max(this.activeBuffs.shotgun, 30000);
-        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'SHOTGUN CHEAT', '#00ffaa'));
+        this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'SHOTGUN CHEAT', '#00ffaa'));
     }
 
     cheat_fillAmmo() {
@@ -3222,7 +3333,7 @@ class Game {
         this.ammo = this.maxAmmo;
         this.isReloading = false;
         this.renderAmmo();
-        this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'MUNITION VOLL CHEAT', '#00ffaa'));
+        this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'MUNITION VOLL CHEAT', '#00ffaa'));
     }
 
     cheat_maxUpgrades() {
@@ -3230,11 +3341,16 @@ class Game {
         this.meta.upgrades.reloadSpeed = 3;
         this.meta.upgrades.timeBonus = 3;
         this.meta.upgrades.shotgun = 3;
+        this.meta.upgrades.goldgier = 3;
+        this.meta.upgrades.comboExtender = 3;
+        this.meta.upgrades.criticalHit = 3;
+        this.meta.upgrades.missShield = 3;
+        this.meta.upgrades.eagleEye = 3;
         this.meta.coins += 500;
         this.saveMeta();
         this.updateMenuUI();
         if (this.state === GameState.PLAYING) {
-            this.popups.push(new ScorePopup(this.canvas.width / 2, this.canvas.height / 2, 'UPGRADES MAX CHEAT', '#00ffaa'));
+            this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'UPGRADES MAX CHEAT', '#00ffaa'));
         }
     }
 
@@ -3272,10 +3388,10 @@ class Game {
         // 18% Chance on Rare, 82% normal
         let target;
         if (Math.random() < 0.18) {
-            target = new RareTarget(this.canvas.width, this.canvas.height);
+            target = new RareTarget(this.gameW, this.gameH);
             this.unlockAchievement('goldenhuhn', 'Goldhuhn erwischt!');
         } else {
-            target = new Target(this.canvas.width, this.canvas.height);
+            target = new Target(this.gameW, this.gameH);
         }
         // Swarm-Modifikationen: kleiner, mehr Punkte
         target.size *= 0.75;
