@@ -2227,44 +2227,7 @@ class Game {
         // Portrait-Overlay initial prüfen
         this.updatePortraitOverlay();
         // --- Portrait-Overlay-Option ---
-        initRotationEnforceToggle() {
-            const checkbox = document.getElementById('toggle-rotation-enforce');
-            // Initialwert aus localStorage
-            const enforce = localStorage.getItem('moorhuhn_enforce_rotation');
-            checkbox.checked = enforce !== '0'; // Default: an
-            checkbox.addEventListener('change', () => {
-                localStorage.setItem('moorhuhn_enforce_rotation', checkbox.checked ? '1' : '0');
-                this.updatePortraitOverlay();
-            });
-            // Hinweistext setzen
-            const hint = document.getElementById('portrait-overlay-hint');
-            if (hint) {
-                hint.textContent = 'Diese Warnung kann im Hauptmenü deaktiviert werden.';
-            }
-            // Bei Orientierung/Resize Overlay prüfen
-            window.addEventListener('orientationchange', () => this.updatePortraitOverlay());
-            window.addEventListener('resize', () => this.updatePortraitOverlay());
-        }
-
-        updatePortraitOverlay() {
-            const enforce = localStorage.getItem('moorhuhn_enforce_rotation');
-            const overlay = document.getElementById('portrait-overlay');
-            if (!overlay) return;
-            // Nur auf Mobilgeräten relevant
-            const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-            // Wenn Option deaktiviert: Overlay immer ausblenden
-            if (enforce === '0' || !isMobile) {
-                overlay.style.display = 'none';
-                return;
-            }
-            // Prüfe Orientierung
-            const isPortrait = window.innerHeight > window.innerWidth;
-            if (isPortrait && window.innerWidth < 900) {
-                overlay.style.display = 'flex';
-            } else {
-                overlay.style.display = 'none';
-            }
-        }
+        // (Methoden sind korrekt innerhalb der Klasse definiert)
     }
 
     loadMeta() {
