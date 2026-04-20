@@ -2277,6 +2277,40 @@ class Game {
         if (this.landscape) {
             this.landscape.resize(cssW, cssH);
         }
+        this.updatePortraitOverlay();
+    }
+
+    shouldEnforceRotation() {
+        return localStorage.getItem('moorhuhn_force_landscape') === '1';
+    }
+
+    initRotationEnforceToggle() {
+        const toggle = document.getElementById('toggle-rotation-enforce');
+        if (!toggle) return;
+
+        toggle.checked = this.shouldEnforceRotation();
+        toggle.addEventListener('change', () => {
+            localStorage.setItem('moorhuhn_force_landscape', toggle.checked ? '1' : '0');
+            this.updatePortraitOverlay();
+        });
+    }
+
+    updatePortraitOverlay() {
+        const overlay = document.getElementById('portrait-overlay');
+        const hint = document.getElementById('portrait-overlay-hint');
+        if (!overlay) return;
+
+        const enforceRotation = this.shouldEnforceRotation();
+        const isPortrait = window.innerHeight > window.innerWidth;
+        const shouldShow = enforceRotation && isPortrait;
+
+        overlay.style.display = shouldShow ? 'flex' : 'none';
+
+        if (hint) {
+            hint.textContent = enforceRotation
+                ? 'Aktiv: Querformat wird aktuell erzwungen.'
+                : '';
+        }
     }
 
     initEvents() {
@@ -3340,7 +3374,7 @@ class Game {
         if (this.state !== GameState.PLAYING) return;
         this.ammo = this.maxAmmo;
         this.isReloading = false;
-        this.renderAmmo();
+        this.updateHUD();
         this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, 'MUNITION VOLL CHEAT', '#00ffaa'));
     }
 
