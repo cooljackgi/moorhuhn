@@ -1,7 +1,6 @@
--- Supabase admin setup for secure highscore editing
--- Replace the placeholder email with your real admin email before running.
---
--- Run this in Supabase SQL Editor.
+-- Moorhuhn admin + analytics setup
+-- Run this in the Supabase SQL Editor.
+-- Admin email fixed for this project: becker.bubenrod@gmail.com
 
 alter table public.highscores enable row level security;
 
@@ -32,5 +31,43 @@ with check ((auth.jwt() ->> 'email') = 'becker.bubenrod@gmail.com');
 create policy "admin can delete highscores"
 on public.highscores
 for delete
+to authenticated
+using ((auth.jwt() ->> 'email') = 'becker.bubenrod@gmail.com');
+
+create table if not exists public.game_sessions (
+    client_session_id text primary key,
+    started_at timestamptz not null default timezone('utc', now()),
+    ended_at timestamptz,
+    completed boolean not null default false,
+    score integer not null default 0,
+    coins_earned integer not null default 0,
+    duration_seconds integer not null default 0,
+    exit_reason text not null default 'unknown',
+    page_path text,
+    user_agent text
+);
+
+alter table public.game_sessions enable row level security;
+
+drop policy if exists "public can insert sessions" on public.game_sessions;
+drop policy if exists "public can update sessions" on public.game_sessions;
+drop policy if exists "admin can read sessions" on public.game_sessions;
+
+create policy "public can insert sessions"
+on public.game_sessions
+for insert
+to anon, authenticated
+with check (true);
+
+create policy "public can update sessions"
+on public.game_sessions
+for update
+to anon, authenticated
+using (true)
+with check (true);
+
+create policy "admin can read sessions"
+on public.game_sessions
+for select
 to authenticated
 using ((auth.jwt() ->> 'email') = 'becker.bubenrod@gmail.com');

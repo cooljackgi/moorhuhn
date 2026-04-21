@@ -2220,8 +2220,11 @@ class Game {
 
         this.highscoreEntries = [];
         this.editingHighscoreIndex = -1;
+        this.enableInlineAdminHighscoreControls = false;
         this.adminUser = null;
         this.adminAuthSubscription = null;
+        this.currentSessionId = null;
+        this.sessionStartedAt = null;
 
         this.initEvents();
         this.resize();
@@ -2347,6 +2350,10 @@ class Game {
         return window.db.isAdminUser(this.adminUser);
     }
 
+    canManageHighscoresHere() {
+        return this.enableInlineAdminHighscoreControls && this.isAdmin();
+    }
+
     updateAdminUI() {
         if (!this.ui.adminAuthStatus) return;
 
@@ -2368,6 +2375,7 @@ class Game {
     }
 
     async loginAdmin() {
+        if (!this.ui.adminEmailInput || !this.ui.adminPasswordInput) return;
         const email = this.ui.adminEmailInput.value.trim();
         const password = this.ui.adminPasswordInput.value;
 
@@ -2398,6 +2406,7 @@ class Game {
     }
 
     async logoutAdmin() {
+        if (!this.ui.btnAdminLogout) return;
         const success = await window.db.signOutAdmin();
         if (!success) {
             this.setHighscoreEditMessage('Logout fehlgeschlagen.', true);
@@ -2455,8 +2464,8 @@ class Game {
 
         document.getElementById('btn-shop-back').addEventListener('click', () => this.showMainMenu());
         document.getElementById('btn-highscores-back').addEventListener('click', () => this.showMainMenu());
-        this.ui.btnAdminLogin.addEventListener('click', () => this.loginAdmin());
-        this.ui.btnAdminLogout.addEventListener('click', () => this.logoutAdmin());
+        if (this.ui.btnAdminLogin) this.ui.btnAdminLogin.addEventListener('click', () => this.loginAdmin());
+        if (this.ui.btnAdminLogout) this.ui.btnAdminLogout.addEventListener('click', () => this.logoutAdmin());
 
         document.getElementById('btn-play-again').addEventListener('click', () => this.startGame());
         document.getElementById('btn-gameover-menu').addEventListener('click', () => this.showMainMenu());
@@ -2518,11 +2527,13 @@ class Game {
             }
         });
 
-        this.ui.adminPasswordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                this.loginAdmin();
-            }
-        });
+        if (this.ui.adminPasswordInput) {
+            this.ui.adminPasswordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    this.loginAdmin();
+                }
+            });
+        }
     }
 
     updateMenuUI() {
@@ -2549,6 +2560,9 @@ class Game {
     }
 
     showMainMenu() {
+        if (this.state === GameState.PLAYING && this.currentSessionId) {
+            this.finishActiveSession(false, 'menu');
+        }
         this.state = GameState.MENU;
         this.audio.stopBGM();
         this.hideAllScreens();
@@ -2564,6 +2578,28 @@ class Game {
         if (typeof window.initAdWhenReady === 'function') {
             setTimeout(() => window.initAdWhenReady('ad-main-menu', 20, 250), 0);
         }
+    }
+
+    async startNewSession() {
+        this.currentSessionId = await window.db.startGameSession();
+        this.sessionStartedAt = Date.now();
+    }
+
+    async finishActiveSession(completed, exitReason, coinsEarned = 0) {
+        if (!this.currentSessionId) return;
+
+        const sessionId = this.currentSessionId;
+        const startedAt = this.sessionStartedAt || Date.now();
+        this.currentSessionId = null;
+        this.sessionStartedAt = null;
+
+        await window.db.finishGameSession(sessionId, {
+            completed,
+            exit_reason: exitReason,
+            score: this.score || 0,
+            coins_earned: coinsEarned,
+            duration_seconds: (Date.now() - startedAt) / 1000
+        });
     }
 
     hideAllScreens() {
@@ -2637,7 +2673,7 @@ class Game {
             const li = document.createElement('li');
             li.className = 'highscore-item';
 
-        if (this.isAdmin() && this.editingHighscoreIndex === i) {
+            if (this.canManageHighscoresHere() && this.editingHighscoreIndex === i) {
                 li.innerHTML = `
                     <div class="highscore-edit-fields">
                         <input id="hs-edit-name-${i}" class="highscore-edit-input" type="text" maxlength="15" value="${this.escapeHtml(hs.name)}">
@@ -2654,7 +2690,7 @@ class Game {
                         <span>#${i + 1} <b>${this.escapeHtml(hs.name)}</b></span>
                         <span>${hs.score} Pkt</span>
                     </div>
-                    ${this.isAdmin() ? `
+                    ${this.canManageHighscoresHere() ? `
                     <div class="highscore-actions">
                         <button class="btn btn-secondary highscore-action-btn" onclick="window.game.startEditHighscore(${i})">Bearbeiten</button>
                         <button class="btn btn-secondary highscore-action-btn danger" onclick="window.game.deleteHighscoreEntry(${i})">Loeschen</button>
@@ -2676,7 +2712,7 @@ class Game {
     }
 
     startEditHighscore(index) {
-        if (!this.isAdmin()) return;
+        if (!this.canManageHighscoresHere()) return;
         this.editingHighscoreIndex = index;
         this.setHighscoreEditMessage('');
         this.renderHighscoreList();
@@ -2689,7 +2725,7 @@ class Game {
     }
 
     async saveEditedHighscore(index) {
-        if (!this.isAdmin()) {
+        if (!this.canManageHighscoresHere()) {
             this.setHighscoreEditMessage('Nur Admins duerfen Highscores bearbeiten.', true);
             return;
         }
@@ -2719,7 +2755,7 @@ class Game {
     }
 
     async deleteHighscoreEntry(index) {
-        if (!this.isAdmin()) {
+        if (!this.canManageHighscoresHere()) {
             this.setHighscoreEditMessage('Nur Admins duerfen Highscores loeschen.', true);
             return;
         }
@@ -2789,6 +2825,9 @@ class Game {
     }
 
     startGame() {
+        if (this.currentSessionId) {
+            this.finishActiveSession(false, 'restart');
+        }
         if (this.audio.ctx.state === 'suspended') {
             this.audio.ctx.resume();
         }
@@ -2843,6 +2882,7 @@ class Game {
 
         this.lastTime = performance.now();
         this.updateHUD();
+        this.startNewSession();
     }
 
     updateHUD() {
@@ -3178,6 +3218,7 @@ class Game {
         // Calc Coins (z.B. 10 Punkte = 1 Münze, Goldgier gibt Bonus)
         const earnedCoins = Math.floor(this.score / 10 * (1 + (this.meta.upgrades.goldgier || 0) * 0.2));
         this.meta.coins += earnedCoins;
+        await this.finishActiveSession(true, 'completed', earnedCoins);
 
         let isNewHS = false;
         this.meta.highscores.push(this.score);

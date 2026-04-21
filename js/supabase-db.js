@@ -3,7 +3,6 @@
 const SUPABASE_URL = 'https://jaeaoajtmjicwqjwtuly.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_uWXUdVQD2X1hYpdCWaxFBw_9SjrWBrT';
 
-// Add your admin email(s) here. The same email(s) must also be used in the SQL policies.
 const ADMIN_EMAILS = [
     'becker.bubenrod@gmail.com'
 ];
@@ -38,13 +37,27 @@ function buildHighscoreMutation(entry) {
         .eq('score', entry.score);
 }
 
-async function getHighscores() {
+function generateClientSessionId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+    }
+
+    return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function getTodayStartIso() {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return todayStart.toISOString();
+}
+
+async function getHighscores(limit = 25) {
     try {
         const { data, error } = await supabaseClient
             .from('highscores')
             .select('name, score, created_at')
             .order('score', { ascending: false })
-            .limit(25);
+            .limit(limit);
 
         if (error) {
             console.error('Error fetching highscores:', error);
@@ -116,6 +129,60 @@ async function deleteHighscore(entry) {
     }
 }
 
+async function startGameSession() {
+    const clientSessionId = generateClientSessionId();
+
+    try {
+        const { error } = await supabaseClient
+            .from('game_sessions')
+            .insert([{
+                client_session_id: clientSessionId,
+                started_at: new Date().toISOString(),
+                completed: false,
+                page_path: window.location.pathname,
+                user_agent: navigator.userAgent
+            }]);
+
+        if (error) {
+            console.error('Error starting game session:', error);
+            return null;
+        }
+
+        return clientSessionId;
+    } catch (err) {
+        console.error('Unexpected error starting game session:', err);
+        return null;
+    }
+}
+
+async function finishGameSession(clientSessionId, payload = {}) {
+    if (!clientSessionId) return false;
+
+    try {
+        const { error } = await supabaseClient
+            .from('game_sessions')
+            .update({
+                ended_at: new Date().toISOString(),
+                completed: Boolean(payload.completed),
+                score: sanitizeHighscoreScore(payload.score),
+                coins_earned: sanitizeHighscoreScore(payload.coins_earned || 0),
+                duration_seconds: Math.max(0, Math.round(payload.duration_seconds || 0)),
+                exit_reason: String(payload.exit_reason || 'unknown').substring(0, 40)
+            })
+            .eq('client_session_id', clientSessionId);
+
+        if (error) {
+            console.error('Error finishing game session:', error);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('Unexpected error finishing game session:', err);
+        return false;
+    }
+}
+
 async function signInAdmin(email, password) {
     try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -171,11 +238,92 @@ function onAuthStateChange(callback) {
     });
 }
 
+async function getAdminDashboardData() {
+    const todayStartIso = getTodayStartIso();
+
+    try {
+        const [
+            highscores,
+            recentSessionsResult,
+            totalSessionsResult,
+            todaySessionsResult,
+            todayCompletedResult,
+            todayScoresResult
+        ] = await Promise.all([
+            getHighscores(50),
+            supabaseClient
+                .from('game_sessions')
+                .select('started_at, ended_at, completed, score, coins_earned, duration_seconds, exit_reason, page_path')
+                .order('started_at', { ascending: false })
+                .limit(30),
+            supabaseClient
+                .from('game_sessions')
+                .select('*', { count: 'exact', head: true }),
+            supabaseClient
+                .from('game_sessions')
+                .select('*', { count: 'exact', head: true })
+                .gte('started_at', todayStartIso),
+            supabaseClient
+                .from('game_sessions')
+                .select('*', { count: 'exact', head: true })
+                .gte('started_at', todayStartIso)
+                .eq('completed', true),
+            supabaseClient
+                .from('game_sessions')
+                .select('score')
+                .gte('started_at', todayStartIso)
+                .eq('completed', true)
+        ]);
+
+        if (recentSessionsResult.error) throw recentSessionsResult.error;
+        if (totalSessionsResult.error) throw totalSessionsResult.error;
+        if (todaySessionsResult.error) throw todaySessionsResult.error;
+        if (todayCompletedResult.error) throw todayCompletedResult.error;
+        if (todayScoresResult.error) throw todayScoresResult.error;
+
+        const todayScores = (todayScoresResult.data || []).map((row) => row.score || 0);
+        const avgTodayScore = todayScores.length
+            ? Math.round(todayScores.reduce((sum, value) => sum + value, 0) / todayScores.length)
+            : 0;
+        const bestTodayScore = todayScores.length ? Math.max(...todayScores) : 0;
+
+        return {
+            highscores,
+            recentSessions: recentSessionsResult.data || [],
+            stats: {
+                totalSessions: totalSessionsResult.count || 0,
+                sessionsToday: todaySessionsResult.count || 0,
+                completedToday: todayCompletedResult.count || 0,
+                avgTodayScore,
+                bestTodayScore,
+                highscoreEntries: highscores.length
+            }
+        };
+    } catch (err) {
+        console.error('Unexpected error loading admin dashboard:', err);
+        return {
+            highscores: [],
+            recentSessions: [],
+            stats: {
+                totalSessions: 0,
+                sessionsToday: 0,
+                completedToday: 0,
+                avgTodayScore: 0,
+                bestTodayScore: 0,
+                highscoreEntries: 0
+            }
+        };
+    }
+}
+
 window.db = {
     getHighscores,
     saveHighscore,
     updateHighscore,
     deleteHighscore,
+    startGameSession,
+    finishGameSession,
+    getAdminDashboardData,
     signInAdmin,
     signOutAdmin,
     getCurrentUser,

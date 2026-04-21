@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moorhuhn Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+</head>
+
+<body class="admin-page">
+    <main class="admin-shell">
+        <section class="admin-hero">
+            <div>
+                <p class="admin-kicker">Moorhuhn Admin</p>
+                <h1>Dashboard</h1>
+                <p class="admin-subtitle">Highscores verwalten, Spielrunden prüfen und sehen, wie oft heute gespielt wurde.</p>
+            </div>
+            <div class="admin-hero-actions">
+                <a href="index.html" class="btn btn-secondary">Zurück zum Spiel</a>
+                <button id="btn-admin-refresh" class="btn btn-primary hidden">Aktualisieren</button>
+                <button id="btn-admin-logout-page" class="btn btn-secondary hidden">Logout</button>
+            </div>
+        </section>
+
+        <section class="admin-panel admin-login-panel" id="admin-login-panel">
+            <h2>Admin Login</h2>
+            <p class="admin-panel-copy">Nur für freigegebene Admin-Accounts.</p>
+            <div class="admin-login-grid">
+                <input type="email" id="admin-page-email" class="name-input admin-auth-input" placeholder="Admin E-Mail">
+                <input type="password" id="admin-page-password" class="name-input admin-auth-input" placeholder="Passwort">
+                <button id="btn-admin-login-page" class="btn btn-primary">Einloggen</button>
+            </div>
+            <p id="admin-page-message" class="highscore-edit-msg hidden"></p>
+        </section>
+
+        <section id="admin-dashboard" class="hidden">
+            <section class="admin-stats-grid">
+                <article class="admin-stat-card">
+                    <span class="admin-stat-label">Heute gestartet</span>
+                    <strong id="stat-sessions-today">0</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span class="admin-stat-label">Heute beendet</span>
+                    <strong id="stat-completed-today">0</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span class="admin-stat-label">Ø Score heute</span>
+                    <strong id="stat-avg-score">0</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span class="admin-stat-label">Bester Score heute</span>
+                    <strong id="stat-best-score">0</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span class="admin-stat-label">Runden gesamt</span>
+                    <strong id="stat-total-sessions">0</strong>
+                </article>
+                <article class="admin-stat-card">
+                    <span class="admin-stat-label">Highscore-Einträge</span>
+                    <strong id="stat-highscore-count">0</strong>
+                </article>
+            </section>
+
+            <section class="admin-grid">
+                <section class="admin-panel">
+                    <div class="admin-panel-head">
+                        <div>
+                            <h2>Highscores</h2>
+                            <p class="admin-panel-copy">Direkt bearbeiten oder löschen.</p>
+                        </div>
+                    </div>
+                    <p id="admin-highscore-message" class="highscore-edit-msg hidden"></p>
+                    <ul id="admin-highscore-list" class="highscore-list admin-highscore-list"></ul>
+                </section>
+
+                <section class="admin-panel">
+                    <div class="admin-panel-head">
+                        <div>
+                            <h2>Letzte Spielrunden</h2>
+                            <p class="admin-panel-copy">Letzte Starts und Abschlüsse aus `game_sessions`.</p>
+                        </div>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Start</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Dauer</th>
+                                    <th>Exit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-sessions-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-db.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>
