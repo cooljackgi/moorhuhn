@@ -2195,6 +2195,7 @@ class Game {
             menuCoins: document.getElementById('menu-coins'),
             shopCoins: document.getElementById('shop-coins'),
             highscoreList: document.getElementById('highscore-list'),
+            highscoreEditMsg: document.getElementById('highscore-edit-msg'),
 
             resScore: document.getElementById('result-score'),
             resCoins: document.getElementById('result-coins'),
@@ -2210,6 +2211,9 @@ class Game {
             btnReload: document.getElementById('btn-reload'),
             cheatMenu: document.getElementById('cheat-menu')
         };
+
+        this.highscoreEntries = [];
+        this.editingHighscoreIndex = -1;
 
         this.initEvents();
         this.resize();
@@ -2483,8 +2487,13 @@ class Game {
         this.ui.highscoreMenu.classList.add('active');
 
         this.ui.highscoreList.innerHTML = '<li>Lade Highscores...</li>';
+        this.setHighscoreEditMessage('');
 
         const scores = await window.db.getHighscores();
+        this.highscoreEntries = scores;
+        this.editingHighscoreIndex = -1;
+        this.renderHighscoreList();
+        return;
 
         this.ui.highscoreList.innerHTML = '';
         if (scores.length === 0) {
@@ -2497,6 +2506,123 @@ class Game {
                 this.ui.highscoreList.appendChild(li);
             });
         }
+    }
+
+    setHighscoreEditMessage(message, isError = false) {
+        if (!this.ui.highscoreEditMsg) return;
+
+        if (!message) {
+            this.ui.highscoreEditMsg.textContent = '';
+            this.ui.highscoreEditMsg.classList.add('hidden');
+            this.ui.highscoreEditMsg.classList.remove('error');
+            return;
+        }
+
+        this.ui.highscoreEditMsg.textContent = message;
+        this.ui.highscoreEditMsg.classList.remove('hidden');
+        this.ui.highscoreEditMsg.classList.toggle('error', isError);
+    }
+
+    renderHighscoreList() {
+        this.ui.highscoreList.innerHTML = '';
+
+        if (this.highscoreEntries.length === 0) {
+            this.ui.highscoreList.innerHTML = '<li>Noch keine EintrÃ¤ge oder Fehler beim Laden.</li>';
+            return;
+        }
+
+        this.highscoreEntries.forEach((hs, i) => {
+            const li = document.createElement('li');
+            li.className = 'highscore-item';
+
+            if (this.editingHighscoreIndex === i) {
+                li.innerHTML = `
+                    <div class="highscore-edit-fields">
+                        <input id="hs-edit-name-${i}" class="highscore-edit-input" type="text" maxlength="15" value="${this.escapeHtml(hs.name)}">
+                        <input id="hs-edit-score-${i}" class="highscore-edit-input highscore-score-input" type="number" min="0" step="1" value="${hs.score}">
+                    </div>
+                    <div class="highscore-actions">
+                        <button class="btn btn-primary highscore-action-btn" onclick="window.game.saveEditedHighscore(${i})">Speichern</button>
+                        <button class="btn btn-secondary highscore-action-btn" onclick="window.game.cancelEditHighscore()">Abbrechen</button>
+                    </div>
+                `;
+            } else {
+                li.innerHTML = `
+                    <div class="highscore-main">
+                        <span>#${i + 1} <b>${this.escapeHtml(hs.name)}</b></span>
+                        <span>${hs.score} Pkt</span>
+                    </div>
+                    <div class="highscore-actions">
+                        <button class="btn btn-secondary highscore-action-btn" onclick="window.game.startEditHighscore(${i})">Bearbeiten</button>
+                        <button class="btn btn-secondary highscore-action-btn danger" onclick="window.game.deleteHighscoreEntry(${i})">LÃ¶schen</button>
+                    </div>
+                `;
+            }
+
+            this.ui.highscoreList.appendChild(li);
+        });
+    }
+
+    escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    startEditHighscore(index) {
+        this.editingHighscoreIndex = index;
+        this.setHighscoreEditMessage('');
+        this.renderHighscoreList();
+    }
+
+    cancelEditHighscore() {
+        this.editingHighscoreIndex = -1;
+        this.setHighscoreEditMessage('');
+        this.renderHighscoreList();
+    }
+
+    async saveEditedHighscore(index) {
+        const entry = this.highscoreEntries[index];
+        if (!entry) return;
+
+        const nameInput = document.getElementById(`hs-edit-name-${index}`);
+        const scoreInput = document.getElementById(`hs-edit-score-${index}`);
+        const newName = nameInput ? nameInput.value : entry.name;
+        const newScore = scoreInput ? scoreInput.value : entry.score;
+
+        this.setHighscoreEditMessage('Speichere Highscore...');
+
+        const success = await window.db.updateHighscore(entry, {
+            name: newName,
+            score: newScore
+        });
+
+        if (!success) {
+            this.setHighscoreEditMessage('Bearbeiten fehlgeschlagen. Supabase erlaubt das gerade nicht.', true);
+            return;
+        }
+
+        await this.openHighscores();
+        this.setHighscoreEditMessage('Highscore aktualisiert.');
+    }
+
+    async deleteHighscoreEntry(index) {
+        const entry = this.highscoreEntries[index];
+        if (!entry) return;
+
+        this.setHighscoreEditMessage('LÃ¶sche Highscore...');
+
+        const success = await window.db.deleteHighscore(entry);
+        if (!success) {
+            this.setHighscoreEditMessage('LÃ¶schen fehlgeschlagen. Supabase erlaubt das gerade nicht.', true);
+            return;
+        }
+
+        await this.openHighscores();
+        this.setHighscoreEditMessage('Highscore gelÃ¶scht.');
     }
 
     renderShopItems() {

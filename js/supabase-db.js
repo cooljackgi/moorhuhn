@@ -17,7 +17,7 @@ async function getHighscores() {
             .from('highscores')
             .select('name, score, created_at')
             .order('score', { ascending: false })
-            .limit(10);
+            .limit(25);
 
         if (error) {
             console.error("Error fetching highscores:", error);
@@ -61,7 +61,64 @@ async function saveHighscore(name, score) {
     }
 }
 
+function sanitizeHighscoreName(name) {
+    const trimmed = (name || '').trim();
+    return trimmed === '' ? 'Anonymes Huhn' : trimmed.substring(0, 15);
+}
+
+function sanitizeHighscoreScore(score) {
+    const parsed = parseInt(score, 10);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+}
+
+function buildHighscoreMutation(entry) {
+    return supabaseClient
+        .from('highscores')
+        .eq('created_at', entry.created_at)
+        .eq('name', entry.name)
+        .eq('score', entry.score);
+}
+
+async function updateHighscore(entry, updates) {
+    try {
+        const payload = {
+            name: sanitizeHighscoreName(updates.name),
+            score: sanitizeHighscoreScore(updates.score)
+        };
+
+        const { error } = await buildHighscoreMutation(entry).update(payload);
+
+        if (error) {
+            console.error("Error updating highscore:", error);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error("Unexpected error updating highscore:", err);
+        return false;
+    }
+}
+
+async function deleteHighscore(entry) {
+    try {
+        const { error } = await buildHighscoreMutation(entry).delete();
+
+        if (error) {
+            console.error("Error deleting highscore:", error);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error("Unexpected error deleting highscore:", err);
+        return false;
+    }
+}
+
 window.db = {
     getHighscores,
-    saveHighscore
+    saveHighscore,
+    updateHighscore,
+    deleteHighscore
 };

@@ -391,6 +391,75 @@ body {
     border-bottom: none;
 }
 
+.highscore-edit-msg {
+    width: 400px;
+    max-width: 90vw;
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(46, 204, 113, 0.18);
+    border: 1px solid rgba(46, 204, 113, 0.35);
+    color: #d5ffe0;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.highscore-edit-msg.error {
+    background: rgba(231, 76, 60, 0.18);
+    border-color: rgba(231, 76, 60, 0.35);
+    color: #ffd7d2;
+}
+
+.highscore-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.highscore-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+
+.highscore-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.highscore-action-btn {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+}
+
+.highscore-action-btn.danger {
+    background: linear-gradient(180deg, #d64541, #96281b);
+}
+
+.highscore-edit-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(90px, 0.7fr);
+    gap: 10px;
+}
+
+.highscore-edit-input {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 215, 0, 0.45);
+    background: rgba(0, 0, 0, 0.45);
+    color: white;
+    outline: none;
+}
+
+.highscore-score-input {
+    text-align: center;
+}
+
 /* == Advertisement Slots == */
 .ad-slot {
     background: rgba(255, 255, 255, 0.05);
@@ -688,6 +757,26 @@ body {
     .highscore-list li {
         font-size: 1rem;
         padding: 6px 0;
+    }
+
+    .highscore-edit-msg {
+        width: 90vw;
+        max-width: 350px;
+        font-size: 0.85rem;
+    }
+
+    .highscore-edit-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .highscore-actions {
+        justify-content: stretch;
+    }
+
+    .highscore-action-btn {
+        flex: 1 1 120px;
+        font-size: 0.8rem;
+        padding: 8px 10px;
     }
 
     /* Name Input */
