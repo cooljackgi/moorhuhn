@@ -78,6 +78,15 @@
             <!-- Highscore Menü -->
             <div id="highscore-menu" class="screen hidden window-menu">
                 <h2>Highscores</h2>
+                <div class="admin-auth-box">
+                    <p id="admin-auth-status" class="admin-auth-status">Admin nicht eingeloggt.</p>
+                    <div id="admin-auth-form" class="admin-auth-form">
+                        <input type="email" id="admin-email-input" class="name-input admin-auth-input" placeholder="Admin E-Mail">
+                        <input type="password" id="admin-password-input" class="name-input admin-auth-input" placeholder="Admin Passwort">
+                        <button id="btn-admin-login" class="btn btn-primary">Admin Login</button>
+                    </div>
+                    <button id="btn-admin-logout" class="btn btn-secondary hidden">Logout</button>
+                </div>
                 <p id="highscore-edit-msg" class="highscore-edit-msg hidden"></p>
                 <ul id="highscore-list" class="highscore-list">
                     <!-- Highscores via JS -->

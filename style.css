@@ -391,6 +391,33 @@ body {
     border-bottom: none;
 }
 
+.admin-auth-box {
+    width: 400px;
+    max-width: 90vw;
+    margin-bottom: 14px;
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-auth-status {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    color: #ffe9a6;
+}
+
+.admin-auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-auth-input {
+    width: 100%;
+    max-width: 100%;
+}
+
 .highscore-edit-msg {
     width: 400px;
     max-width: 90vw;
@@ -757,6 +784,12 @@ body {
     .highscore-list li {
         font-size: 1rem;
         padding: 6px 0;
+    }
+
+    .admin-auth-box {
+        width: 90vw;
+        max-width: 350px;
+        padding: 12px;
     }
 
     .highscore-edit-msg {

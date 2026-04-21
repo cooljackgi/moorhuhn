@@ -2196,6 +2196,12 @@ class Game {
             shopCoins: document.getElementById('shop-coins'),
             highscoreList: document.getElementById('highscore-list'),
             highscoreEditMsg: document.getElementById('highscore-edit-msg'),
+            adminAuthStatus: document.getElementById('admin-auth-status'),
+            adminAuthForm: document.getElementById('admin-auth-form'),
+            adminEmailInput: document.getElementById('admin-email-input'),
+            adminPasswordInput: document.getElementById('admin-password-input'),
+            btnAdminLogin: document.getElementById('btn-admin-login'),
+            btnAdminLogout: document.getElementById('btn-admin-logout'),
 
             resScore: document.getElementById('result-score'),
             resCoins: document.getElementById('result-coins'),
@@ -2214,6 +2220,8 @@ class Game {
 
         this.highscoreEntries = [];
         this.editingHighscoreIndex = -1;
+        this.adminUser = null;
+        this.adminAuthSubscription = null;
 
         this.initEvents();
         this.resize();
@@ -2221,6 +2229,7 @@ class Game {
 
         this.updateMenuUI();
         this.updateModeToggleUI();
+        this.initAdminAuth();
 
         // Portrait-Overlay-Option initialisieren
         this.initRotationEnforceToggle();
@@ -2317,6 +2326,90 @@ class Game {
         }
     }
 
+    async initAdminAuth() {
+        this.adminUser = await window.db.getCurrentUser();
+        this.updateAdminUI();
+
+        if (this.adminAuthSubscription && this.adminAuthSubscription.data && this.adminAuthSubscription.data.subscription) {
+            this.adminAuthSubscription.data.subscription.unsubscribe();
+        }
+
+        this.adminAuthSubscription = window.db.onAuthStateChange((user) => {
+            this.adminUser = user;
+            this.updateAdminUI();
+            if (this.state === GameState.HIGHSCORES) {
+                this.renderHighscoreList();
+            }
+        });
+    }
+
+    isAdmin() {
+        return window.db.isAdminUser(this.adminUser);
+    }
+
+    updateAdminUI() {
+        if (!this.ui.adminAuthStatus) return;
+
+        if (this.isAdmin()) {
+            this.ui.adminAuthStatus.textContent = `Admin aktiv: ${this.adminUser.email}`;
+            this.ui.adminAuthForm.classList.add('hidden');
+            this.ui.btnAdminLogout.classList.remove('hidden');
+            return;
+        }
+
+        if (this.adminUser && this.adminUser.email) {
+            this.ui.adminAuthStatus.textContent = `Eingeloggt als ${this.adminUser.email}, aber nicht als Admin freigeschaltet.`;
+        } else {
+            this.ui.adminAuthStatus.textContent = 'Admin nicht eingeloggt.';
+        }
+
+        this.ui.adminAuthForm.classList.remove('hidden');
+        this.ui.btnAdminLogout.classList.add('hidden');
+    }
+
+    async loginAdmin() {
+        const email = this.ui.adminEmailInput.value.trim();
+        const password = this.ui.adminPasswordInput.value;
+
+        if (!email || !password) {
+            this.setHighscoreEditMessage('Bitte Admin E-Mail und Passwort eingeben.', true);
+            return;
+        }
+
+        this.setHighscoreEditMessage('Admin-Login läuft...');
+        const result = await window.db.signInAdmin(email, password);
+
+        if (!result.success) {
+            this.setHighscoreEditMessage(result.error || 'Admin-Login fehlgeschlagen.', true);
+            return;
+        }
+
+        if (!window.db.isAdminUser(result.user)) {
+            await window.db.signOutAdmin();
+            this.setHighscoreEditMessage('Dieser Account ist nicht als Admin freigegeben.', true);
+            return;
+        }
+
+        this.ui.adminPasswordInput.value = '';
+        this.adminUser = result.user;
+        this.updateAdminUI();
+        this.renderHighscoreList();
+        this.setHighscoreEditMessage('Admin-Login erfolgreich.');
+    }
+
+    async logoutAdmin() {
+        const success = await window.db.signOutAdmin();
+        if (!success) {
+            this.setHighscoreEditMessage('Logout fehlgeschlagen.', true);
+            return;
+        }
+
+        this.adminUser = null;
+        this.updateAdminUI();
+        this.renderHighscoreList();
+        this.setHighscoreEditMessage('Admin ausgeloggt.');
+    }
+
     initEvents() {
         // Mausbewegung für Fadenkreuz (Canvas und UI)
         document.addEventListener('mousemove', (e) => {
@@ -2362,6 +2455,8 @@ class Game {
 
         document.getElementById('btn-shop-back').addEventListener('click', () => this.showMainMenu());
         document.getElementById('btn-highscores-back').addEventListener('click', () => this.showMainMenu());
+        this.ui.btnAdminLogin.addEventListener('click', () => this.loginAdmin());
+        this.ui.btnAdminLogout.addEventListener('click', () => this.logoutAdmin());
 
         document.getElementById('btn-play-again').addEventListener('click', () => this.startGame());
         document.getElementById('btn-gameover-menu').addEventListener('click', () => this.showMainMenu());
@@ -2420,6 +2515,12 @@ class Game {
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && this.state === GameState.PLAYING) {
                 this.lastTime = null;
+            }
+        });
+
+        this.ui.adminPasswordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                this.loginAdmin();
             }
         });
     }
@@ -2487,6 +2588,7 @@ class Game {
         this.ui.highscoreMenu.classList.add('active');
 
         this.ui.highscoreList.innerHTML = '<li>Lade Highscores...</li>';
+        this.updateAdminUI();
         this.setHighscoreEditMessage('');
 
         const scores = await window.db.getHighscores();
@@ -2535,7 +2637,7 @@ class Game {
             const li = document.createElement('li');
             li.className = 'highscore-item';
 
-            if (this.editingHighscoreIndex === i) {
+        if (this.isAdmin() && this.editingHighscoreIndex === i) {
                 li.innerHTML = `
                     <div class="highscore-edit-fields">
                         <input id="hs-edit-name-${i}" class="highscore-edit-input" type="text" maxlength="15" value="${this.escapeHtml(hs.name)}">
@@ -2552,10 +2654,11 @@ class Game {
                         <span>#${i + 1} <b>${this.escapeHtml(hs.name)}</b></span>
                         <span>${hs.score} Pkt</span>
                     </div>
+                    ${this.isAdmin() ? `
                     <div class="highscore-actions">
                         <button class="btn btn-secondary highscore-action-btn" onclick="window.game.startEditHighscore(${i})">Bearbeiten</button>
-                        <button class="btn btn-secondary highscore-action-btn danger" onclick="window.game.deleteHighscoreEntry(${i})">LÃ¶schen</button>
-                    </div>
+                        <button class="btn btn-secondary highscore-action-btn danger" onclick="window.game.deleteHighscoreEntry(${i})">Loeschen</button>
+                    </div>` : ''}
                 `;
             }
 
@@ -2573,6 +2676,7 @@ class Game {
     }
 
     startEditHighscore(index) {
+        if (!this.isAdmin()) return;
         this.editingHighscoreIndex = index;
         this.setHighscoreEditMessage('');
         this.renderHighscoreList();
@@ -2585,6 +2689,11 @@ class Game {
     }
 
     async saveEditedHighscore(index) {
+        if (!this.isAdmin()) {
+            this.setHighscoreEditMessage('Nur Admins duerfen Highscores bearbeiten.', true);
+            return;
+        }
+
         const entry = this.highscoreEntries[index];
         if (!entry) return;
 
@@ -2601,7 +2710,7 @@ class Game {
         });
 
         if (!success) {
-            this.setHighscoreEditMessage('Bearbeiten fehlgeschlagen. Supabase erlaubt das gerade nicht.', true);
+            this.setHighscoreEditMessage('Bearbeiten fehlgeschlagen. Pruefe die Admin-RLS-Policy in Supabase.', true);
             return;
         }
 
@@ -2610,6 +2719,10 @@ class Game {
     }
 
     async deleteHighscoreEntry(index) {
+        if (!this.isAdmin()) {
+            this.setHighscoreEditMessage('Nur Admins duerfen Highscores loeschen.', true);
+            return;
+        }
         const entry = this.highscoreEntries[index];
         if (!entry) return;
 
