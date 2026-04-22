@@ -34,9 +34,8 @@ function isAdminUser(user) {
     return ADMIN_EMAILS.map(normalizeEmail).includes(email);
 }
 
-function buildHighscoreMutation(entry) {
-    return supabaseClient
-        .from('highscores')
+function applyHighscoreEntryFilters(query, entry) {
+    return query
         .eq('created_at', entry.created_at)
         .eq('name', entry.name)
         .eq('score', entry.score);
@@ -126,10 +125,15 @@ async function saveHighscore(name, score) {
 
 async function updateHighscore(entry, updates) {
     try {
-        const { error } = await buildHighscoreMutation(entry).update({
-            name: sanitizeHighscoreName(updates.name),
-            score: sanitizeHighscoreScore(updates.score)
-        });
+        const { error } = await applyHighscoreEntryFilters(
+            supabaseClient
+                .from('highscores')
+                .update({
+                    name: sanitizeHighscoreName(updates.name),
+                    score: sanitizeHighscoreScore(updates.score)
+                }),
+            entry
+        );
 
         if (error) {
             console.error('Error updating highscore:', error);
@@ -145,7 +149,12 @@ async function updateHighscore(entry, updates) {
 
 async function deleteHighscore(entry) {
     try {
-        const { error } = await buildHighscoreMutation(entry).delete();
+        const { error } = await applyHighscoreEntryFilters(
+            supabaseClient
+                .from('highscores')
+                .delete(),
+            entry
+        );
 
         if (error) {
             console.error('Error deleting highscore:', error);
