@@ -499,6 +499,12 @@ body {
 .admin-page {
     min-height: 100vh;
     margin: 0;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    user-select: text;
+    overscroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
     background:
         radial-gradient(circle at top, rgba(255, 215, 0, 0.15), transparent 35%),
         linear-gradient(180deg, #12212f 0%, #0a1219 100%);
