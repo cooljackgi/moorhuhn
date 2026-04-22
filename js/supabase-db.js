@@ -8,6 +8,11 @@ const ADMIN_EMAILS = [
 ];
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const DEFAULT_GAME_CONFIG = {
+    time_limit_seconds: 90,
+    game_enabled: true,
+    announcement_text: ''
+};
 
 function normalizeEmail(email) {
     return String(email || '').trim().toLowerCase();
@@ -49,6 +54,31 @@ function getTodayStartIso() {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return todayStart.toISOString();
+}
+
+function normalizeGameConfig(rows) {
+    const config = { ...DEFAULT_GAME_CONFIG };
+
+    (rows || []).forEach((row) => {
+        if (!row || !row.key) return;
+
+        if (row.key === 'time_limit_seconds') {
+            const parsed = parseInt(row.value, 10);
+            if (Number.isFinite(parsed)) {
+                config.time_limit_seconds = Math.max(15, Math.min(parsed, 600));
+            }
+        }
+
+        if (row.key === 'game_enabled') {
+            config.game_enabled = String(row.value).toLowerCase() !== 'false';
+        }
+
+        if (row.key === 'announcement_text') {
+            config.announcement_text = String(row.value || '').substring(0, 280);
+        }
+    });
+
+    return config;
 }
 
 async function getHighscores(limit = 25) {
@@ -243,6 +273,7 @@ async function getAdminDashboardData() {
 
     try {
         const [
+            configResult,
             highscores,
             recentSessionsResult,
             totalSessionsResult,
@@ -250,6 +281,9 @@ async function getAdminDashboardData() {
             todayCompletedResult,
             todayScoresResult
         ] = await Promise.all([
+            supabaseClient
+                .from('game_config')
+                .select('key, value'),
             getHighscores(50),
             supabaseClient
                 .from('game_sessions')
@@ -275,6 +309,7 @@ async function getAdminDashboardData() {
                 .eq('completed', true)
         ]);
 
+        if (configResult.error) throw configResult.error;
         if (recentSessionsResult.error) throw recentSessionsResult.error;
         if (totalSessionsResult.error) throw totalSessionsResult.error;
         if (todaySessionsResult.error) throw todaySessionsResult.error;
@@ -288,6 +323,7 @@ async function getAdminDashboardData() {
         const bestTodayScore = todayScores.length ? Math.max(...todayScores) : 0;
 
         return {
+            config: normalizeGameConfig(configResult.data || []),
             highscores,
             recentSessions: recentSessionsResult.data || [],
             stats: {
@@ -302,6 +338,7 @@ async function getAdminDashboardData() {
     } catch (err) {
         console.error('Unexpected error loading admin dashboard:', err);
         return {
+            config: { ...DEFAULT_GAME_CONFIG },
             highscores: [],
             recentSessions: [],
             stats: {
@@ -316,6 +353,57 @@ async function getAdminDashboardData() {
     }
 }
 
+async function getPublicGameConfig() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('game_config')
+            .select('key, value');
+
+        if (error) {
+            console.error('Error loading game config:', error);
+            return { ...DEFAULT_GAME_CONFIG };
+        }
+
+        return normalizeGameConfig(data || []);
+    } catch (err) {
+        console.error('Unexpected error loading game config:', err);
+        return { ...DEFAULT_GAME_CONFIG };
+    }
+}
+
+async function upsertGameConfig(config) {
+    const rows = [
+        {
+            key: 'time_limit_seconds',
+            value: String(Math.max(15, Math.min(parseInt(config.time_limit_seconds, 10) || DEFAULT_GAME_CONFIG.time_limit_seconds, 600)))
+        },
+        {
+            key: 'game_enabled',
+            value: String(Boolean(config.game_enabled))
+        },
+        {
+            key: 'announcement_text',
+            value: String(config.announcement_text || '').substring(0, 280)
+        }
+    ];
+
+    try {
+        const { error } = await supabaseClient
+            .from('game_config')
+            .upsert(rows, { onConflict: 'key' });
+
+        if (error) {
+            console.error('Error saving game config:', error);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('Unexpected error saving game config:', err);
+        return false;
+    }
+}
+
 window.db = {
     getHighscores,
     saveHighscore,
@@ -324,10 +412,13 @@ window.db = {
     startGameSession,
     finishGameSession,
     getAdminDashboardData,
+    getPublicGameConfig,
+    upsertGameConfig,
     signInAdmin,
     signOutAdmin,
     getCurrentUser,
     onAuthStateChange,
     isAdminUser,
-    ADMIN_EMAILS
+    ADMIN_EMAILS,
+    DEFAULT_GAME_CONFIG
 };

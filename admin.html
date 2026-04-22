@@ -63,6 +63,33 @@
                 </article>
             </section>
 
+            <section class="admin-panel admin-settings-panel">
+                <div class="admin-panel-head">
+                    <div>
+                        <h2>Spieleinstellungen</h2>
+                        <p class="admin-panel-copy">Zeitlimit, Aktiv-Status und Hinweistext für das Hauptmenü.</p>
+                    </div>
+                </div>
+                <div class="admin-settings-grid">
+                    <label class="admin-setting-field">
+                        <span>Zeitlimit in Sekunden</span>
+                        <input type="number" id="setting-time-limit" class="highscore-edit-input" min="15" max="600" step="5">
+                    </label>
+                    <label class="admin-setting-field admin-setting-toggle">
+                        <span>Spiel aktiv</span>
+                        <input type="checkbox" id="setting-game-enabled">
+                    </label>
+                    <label class="admin-setting-field admin-setting-wide">
+                        <span>Hinweistext im Hauptmenü</span>
+                        <textarea id="setting-announcement" class="highscore-edit-input admin-textarea" maxlength="280" placeholder="Optionaler Hinweis für Spieler"></textarea>
+                    </label>
+                </div>
+                <div class="admin-settings-actions">
+                    <button id="btn-save-settings" class="btn btn-primary">Einstellungen speichern</button>
+                </div>
+                <p id="admin-settings-message" class="highscore-edit-msg hidden"></p>
+            </section>
+
             <section class="admin-grid">
                 <section class="admin-panel">
                     <div class="admin-panel-head">

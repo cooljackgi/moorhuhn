@@ -1,5 +1,5 @@
 // --- Konfiguration und Globals ---
-const GAME_DURATION = 90; // Standard Zeit in Sekunden
+const GAME_DURATION = 90; // Fallback Zeit in Sekunden
 const DEFAULT_AMMO = 5;
 const KONAMI_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
 const MENU_CHEAT_CODE = 'MOORHUHN';
@@ -2221,6 +2221,7 @@ class Game {
         this.highscoreEntries = [];
         this.editingHighscoreIndex = -1;
         this.enableInlineAdminHighscoreControls = false;
+        this.remoteConfig = { time_limit_seconds: GAME_DURATION, game_enabled: true, announcement_text: '' };
         this.adminUser = null;
         this.adminAuthSubscription = null;
         this.currentSessionId = null;
@@ -2233,6 +2234,7 @@ class Game {
         this.updateMenuUI();
         this.updateModeToggleUI();
         this.initAdminAuth();
+        this.loadRemoteConfig();
 
         // Portrait-Overlay-Option initialisieren
         this.initRotationEnforceToggle();
@@ -2352,6 +2354,28 @@ class Game {
 
     canManageHighscoresHere() {
         return this.enableInlineAdminHighscoreControls && this.isAdmin();
+    }
+
+    async loadRemoteConfig() {
+        this.remoteConfig = await window.db.getPublicGameConfig();
+        this.applyRemoteConfig();
+    }
+
+    applyRemoteConfig() {
+        const announcement = document.getElementById('menu-announcement');
+        const startButton = document.getElementById('btn-start');
+
+        if (announcement) {
+            const text = String(this.remoteConfig.announcement_text || '').trim();
+            announcement.textContent = text;
+            announcement.classList.toggle('hidden', text === '');
+        }
+
+        if (startButton) {
+            startButton.disabled = !this.remoteConfig.game_enabled;
+            startButton.style.filter = this.remoteConfig.game_enabled ? '' : 'grayscale(1)';
+            startButton.textContent = this.remoteConfig.game_enabled ? 'Spiel Starten' : 'Spiel Deaktiviert';
+        }
     }
 
     updateAdminUI() {
@@ -2825,6 +2849,10 @@ class Game {
     }
 
     startGame() {
+        if (!this.remoteConfig.game_enabled) {
+            this.setHighscoreEditMessage('Das Spiel ist aktuell deaktiviert.', true);
+            return;
+        }
         if (this.currentSessionId) {
             this.finishActiveSession(false, 'restart');
         }
@@ -2849,7 +2877,7 @@ class Game {
 
         // Init Stats
         this.score = 0;
-        this.timeRemaining = GAME_DURATION + (this.meta.upgrades.timeBonus * 10);
+        this.timeRemaining = this.remoteConfig.time_limit_seconds + (this.meta.upgrades.timeBonus * 10);
         this.maxAmmo = DEFAULT_AMMO + (this.meta.upgrades.magazine * 2);
         this.ammo = this.maxAmmo;
         this.isReloading = false;

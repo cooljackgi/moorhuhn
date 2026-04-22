@@ -4,6 +4,7 @@ class AdminApp {
         this.highscores = [];
         this.editingHighscoreIndex = -1;
         this.authSubscription = null;
+        this.config = { ...window.db.DEFAULT_GAME_CONFIG };
 
         this.ui = {
             loginPanel: document.getElementById('admin-login-panel'),
@@ -15,6 +16,7 @@ class AdminApp {
             refreshButton: document.getElementById('btn-admin-refresh'),
             message: document.getElementById('admin-page-message'),
             highscoreMessage: document.getElementById('admin-highscore-message'),
+            settingsMessage: document.getElementById('admin-settings-message'),
             highscoreList: document.getElementById('admin-highscore-list'),
             sessionsBody: document.getElementById('admin-sessions-body'),
             statSessionsToday: document.getElementById('stat-sessions-today'),
@@ -22,7 +24,11 @@ class AdminApp {
             statAvgScore: document.getElementById('stat-avg-score'),
             statBestScore: document.getElementById('stat-best-score'),
             statTotalSessions: document.getElementById('stat-total-sessions'),
-            statHighscoreCount: document.getElementById('stat-highscore-count')
+            statHighscoreCount: document.getElementById('stat-highscore-count'),
+            settingTimeLimit: document.getElementById('setting-time-limit'),
+            settingGameEnabled: document.getElementById('setting-game-enabled'),
+            settingAnnouncement: document.getElementById('setting-announcement'),
+            saveSettingsButton: document.getElementById('btn-save-settings')
         };
 
         this.bindEvents();
@@ -33,6 +39,7 @@ class AdminApp {
         this.ui.loginButton.addEventListener('click', () => this.login());
         this.ui.logoutButton.addEventListener('click', () => this.logout());
         this.ui.refreshButton.addEventListener('click', () => this.loadDashboard());
+        this.ui.saveSettingsButton.addEventListener('click', () => this.saveSettings());
         this.ui.password.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 this.login();
@@ -140,6 +147,7 @@ class AdminApp {
         const data = await window.db.getAdminDashboardData();
         this.highscores = data.highscores || [];
         this.editingHighscoreIndex = -1;
+        this.config = data.config || { ...window.db.DEFAULT_GAME_CONFIG };
 
         this.ui.statSessionsToday.textContent = data.stats.sessionsToday;
         this.ui.statCompletedToday.textContent = data.stats.completedToday;
@@ -148,9 +156,33 @@ class AdminApp {
         this.ui.statTotalSessions.textContent = data.stats.totalSessions;
         this.ui.statHighscoreCount.textContent = data.stats.highscoreEntries;
 
+        this.ui.settingTimeLimit.value = this.config.time_limit_seconds;
+        this.ui.settingGameEnabled.checked = Boolean(this.config.game_enabled);
+        this.ui.settingAnnouncement.value = this.config.announcement_text || '';
+
         this.renderHighscores();
         this.renderSessions(data.recentSessions || []);
         this.setMessage(this.ui.highscoreMessage, '');
+        this.setMessage(this.ui.settingsMessage, '');
+    }
+
+    async saveSettings() {
+        if (!this.isAdmin()) return;
+
+        this.setMessage(this.ui.settingsMessage, 'Speichere Einstellungen...');
+        const success = await window.db.upsertGameConfig({
+            time_limit_seconds: this.ui.settingTimeLimit.value,
+            game_enabled: this.ui.settingGameEnabled.checked,
+            announcement_text: this.ui.settingAnnouncement.value
+        });
+
+        if (!success) {
+            this.setMessage(this.ui.settingsMessage, 'Speichern fehlgeschlagen. Prüfe die Config-Policies.', true);
+            return;
+        }
+
+        await this.loadDashboard();
+        this.setMessage(this.ui.settingsMessage, 'Einstellungen gespeichert.');
     }
 
     renderHighscores() {

@@ -34,6 +34,36 @@ for delete
 to authenticated
 using ((auth.jwt() ->> 'email') = 'becker.bubenrod@gmail.com');
 
+create table if not exists public.game_config (
+    key text primary key,
+    value text not null
+);
+
+alter table public.game_config enable row level security;
+
+drop policy if exists "public can read game config" on public.game_config;
+drop policy if exists "admin can write game config" on public.game_config;
+
+create policy "public can read game config"
+on public.game_config
+for select
+to anon, authenticated
+using (true);
+
+create policy "admin can write game config"
+on public.game_config
+for all
+to authenticated
+using ((auth.jwt() ->> 'email') = 'becker.bubenrod@gmail.com')
+with check ((auth.jwt() ->> 'email') = 'becker.bubenrod@gmail.com');
+
+insert into public.game_config (key, value)
+values
+    ('time_limit_seconds', '90'),
+    ('game_enabled', 'true'),
+    ('announcement_text', '')
+on conflict (key) do nothing;
+
 create table if not exists public.game_sessions (
     client_session_id text primary key,
     started_at timestamptz not null default timezone('utc', now()),
