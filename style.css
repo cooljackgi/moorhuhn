@@ -862,10 +862,10 @@ body {
 .btn-reload {
     position: fixed;
     bottom: 30px;
-    right: 30px;
     font-family: 'Fredoka One', cursive;
     font-size: 1.4rem;
-    padding: 15px 40px;
+    padding: 15px 26px;
+    min-width: 128px;
     border: none;
     border-radius: 50px;
     background: linear-gradient(180deg, #ff9800, #e65100);
@@ -880,6 +880,14 @@ body {
 
 .btn-reload.visible {
     display: block;
+}
+
+.btn-reload-left {
+    left: 30px;
+}
+
+.btn-reload-right {
+    right: 30px;
 }
 
 /* == Prevent overscroll on iOS / mobile == */
@@ -1403,11 +1411,19 @@ body {
     }
 
     .btn-reload {
-        right: max(14px, env(safe-area-inset-right));
         bottom: max(14px, env(safe-area-inset-bottom));
         padding: 14px 22px;
         font-size: 1rem;
         border-radius: 18px;
+        min-width: 110px;
+    }
+
+    .btn-reload-left {
+        left: max(14px, env(safe-area-inset-left));
+    }
+
+    .btn-reload-right {
+        right: max(14px, env(safe-area-inset-right));
     }
 
     .window-menu {
@@ -1477,5 +1493,14 @@ body {
         padding: 10px 16px;
         font-size: 0.85rem;
         border-radius: 14px;
+        min-width: 92px;
+    }
+
+    .btn-reload-left {
+        left: 12px;
+    }
+
+    .btn-reload-right {
+        right: 12px;
     }
 }

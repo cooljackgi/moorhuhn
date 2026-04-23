@@ -2215,7 +2215,9 @@ class Game {
             highscoreSubmissionDiv: document.getElementById('highscore-submission'),
 
             cursor: document.getElementById('custom-cursor'),
-            btnReload: document.getElementById('btn-reload'),
+            btnReloadLeft: document.getElementById('btn-reload-left'),
+            btnReloadRight: document.getElementById('btn-reload-right'),
+            btnFullscreen: document.getElementById('btn-fullscreen'),
             cheatMenu: document.getElementById('cheat-menu')
         };
 
@@ -2323,16 +2325,13 @@ class Game {
 
         const enforceRotation = this.shouldEnforceRotation();
         const isPortrait = window.innerHeight > window.innerWidth;
-        const isCompactTouchScreen = this.isTouchDevice && Math.min(window.innerWidth, window.innerHeight) < 900;
-        const shouldShow = isPortrait && (enforceRotation || (isCompactTouchScreen && this.state === GameState.PLAYING));
+        const shouldShow = enforceRotation && isPortrait;
 
         overlay.style.display = shouldShow ? 'flex' : 'none';
 
         if (hint) {
             if (enforceRotation) {
                 hint.textContent = 'Aktiv: Querformat wird aktuell erzwungen.';
-            } else if (isCompactTouchScreen && isPortrait) {
-                hint.textContent = 'Tipp: Auf kleinen Displays bleibt Zielen und HUD im Querformat deutlich besser nutzbar.';
             } else {
                 hint.textContent = '';
             }
@@ -2493,6 +2492,9 @@ class Game {
         document.getElementById('btn-start').addEventListener('click', () => this.startGame());
         document.getElementById('btn-shop').addEventListener('click', () => this.openShop());
         document.getElementById('btn-highscores').addEventListener('click', () => this.openHighscores());
+        if (this.ui.btnFullscreen) {
+            this.ui.btnFullscreen.addEventListener('click', () => this.enterFullscreen());
+        }
 
         document.getElementById('btn-shop-back').addEventListener('click', () => this.showMainMenu());
         document.getElementById('btn-highscores-back').addEventListener('click', () => this.showMainMenu());
@@ -2536,16 +2538,18 @@ class Game {
             }
         }, true);
 
-        // Mobile Reload Button
-        this.ui.btnReload.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.reload();
+        [this.ui.btnReloadLeft, this.ui.btnReloadRight].forEach((button) => {
+            if (!button) return;
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.reload();
+            });
+            button.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.reload();
+            }, { passive: false });
         });
-        this.ui.btnReload.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            this.reload();
-        }, { passive: false });
 
         // Verhindere Scroll/Zoom während des Spiels
         this.canvas.addEventListener('touchmove', (e) => {
@@ -2565,6 +2569,26 @@ class Game {
                     this.loginAdmin();
                 }
             });
+        }
+    }
+
+    enterFullscreen() {
+        const root = document.documentElement;
+        const request =
+            root.requestFullscreen ||
+            root.webkitRequestFullscreen ||
+            root.mozRequestFullScreen ||
+            root.msRequestFullscreen;
+
+        if (!request) return;
+
+        try {
+            const result = request.call(root);
+            if (result && typeof result.catch === 'function') {
+                result.catch(() => { });
+            }
+        } catch (_) {
+            // Mobile browser denied fullscreen; keep playing normally.
         }
     }
 
@@ -2602,8 +2626,11 @@ class Game {
         this.ui.mainMenu.classList.add('active');
         this.ui.cursor.style.display = 'none'; // Normaler cursor im Menü
         document.body.style.cursor = 'default';
-        this.ui.btnReload.classList.add('hidden');
-        this.ui.btnReload.classList.remove('visible');
+        [this.ui.btnReloadLeft, this.ui.btnReloadRight].forEach((button) => {
+            if (!button) return;
+            button.classList.add('hidden');
+            button.classList.remove('visible');
+        });
         this.updateMenuUI();
         this.updatePortraitOverlay();
 
@@ -2870,6 +2897,9 @@ class Game {
         if (this.audio.ctx.state === 'suspended') {
             this.audio.ctx.resume();
         }
+        if (this.isTouchDevice) {
+            this.enterFullscreen();
+        }
 
         this.state = GameState.PLAYING;
         this.audio.startBGM();
@@ -2882,8 +2912,11 @@ class Game {
 
         // Show reload button on touch devices
         if (this.isTouchDevice) {
-            this.ui.btnReload.classList.remove('hidden');
-            this.ui.btnReload.classList.add('visible');
+            [this.ui.btnReloadLeft, this.ui.btnReloadRight].forEach((button) => {
+                if (!button) return;
+                button.classList.remove('hidden');
+                button.classList.add('visible');
+            });
         }
         this.updatePortraitOverlay();
 
