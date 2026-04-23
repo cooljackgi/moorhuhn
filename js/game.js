@@ -2146,7 +2146,6 @@ class Game {
         this.isReloading = false;
         this.reloadEndsAt = 0;
         this.reloadDurationMs = 0;
-        this.reloadFlashTimeout = null;
 
         // Active Buffs
         this.activeBuffs = {
@@ -2923,10 +2922,6 @@ class Game {
         if (this.audio.ctx.state === 'suspended') {
             this.audio.ctx.resume();
         }
-        if (this.isTouchDevice) {
-            this.enterFullscreen();
-        }
-
         this.state = GameState.PLAYING;
         this.audio.startBGM();
         this.hideAllScreens();
@@ -2997,7 +2992,6 @@ class Game {
         this.ui.ammoContainer.innerHTML = '';
         this.ui.ammoContainer.classList.remove('is-reloading');
         if (this.ui.reloadProgress) this.ui.reloadProgress.classList.add('hidden');
-        if (this.ui.reloadProgress) this.ui.reloadProgress.classList.remove('reloaded');
         const limitType = this.activeBuffs.machinegun > 0;
 
         if (this.isReloading) {
@@ -3157,19 +3151,6 @@ class Game {
                 this.reloadEndsAt = 0;
                 this.reloadDurationMs = 0;
                 this.updateHUD();
-                if (this.reloadFlashTimeout) {
-                    clearTimeout(this.reloadFlashTimeout);
-                }
-                if (this.ui.reloadProgress) {
-                    this.ui.reloadProgress.classList.remove('hidden');
-                    this.ui.reloadProgress.classList.add('reloaded');
-                    this.reloadFlashTimeout = setTimeout(() => {
-                        if (this.ui.reloadProgress) {
-                            this.ui.reloadProgress.classList.remove('reloaded');
-                            this.ui.reloadProgress.classList.add('hidden');
-                        }
-                    }, 350);
-                }
             }
         }, reloadTime);
     }
