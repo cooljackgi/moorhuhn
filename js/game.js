@@ -2127,8 +2127,8 @@ class Game {
 
         this.state = GameState.MENU;
 
-        // Touch device detection
-        this.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        // Touch/mobile detection
+        this.isTouchDevice = this.detectTouchDevice();
 
         this.themeIndex = 0;
         this.gameW = window.innerWidth;
@@ -2144,6 +2144,9 @@ class Game {
         this.maxAmmo = DEFAULT_AMMO + this.meta.upgrades.magazine;
         this.ammo = this.maxAmmo;
         this.isReloading = false;
+        this.reloadEndsAt = 0;
+        this.reloadDurationMs = 0;
+        this.reloadFlashTimeout = null;
 
         // Active Buffs
         this.activeBuffs = {
@@ -2190,6 +2193,8 @@ class Game {
             time: document.getElementById('hud-time'),
             ammoContainer: document.getElementById('ammo-container'),
             ammoCountLabel: document.getElementById('ammo-count-label'),
+            reloadProgress: document.getElementById('reload-progress'),
+            reloadProgressBar: document.getElementById('reload-progress-bar'),
             reloadHint: document.getElementById('reload-hint'),
             buffsContainer: document.getElementById('buffs-container'),
 
@@ -2284,7 +2289,17 @@ class Game {
         this.updateMenuUI();
     }
 
+    detectTouchDevice() {
+        const hasCoarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+        return hasCoarsePointer
+            || ('ontouchstart' in window)
+            || (navigator.maxTouchPoints > 0)
+            || (Math.min(window.innerWidth, window.innerHeight) <= 900);
+    }
+
     resize() {
+        this.isTouchDevice = this.detectTouchDevice();
+        document.body.classList.toggle('is-touch-device', this.isTouchDevice);
         const dpr = window.devicePixelRatio || 1;
         const cssW = window.innerWidth;
         const cssH = window.innerHeight;
@@ -2299,6 +2314,13 @@ class Game {
         document.documentElement.style.setProperty('--vh', `${cssH * 0.01}px`);
         if (this.landscape) {
             this.landscape.resize(cssW, cssH);
+        }
+        if (this.state === GameState.PLAYING) {
+            [this.ui.btnReloadLeft, this.ui.btnReloadRight].forEach((button) => {
+                if (!button) return;
+                button.classList.toggle('hidden', !this.isTouchDevice);
+                button.classList.toggle('visible', this.isTouchDevice);
+            });
         }
         this.updatePortraitOverlay();
     }
@@ -2494,6 +2516,10 @@ class Game {
         document.getElementById('btn-highscores').addEventListener('click', () => this.openHighscores());
         if (this.ui.btnFullscreen) {
             this.ui.btnFullscreen.addEventListener('click', () => this.enterFullscreen());
+            this.ui.btnFullscreen.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.enterFullscreen();
+            }, { passive: false });
         }
 
         document.getElementById('btn-shop-back').addEventListener('click', () => this.showMainMenu());
@@ -2926,6 +2952,8 @@ class Game {
         this.maxAmmo = DEFAULT_AMMO + (this.meta.upgrades.magazine * 2);
         this.ammo = this.maxAmmo;
         this.isReloading = false;
+        this.reloadEndsAt = 0;
+        this.reloadDurationMs = 0;
         this.activeBuffs = { machinegun: 0, slowmo: 0, shotgun: 0, doublescore: 0, frenzy: 0, zoom: 0 };
         this.missShieldsLeft = this.meta.upgrades.missShield || 0;
         this.comboWindowMs = 2200 + (this.meta.upgrades.comboExtender || 0) * 300;
@@ -2968,17 +2996,35 @@ class Game {
         // Render Ammo
         this.ui.ammoContainer.innerHTML = '';
         this.ui.ammoContainer.classList.remove('is-reloading');
+        if (this.ui.reloadProgress) this.ui.reloadProgress.classList.add('hidden');
+        if (this.ui.reloadProgress) this.ui.reloadProgress.classList.remove('reloaded');
         const limitType = this.activeBuffs.machinegun > 0;
 
-        for (let i = 0; i < this.maxAmmo; i++) {
-            const div = document.createElement('div');
-            div.className = 'bullet';
-            if (limitType) {
-                div.style.background = 'linear-gradient(to right, #ff0000, #ff5722)'; // MG Ammo
-            } else if (i >= this.ammo && !this.isReloading) {
-                div.classList.add('empty');
+        if (this.isReloading) {
+            const remainingMs = Math.max(0, this.reloadEndsAt - performance.now());
+            const progress = this.reloadDurationMs > 0
+                ? Math.min(1, Math.max(0, 1 - (remainingMs / this.reloadDurationMs)))
+                : 0;
+            const hue = 10 + (progress * 110);
+            this.ui.ammoContainer.classList.add('is-reloading');
+            this.ui.ammoContainer.innerHTML = `<div class="ammo-reload-chip">Nachladen... ${Math.ceil(remainingMs / 100) / 10}s</div>`;
+            if (this.ui.reloadProgress && this.ui.reloadProgressBar) {
+                this.ui.reloadProgress.classList.remove('hidden');
+                this.ui.reloadProgressBar.style.width = `${progress * 100}%`;
+                this.ui.reloadProgressBar.style.background = `linear-gradient(90deg, hsl(${hue} 95% 48%) 0%, hsl(${Math.min(hue + 24, 120)} 95% 60%) 60%, #fff59d 100%)`;
+                this.ui.reloadProgressBar.style.boxShadow = `0 0 12px hsla(${hue}, 95%, 55%, 0.45)`;
             }
-            this.ui.ammoContainer.appendChild(div);
+        } else {
+            for (let i = 0; i < this.maxAmmo; i++) {
+                const div = document.createElement('div');
+                div.className = 'bullet';
+                if (limitType) {
+                    div.style.background = 'linear-gradient(to right, #ff0000, #ff5722)'; // MG Ammo
+                } else if (i >= this.ammo) {
+                    div.classList.add('empty');
+                }
+                this.ui.ammoContainer.appendChild(div);
+            }
         }
 
         if (this.ammo === 0 && !this.isReloading && !limitType) {
@@ -3095,19 +3141,35 @@ class Game {
         if (this.state !== GameState.PLAYING || this.isReloading || this.ammo === this.maxAmmo) return;
 
         this.isReloading = true;
-        this.ui.ammoContainer.classList.add('is-reloading');
-        this.ui.ammoContainer.innerHTML = '<div class="ammo-reload-chip">Nachladen...</div>';
         this.ui.reloadHint.classList.add('hidden');
         this.audio.playReload();
 
         // Basiszeit 1000ms, abzüglich 15% pro Upgrade Level
         const reloadTime = 1000 * (1 - (this.meta.upgrades.reloadSpeed * 0.15));
+        this.reloadDurationMs = reloadTime;
+        this.reloadEndsAt = performance.now() + reloadTime;
+        this.updateHUD();
 
         setTimeout(() => {
             if (this.state === GameState.PLAYING) {
                 this.ammo = this.maxAmmo;
                 this.isReloading = false;
+                this.reloadEndsAt = 0;
+                this.reloadDurationMs = 0;
                 this.updateHUD();
+                if (this.reloadFlashTimeout) {
+                    clearTimeout(this.reloadFlashTimeout);
+                }
+                if (this.ui.reloadProgress) {
+                    this.ui.reloadProgress.classList.remove('hidden');
+                    this.ui.reloadProgress.classList.add('reloaded');
+                    this.reloadFlashTimeout = setTimeout(() => {
+                        if (this.ui.reloadProgress) {
+                            this.ui.reloadProgress.classList.remove('reloaded');
+                            this.ui.reloadProgress.classList.add('hidden');
+                        }
+                    }, 350);
+                }
             }
         }, reloadTime);
     }

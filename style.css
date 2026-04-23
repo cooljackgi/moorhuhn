@@ -168,6 +168,13 @@ body {
     margin-top: 10px;
 }
 
+.btn-fullscreen {
+    margin-top: 10px;
+    min-width: 180px;
+    font-size: 1rem;
+    padding: 10px 24px;
+}
+
 .currency-display {
     position: absolute;
     top: 20px;
@@ -337,6 +344,66 @@ body {
     background: rgba(255, 193, 7, 0.16);
     border: 1px solid rgba(255, 193, 7, 0.4);
     font-size: 0.95rem;
+}
+
+.reload-progress {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 10px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.reload-progress-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ff9800 0%, #ffd54f 55%, #fff59d 100%);
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.45);
+    transition: width 0.08s linear;
+}
+
+.reload-progress-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.38) 45%, transparent 75%);
+    transform: translateX(-100%);
+    animation: reload-shimmer 1s linear infinite;
+}
+
+.reload-progress.reloaded {
+    animation: reload-finished 0.35s ease-out;
+}
+
+@keyframes reload-shimmer {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(130%);
+    }
+}
+
+@keyframes reload-finished {
+    0% {
+        transform: scaleX(1);
+        box-shadow: 0 0 0 rgba(255, 235, 59, 0);
+    }
+
+    50% {
+        transform: scaleX(1.03);
+        box-shadow: 0 0 18px rgba(255, 235, 59, 0.65);
+    }
+
+    100% {
+        transform: scaleX(1);
+        box-shadow: 0 0 0 rgba(255, 235, 59, 0);
+    }
 }
 
 .buffs-container {

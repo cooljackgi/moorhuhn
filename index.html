@@ -20,7 +20,6 @@
                     <button id="btn-start" class="btn btn-primary">Spiel Starten</button>
                     <button id="btn-shop" class="btn btn-secondary">Upgrade Shop</button>
                     <button id="btn-highscores" class="btn btn-secondary">Highscores</button>
-                    <button id="btn-fullscreen" class="btn btn-secondary">Vollbild</button>
                 </div>
                 <div class="admin-link-row">
                     <a href="admin.html" class="btn btn-secondary admin-link-btn">Adminbereich</a>
@@ -31,6 +30,7 @@
                 </div>
                 <div class="mode-toggle-container">
                     <button id="btn-toggle-mode" class="btn btn-mode-toggle">🐥 Harmlos</button>
+                    <button id="btn-fullscreen" class="btn btn-secondary btn-fullscreen">Vollbild</button>
                     <div style="margin-top:10px">
                         <label style="font-size:1em;cursor:pointer;">
                             <input type="checkbox" id="toggle-rotation-enforce"
@@ -61,6 +61,9 @@
                                 <span id="ammo-count-label" class="hud-card-meta">0 / 0</span>
                             </div>
                             <div id="ammo-container" class="ammo-container"></div>
+                            <div id="reload-progress" class="reload-progress hidden">
+                                <div id="reload-progress-bar" class="reload-progress-bar"></div>
+                            </div>
                         </div>
                         <div class="hud-mobile-card hud-status-card">
                             <div id="reload-hint" class="hidden hud-status-message">Nachladen!</div>
