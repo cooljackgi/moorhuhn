@@ -2189,6 +2189,7 @@ class Game {
             score: document.getElementById('hud-score'),
             time: document.getElementById('hud-time'),
             ammoContainer: document.getElementById('ammo-container'),
+            ammoCountLabel: document.getElementById('ammo-count-label'),
             reloadHint: document.getElementById('reload-hint'),
             buffsContainer: document.getElementById('buffs-container'),
 
@@ -2226,6 +2227,8 @@ class Game {
         this.adminAuthSubscription = null;
         this.currentSessionId = null;
         this.sessionStartedAt = null;
+
+        document.body.classList.toggle('is-touch-device', this.isTouchDevice);
 
         this.initEvents();
         this.resize();
@@ -2320,14 +2323,19 @@ class Game {
 
         const enforceRotation = this.shouldEnforceRotation();
         const isPortrait = window.innerHeight > window.innerWidth;
-        const shouldShow = enforceRotation && isPortrait;
+        const isCompactTouchScreen = this.isTouchDevice && Math.min(window.innerWidth, window.innerHeight) < 900;
+        const shouldShow = isPortrait && (enforceRotation || (isCompactTouchScreen && this.state === GameState.PLAYING));
 
         overlay.style.display = shouldShow ? 'flex' : 'none';
 
         if (hint) {
-            hint.textContent = enforceRotation
-                ? 'Aktiv: Querformat wird aktuell erzwungen.'
-                : '';
+            if (enforceRotation) {
+                hint.textContent = 'Aktiv: Querformat wird aktuell erzwungen.';
+            } else if (isCompactTouchScreen && isPortrait) {
+                hint.textContent = 'Tipp: Auf kleinen Displays bleibt Zielen und HUD im Querformat deutlich besser nutzbar.';
+            } else {
+                hint.textContent = '';
+            }
         }
     }
 
@@ -2597,6 +2605,7 @@ class Game {
         this.ui.btnReload.classList.add('hidden');
         this.ui.btnReload.classList.remove('visible');
         this.updateMenuUI();
+        this.updatePortraitOverlay();
 
         // Initialize main menu ad once the menu is visible and layout has settled.
         if (typeof window.initAdWhenReady === 'function') {
@@ -2639,6 +2648,7 @@ class Game {
         this.ui.shopMenu.classList.remove('hidden');
         this.ui.shopMenu.classList.add('active');
         this.renderShopItems();
+        this.updatePortraitOverlay();
     }
 
     async openHighscores() {
@@ -2646,6 +2656,7 @@ class Game {
         this.hideAllScreens();
         this.ui.highscoreMenu.classList.remove('hidden');
         this.ui.highscoreMenu.classList.add('active');
+        this.updatePortraitOverlay();
 
         this.ui.highscoreList.innerHTML = '<li>Lade Highscores...</li>';
         this.updateAdminUI();
@@ -2874,6 +2885,7 @@ class Game {
             this.ui.btnReload.classList.remove('hidden');
             this.ui.btnReload.classList.add('visible');
         }
+        this.updatePortraitOverlay();
 
         // Init Stats
         this.score = 0;
@@ -2916,9 +2928,13 @@ class Game {
     updateHUD() {
         this.ui.score.innerText = this.score;
         this.ui.time.innerText = Math.ceil(this.timeRemaining);
+        if (this.ui.ammoCountLabel) {
+            this.ui.ammoCountLabel.innerText = `${this.ammo} / ${this.maxAmmo}`;
+        }
 
         // Render Ammo
         this.ui.ammoContainer.innerHTML = '';
+        this.ui.ammoContainer.classList.remove('is-reloading');
         const limitType = this.activeBuffs.machinegun > 0;
 
         for (let i = 0; i < this.maxAmmo; i++) {
@@ -2961,6 +2977,25 @@ class Game {
             buffsHtml += `<span style="color:#FF0000; font-weight:bold; text-shadow: 0 0 10px #FF0000;">⚡ ENDSPURT! ⚡</span><br>`;
         }
         this.ui.buffsContainer.innerHTML = buffsHtml;
+        const buffChips = [];
+        if (this.activeBuffs.machinegun > 0) buffChips.push(this.createBuffChip(`MG ${this.formatBuffSeconds(this.activeBuffs.machinegun)}`, '#e74c3c'));
+        if (this.activeBuffs.slowmo > 0) buffChips.push(this.createBuffChip(`SlowMo ${this.formatBuffSeconds(this.activeBuffs.slowmo)}`, '#9b59b6'));
+        if (this.activeBuffs.shotgun > 0) buffChips.push(this.createBuffChip(`Shotgun ${this.formatBuffSeconds(this.activeBuffs.shotgun)}`, '#f1c40f'));
+        if (this.activeBuffs.doublescore > 0) buffChips.push(this.createBuffChip(`2x ${this.formatBuffSeconds(this.activeBuffs.doublescore)}`, '#e91e63'));
+        if (this.activeBuffs.frenzy > 0) buffChips.push(this.createBuffChip(`Frenzy ${this.formatBuffSeconds(this.activeBuffs.frenzy)}`, '#ff5722'));
+        if (this.activeBuffs.zoom > 0) buffChips.push(this.createBuffChip(`Zoom ${this.formatBuffSeconds(this.activeBuffs.zoom)}`, '#00bcd4'));
+        if (this.missShieldsLeft > 0) buffChips.push(this.createBuffChip(`Shield x${this.missShieldsLeft}`, '#27ae60'));
+        if (this.comboCount > 0) {
+            const multiplier = this.getScoreMultiplier();
+            buffChips.push(this.createBuffChip(`Kombo x${this.comboCount} (${multiplier.toFixed(1)}x)`, '#ffd700', ['combo']));
+        }
+        if (this.feverModeTimer > 0) {
+            buffChips.push(this.createBuffChip(`Fever ${this.formatBuffSeconds(this.feverModeTimer)}`, '#ff8c00'));
+        }
+        if (this.endRushMode) {
+            buffChips.push(this.createBuffChip('Endspurt!', '#ff5252', ['warning']));
+        }
+        this.ui.buffsContainer.innerHTML = buffChips.join('');
 
         // Fadenkreuz anpassen
         if (this.activeBuffs.shotgun > 0) {
@@ -2978,6 +3013,26 @@ class Game {
             this.ui.cursor.style.borderColor = 'rgba(255, 0, 0, 0.8)';
             this.ui.cursor.style.borderWidth = '2px';
         }
+    }
+
+    formatBuffSeconds(durationMs) {
+        return `${(durationMs / 1000).toFixed(1)}s`;
+    }
+
+    createBuffChip(label, color, extraClasses = []) {
+        const classes = ['buff-chip', ...extraClasses].join(' ');
+        return `<span class="${classes}" style="color:${color}; border-color:${this.hexToRgba(color, 0.4)}; background:${this.hexToRgba(color, 0.16)};">${label}</span>`;
+    }
+
+    hexToRgba(hex, alpha) {
+        const normalized = hex.replace('#', '');
+        const safe = normalized.length === 3
+            ? normalized.split('').map((char) => char + char).join('')
+            : normalized.padEnd(6, '0').slice(0, 6);
+        const r = parseInt(safe.slice(0, 2), 16);
+        const g = parseInt(safe.slice(2, 4), 16);
+        const b = parseInt(safe.slice(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     shoot(x, y) {
@@ -3007,7 +3062,8 @@ class Game {
         if (this.state !== GameState.PLAYING || this.isReloading || this.ammo === this.maxAmmo) return;
 
         this.isReloading = true;
-        this.ui.ammoContainer.innerHTML = '<div style="font-size:20px; color:yellow; margin-top:10px;">Nachladen...</div>';
+        this.ui.ammoContainer.classList.add('is-reloading');
+        this.ui.ammoContainer.innerHTML = '<div class="ammo-reload-chip">Nachladen...</div>';
         this.ui.reloadHint.classList.add('hidden');
         this.audio.playReload();
 

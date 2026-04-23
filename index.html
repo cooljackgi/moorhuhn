@@ -11,13 +11,9 @@
 
 <body>
     <div id="game-container">
-        <!-- Das Canvas, auf dem das eigentliche Spiel gerendert wird -->
         <canvas id="game-canvas"></canvas>
 
-        <!-- UI Overlays -->
         <div id="ui-layer">
-
-            <!-- Hauptmenü -->
             <div id="main-menu" class="screen active">
                 <h1 class="game-title">Moorhuhn<br><span>Madness</span></h1>
                 <div class="menu-buttons">
@@ -36,60 +32,60 @@
                     <button id="btn-toggle-mode" class="btn btn-mode-toggle">🐥 Harmlos</button>
                     <div style="margin-top:10px">
                         <label style="font-size:1em;cursor:pointer;">
-                            <input type="checkbox" id="toggle-rotation-enforce" style="vertical-align:middle;margin-right:6px;">
+                            <input type="checkbox" id="toggle-rotation-enforce"
+                                style="vertical-align:middle;margin-right:6px;">
                             Drehung erzwingen (Querformat)
                         </label>
                     </div>
                 </div>
             </div>
 
-            <!-- In-Game HUD -->
             <div id="hud" class="screen hidden">
                 <div class="hud-top">
-                    <div class="score-container">
-                        Punkte: <span id="hud-score">0</span>
+                    <div class="hud-pill score-container">
+                        <span class="hud-label">Punkte</span>
+                        <span id="hud-score" class="hud-value">0</span>
                     </div>
-                    <div class="time-container">
-                        Zeit: <span id="hud-time">90</span>s
+                    <div class="hud-pill time-container">
+                        <span class="hud-label">Zeit</span>
+                        <span class="hud-value"><span id="hud-time">90</span>s</span>
                     </div>
                 </div>
 
                 <div class="hud-bottom">
-                    <!-- Munitionsanzeige -->
-                    <div id="ammo-container" class="ammo-container">
-                        <!-- Patronen werden per JS generiert -->
+                    <div class="hud-mobile-controls">
+                        <div class="hud-mobile-card hud-ammo-card">
+                            <div class="hud-card-header">
+                                <span class="hud-card-title">Magazin</span>
+                                <span id="ammo-count-label" class="hud-card-meta">0 / 0</span>
+                            </div>
+                            <div id="ammo-container" class="ammo-container"></div>
+                        </div>
+                        <div class="hud-mobile-card hud-status-card">
+                            <div id="reload-hint" class="hidden hud-status-message">Nachladen!</div>
+                            <div id="buffs-container" class="buffs-container"></div>
+                        </div>
                     </div>
-                    <div id="reload-hint" class="hidden">Nachladen!</div>
-                    <!-- Mobile Reload Button -->
-                    <button id="btn-reload" class="btn-reload hidden">🔄 Nachladen</button>
-                    <!-- Temporäre Buffs Anzeige -->
-                    <div id="buffs-container"></div>
+                    <button id="btn-reload" class="btn-reload hidden">Reload</button>
                 </div>
             </div>
 
-            <!-- Shop Menü -->
             <div id="shop-menu" class="screen hidden window-menu">
                 <h2>Upgrade Shop</h2>
                 <div class="currency-display">
                     Guthaben: <span class="coin-icon">💰</span> <span id="shop-coins">0</span>
                 </div>
-                <div class="shop-items" id="shop-items-container">
-                    <!-- Shop Items werden per JS geladen -->
-                </div>
+                <div class="shop-items" id="shop-items-container"></div>
                 <button id="btn-shop-back" class="btn btn-secondary mt-20">Zurück</button>
             </div>
 
-            <!-- Highscore Menü -->
             <div id="highscore-menu" class="screen hidden window-menu">
                 <h2>Highscores</h2>
                 <p id="highscore-edit-msg" class="highscore-edit-msg hidden"></p>
-                <ul id="highscore-list" class="highscore-list">
-                    <!-- Highscores via JS -->
-                </ul>
+                <ul id="highscore-list" class="highscore-list"></ul>
                 <button id="btn-highscores-back" class="btn btn-secondary mt-20">Zurück</button>
             </div>
 
-            <!-- Game Over Screen -->
             <div id="game-over-screen" class="screen hidden window-menu" style="overflow-y: auto;">
                 <h2>Zeit abgelaufen!</h2>
                 <div class="results">
@@ -98,9 +94,8 @@
                     <p id="new-highscore-msg" class="hidden highlight-gold">Neuer Highscore!</p>
                 </div>
 
-                <!-- Neu: Name eingeben für Global Highscore -->
                 <div id="highscore-submission" class="mt-20">
-                    <input type="text" id="player-name-input" placeholder="Dein Name (max 15 Z.)" maxlength="15"
+                    <input type="text" id="player-name-input" placeholder="Dein Name (max. 15 Zeichen)" maxlength="15"
                         class="name-input">
                     <button id="btn-submit-score" class="btn btn-primary" style="margin-top: 10px;">Score
                         eintragen</button>
@@ -112,7 +107,6 @@
                     <button id="btn-gameover-menu" class="btn btn-secondary">Hauptmenü</button>
                 </div>
 
-                <!-- Top Highscores auf Game Over -->
                 <div id="gameover-highscores" class="mt-20"
                     style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px;">
                     <h3 style="font-size: 1em; margin-bottom: 8px; color: #ffd700;">🏆 Top Highscores</h3>
@@ -120,10 +114,8 @@
                         style="font-size: 0.85em; max-height: 150px; overflow-y: auto;"></ul>
                 </div>
             </div>
-
         </div>
 
-        <!-- Cheat Menü (Backtick ` zum Öffnen/Schließen) -->
         <div id="cheat-menu" class="cheat-menu" style="display:none">
             <div class="cheat-menu-header">
                 <span>🎮 Cheat Menü</span>
@@ -141,18 +133,16 @@
             </div>
         </div>
 
-    <div id="portrait-overlay">
-        <div class="portrait-inner">
-            <div class="portrait-icon">🔄</div>
-            <p>Bitte Handy drehen!</p>
-            <p class="portrait-sub">Das Spiel läuft im Querformat.</p>
-            <p class="portrait-sub" id="portrait-overlay-hint" style="font-size:0.9em;opacity:0.7;"></p>
+        <div id="portrait-overlay">
+            <div class="portrait-inner">
+                <div class="portrait-icon">🔄</div>
+                <p>Bitte Handy drehen!</p>
+                <p class="portrait-sub">Das Spiel läuft im Querformat am besten.</p>
+                <p class="portrait-sub" id="portrait-overlay-hint" style="font-size:0.9em;opacity:0.7;"></p>
+            </div>
         </div>
     </div>
 
-    </div>
-
-    <!-- Eigener Cursor -->
     <div id="custom-cursor" class="crosshair"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

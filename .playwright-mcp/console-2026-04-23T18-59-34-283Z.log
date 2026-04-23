@@ -1,0 +1,26 @@
+[    2255ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:4173/style.css:0
+[    2314ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:4173/js/audioManager.js:0
+[    2314ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:4173/js/supabase-db.js:0
+[    2314ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:4173/js/game.js:0
+[    4380ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:4173/favicon.ico:0
+[   45154ms] [ERROR] Error getting current user: AuthSessionMissingError: Auth session missing!
+    at https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2:7:154467
+    at cs._useSession (https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2:7:151883)
+    at async cs._getUser (https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2:7:154194)
+    at async https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2:7:153997 @ http://127.0.0.1:4173/js/supabase-db.js:262
+[   45158ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:4173/favicon.ico:0
+[   47284ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:4173/favicon.ico:0
+[   68343ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   69316ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   70193ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   70510ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   70576ms] [ERROR] Ignored attempt to cancel a touchmove event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2551
+[   70978ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   71045ms] [ERROR] Ignored attempt to cancel a touchmove event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2551
+[   71632ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   72084ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   72126ms] [ERROR] Ignored attempt to cancel a touchmove event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2551
+[   74240ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   74598ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   75487ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513
+[   75989ms] [ERROR] Ignored attempt to cancel a touchstart event with cancelable=false, for example because scrolling is in progress and cannot be interrupted. @ http://127.0.0.1:4173/js/game.js:2513

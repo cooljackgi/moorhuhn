@@ -1,0 +1,2 @@
+[      25ms] [ERROR] Failed to load resource: net::ERR_EMPTY_RESPONSE @ http://127.0.0.1:4173/style.css:0
+[      37ms] [ERROR] Failed to load resource: net::ERR_EMPTY_RESPONSE @ http://127.0.0.1:4173/js/game.js:0

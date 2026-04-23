@@ -1,0 +1,60 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Moorhuhn Madness" [level=1] [ref=e6]:
+        - text: Moorhuhn
+        - text: Madness
+      - generic [ref=e7]:
+        - button "Spiel Starten" [ref=e8]
+        - button "Upgrade Shop" [ref=e9]
+        - button "Highscores" [ref=e10]
+      - link "Adminbereich" [ref=e12] [cursor=pointer]:
+        - /url: admin.html
+      - paragraph
+      - generic [ref=e13]: 💰 0
+      - generic [ref=e14]:
+        - button "🐥 Harmlos" [ref=e15]
+        - generic [ref=e17] [cursor=pointer]:
+          - checkbox "Drehung erzwingen (Querformat)" [ref=e18]
+          - text: Drehung erzwingen (Querformat)
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]: Punkte 0
+        - generic [ref=e22]:
+          - text: Zeit
+          - generic [ref=e23]: 90s
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e27]: Magazin 0 / 0
+          - generic [ref=e29]: Nachladen!
+        - button "Reload" [ref=e30]
+    - generic [ref=e31]:
+      - heading "Upgrade Shop" [level=2] [ref=e32]
+      - generic [ref=e33]: "Guthaben: 💰 0"
+      - button "Zurück" [ref=e34]
+    - generic [ref=e35]:
+      - heading "Highscores" [level=2] [ref=e36]
+      - paragraph
+      - list
+      - button "Zurück" [ref=e37]
+    - generic [ref=e38]:
+      - heading "Zeit abgelaufen!" [level=2] [ref=e39]
+      - generic [ref=e40]:
+        - paragraph [ref=e41]: "Erreichte Punkte: 0"
+        - paragraph [ref=e42]: "Verdiente Münzen: 0"
+        - paragraph [ref=e43]: Neuer Highscore!
+      - generic [ref=e44]:
+        - textbox "Dein Name (max. 15 Zeichen)" [ref=e45]
+        - button "Score eintragen" [ref=e46]
+        - paragraph
+      - generic [ref=e47]:
+        - button "Nochmal spielen" [ref=e48]
+        - button "Hauptmenü" [ref=e49]
+      - generic [ref=e50]:
+        - heading "🏆 Top Highscores" [level=3] [ref=e51]
+        - list
+  - generic [ref=e53]:
+    - generic [ref=e54]: 🔄
+    - paragraph [ref=e55]: Bitte Handy drehen!
+    - paragraph [ref=e56]: Das Spiel läuft im Querformat am besten.
+    - paragraph

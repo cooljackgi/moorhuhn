@@ -250,6 +250,129 @@ body {
     }
 }
 
+.hud-pill {
+    min-width: 132px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 18px;
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-radius: 22px;
+    background:
+        linear-gradient(180deg, rgba(25, 31, 45, 0.92), rgba(10, 14, 22, 0.78));
+    box-shadow: 0 14px 24px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+}
+
+.hud-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.hud-value {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.hud-mobile-controls {
+    width: min(560px, calc(100vw - 28px));
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: end;
+}
+
+.hud-mobile-card {
+    min-height: 92px;
+    padding: 12px 14px;
+    border-radius: 24px;
+    background:
+        linear-gradient(180deg, rgba(9, 13, 23, 0.94), rgba(21, 28, 38, 0.76));
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 18px 28px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(10px);
+}
+
+.hud-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.hud-card-title,
+.hud-card-meta {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hud-card-title {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.hud-card-meta {
+    color: #ffe082;
+}
+
+.hud-status-message {
+    margin-bottom: 8px;
+}
+
+.ammo-container.is-reloading {
+    justify-content: center;
+}
+
+.ammo-reload-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 999px;
+    color: #ffec99;
+    background: rgba(255, 193, 7, 0.16);
+    border: 1px solid rgba(255, 193, 7, 0.4);
+    font-size: 0.95rem;
+}
+
+.buffs-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 38px;
+    align-content: flex-start;
+}
+
+.buff-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    font-size: 0.82rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.buff-chip.combo {
+    color: #ffe082;
+    border-color: rgba(255, 208, 64, 0.45);
+    background: rgba(255, 193, 7, 0.16);
+}
+
+.buff-chip.warning {
+    color: #ffb3b3;
+    border-color: rgba(255, 82, 82, 0.4);
+    background: rgba(255, 82, 82, 0.16);
+}
+
 /* == Custom Cursor == */
 #custom-cursor {
     position: fixed;
@@ -1189,3 +1312,170 @@ body {
 .portrait-inner p { font-size: 1.4rem; margin: 0; }
 .portrait-sub { font-size: 1rem !important; opacity: 0.7; }
 @keyframes rotate360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+    #main-menu {
+        justify-content: flex-end;
+        padding: 24px 16px max(20px, env(safe-area-inset-bottom));
+        background:
+            linear-gradient(180deg, rgba(6, 12, 18, 0.18) 0%, rgba(6, 12, 18, 0.62) 52%, rgba(6, 12, 18, 0.9) 100%);
+    }
+
+    .admin-link-row,
+    .mode-toggle-container {
+        width: min(100%, 360px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hud-top {
+        padding:
+            max(10px, env(safe-area-inset-top))
+            max(12px, env(safe-area-inset-right))
+            0
+            max(12px, env(safe-area-inset-left));
+        gap: 10px;
+    }
+
+    .hud-pill {
+        min-width: 0;
+        flex: 1 1 0;
+        padding: 10px 12px;
+        border-radius: 18px;
+    }
+
+    .hud-label {
+        font-size: 0.62rem;
+    }
+
+    .hud-value {
+        font-size: 1.4rem;
+    }
+
+    .hud-bottom {
+        align-items: stretch;
+        padding: 0 max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    .hud-mobile-controls {
+        width: 100%;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .hud-mobile-card {
+        min-height: 0;
+        padding: 10px 12px;
+        border-radius: 18px;
+    }
+
+    .hud-card-header {
+        margin-bottom: 8px;
+    }
+
+    .hud-card-title,
+    .hud-card-meta {
+        font-size: 0.72rem;
+    }
+
+    .ammo-container {
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        max-width: 100%;
+    }
+
+    .bullet {
+        width: 12px;
+        height: 28px;
+    }
+
+    .buffs-container {
+        min-height: 30px;
+        gap: 6px;
+    }
+
+    .buff-chip {
+        font-size: 0.72rem;
+        min-height: 26px;
+        padding: 5px 8px;
+    }
+
+    .btn-reload {
+        right: max(14px, env(safe-area-inset-right));
+        bottom: max(14px, env(safe-area-inset-bottom));
+        padding: 14px 22px;
+        font-size: 1rem;
+        border-radius: 18px;
+    }
+
+    .window-menu {
+        align-items: stretch;
+    }
+
+    .window-menu h2 {
+        text-align: center;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    #main-menu {
+        justify-content: center;
+        padding: 12px 12px 16px;
+        background:
+            linear-gradient(180deg, rgba(6, 12, 18, 0.3) 0%, rgba(6, 12, 18, 0.72) 100%);
+    }
+
+    .hud-top {
+        gap: 8px;
+    }
+
+    .hud-pill {
+        padding: 8px 10px;
+        border-radius: 16px;
+    }
+
+    .hud-value {
+        font-size: 1.1rem;
+    }
+
+    .hud-bottom {
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .hud-mobile-controls {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+        width: min(600px, calc(100vw - 24px));
+    }
+
+    .hud-mobile-card {
+        padding: 8px 10px;
+        border-radius: 16px;
+    }
+
+    .hud-card-header {
+        margin-bottom: 6px;
+    }
+
+    .ammo-container {
+        gap: 4px;
+    }
+
+    .bullet {
+        width: 9px;
+        height: 22px;
+    }
+
+    .buff-chip {
+        min-height: 24px;
+        font-size: 0.68rem;
+        padding: 4px 7px;
+    }
+
+    .btn-reload {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+        border-radius: 14px;
+    }
+}
