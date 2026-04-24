@@ -74,12 +74,35 @@ class Target {
         this.flapTime += deltaTime;
     }
 
+    getAppearance() {
+        return {
+            tailColors: ['#6B3618', '#8B4A22', '#B2652C'],
+            rearWing: '#7A421A',
+            body: '#D6853C',
+            bodyShade: '#B86329',
+            belly: '#F2C985',
+            wingColors: ['#B5662D', '#C87434', '#DB8A3F', '#BE6C2E', '#934A1F'],
+            wingCover: '#F0AA63',
+            neck: '#D98B41',
+            head: '#E2A257',
+            cheek: 'rgba(255, 164, 116, 0.42)',
+            comb: '#E53935',
+            combBase: '#BC1E1B',
+            eyeOuter: '#C96A1A',
+            eyeInner: '#F5BD2F',
+            beakTop: '#FFD54A',
+            beakBottom: '#ECA11D',
+            wattle: '#D92D2A'
+        };
+    }
+
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x, this.y);
         const s = this.size;
         if (this.direction === -1) ctx.scale(-1, 1);
 
+        const appearance = this.getAppearance();
         const flapAngle = Math.sin(this.flapTime / 50) * 0.7;
         const footSwing = Math.sin(this.flapTime / 80) * 0.15;
         const lw = Math.max(1.2, s * 0.055); // Comic-Outline Dicke skaliert mit Größe
@@ -143,7 +166,6 @@ class Target {
         drawLeg(s * 0.06, s * 0.3, -footSwing * s);
 
         // --- Schwanz (3 breite Federn) ---
-        const tailColors = ['#5A3010', '#7A4820', '#9A6030'];
         [
             { a: -2.5, l: 0.85 },
             { a: -2.0, l: 0.95 },
@@ -153,7 +175,7 @@ class Target {
             const ey = Math.sin(f.a) * s * f.l;
             const nx = -Math.sin(f.a) * s * 0.14;
             const ny =  Math.cos(f.a) * s * 0.14;
-            fill(tailColors[i], () => {
+            fill(appearance.tailColors[i], () => {
                 ctx.beginPath();
                 ctx.moveTo(-s * 0.38, s * 0.05);
                 ctx.quadraticCurveTo(ex * 0.55 + nx, ey * 0.55 + ny, ex, ey);
@@ -166,20 +188,24 @@ class Target {
         ctx.save();
         ctx.translate(-s * 0.08, s * 0.04);
         ctx.rotate(flapAngle * 0.35 + 0.2);
-        fill('#6B3C18', () => {
+        fill(appearance.rearWing, () => {
             ctx.beginPath();
             ctx.ellipse(s * 0.18, s * 0.04, s * 0.5, s * 0.16, 0.2, 0, Math.PI * 2);
         });
         ctx.restore();
 
         // --- Körper (rund & prall) ---
-        fill('#C8803A', () => {
+        fill(appearance.body, () => {
             ctx.beginPath();
             ctx.ellipse(s * 0.04, s * 0.1, s * 0.44, s * 0.38, -0.08, 0, Math.PI * 2);
         });
+        ctx.fillStyle = appearance.bodyShade;
+        ctx.beginPath();
+        ctx.ellipse(-s * 0.04, s * 0.14, s * 0.22, s * 0.28, -0.25, 0, Math.PI * 2);
+        ctx.fill();
 
         // Bauchfleck (heller)
-        fill('#E8B870', () => {
+        fill(appearance.belly, () => {
             ctx.beginPath();
             ctx.ellipse(s * 0.14, s * 0.18, s * 0.26, s * 0.22, 0.1, 0, Math.PI * 2);
         });
@@ -189,7 +215,6 @@ class Target {
         ctx.translate(-s * 0.08, s * 0.02);
         ctx.rotate(flapAngle);
         // 5 Comic-Federn
-        const wingFColors = ['#A05828', '#B86830', '#C87838', '#B06028', '#8A4A20'];
         for (let i = 0; i < 5; i++) {
             const t = i / 4;
             const a = -0.1 + t * 0.5;
@@ -197,7 +222,7 @@ class Target {
             const w = s * 0.13;
             const ex = Math.cos(a) * len, ey = Math.sin(a) * len;
             const nx = -Math.sin(a) * w, ny = Math.cos(a) * w;
-            fill(wingFColors[i], () => {
+            fill(appearance.wingColors[i], () => {
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 ctx.quadraticCurveTo(ex * 0.5 + nx, ey * 0.5 + ny, ex, ey);
@@ -206,14 +231,14 @@ class Target {
             });
         }
         // Deckfedern
-        fill('#D09050', () => {
+        fill(appearance.wingCover, () => {
             ctx.beginPath();
             ctx.ellipse(s * 0.14, -s * 0.05, s * 0.26, s * 0.09, -0.15, 0, Math.PI * 2);
         });
         ctx.restore();
 
         // --- Hals ---
-        fill('#C8803A', () => {
+        fill(appearance.neck, () => {
             ctx.beginPath();
             ctx.moveTo(s * 0.1, -s * 0.06);
             ctx.bezierCurveTo(s * 0.05, -s * 0.22, s * 0.2, -s * 0.32, s * 0.28, -s * 0.3);
@@ -222,17 +247,17 @@ class Target {
         });
 
         // --- Kopf (groß & rund = Comic!) ---
-        fill('#D4904A', () => {
+        fill(appearance.head, () => {
             ctx.beginPath();
             ctx.arc(s * 0.32, -s * 0.46, s * 0.4, 0, Math.PI * 2);
         });
 
         // Wangenröte
-        ctx.fillStyle = 'rgba(255,140,100,0.45)';
+        ctx.fillStyle = appearance.cheek;
         ctx.beginPath();
         ctx.ellipse(s * 0.52, -s * 0.36, s * 0.12, s * 0.09, 0.3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = 'rgba(255,140,100,0.45)';
+        ctx.fillStyle = appearance.cheek;
         ctx.beginPath();
         ctx.ellipse(s * 0.14, -s * 0.38, s * 0.1, s * 0.08, -0.3, 0, Math.PI * 2);
         ctx.fill();
@@ -243,7 +268,7 @@ class Target {
             { x: s * 0.32, y: -s * 0.96, r: s * 0.13 },
             { x: s * 0.46, y: -s * 0.84, r: s * 0.1 },
         ].forEach(n => {
-            fill('#FF2020', () => {
+            fill(appearance.comb, () => {
                 ctx.beginPath();
                 ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
             });
@@ -254,7 +279,7 @@ class Target {
             ctx.fill();
         });
         // Kamm-Basis (verbindet die Noppen)
-        fill('#CC1010', () => {
+        fill(appearance.combBase, () => {
             ctx.beginPath();
             ctx.rect(s * 0.1, -s * 0.76, s * 0.44, s * 0.14);
         });
@@ -272,9 +297,13 @@ class Target {
             ctx.ellipse(s * 0.24, -s * 0.5, s * 0.2, s * 0.2, 0, 0, Math.PI * 2);
         });
         // Iris (gelb-orange)
-        fill('#F0A000', () => {
+        fill(appearance.eyeOuter, () => {
             ctx.beginPath();
-            ctx.arc(s * 0.24, -s * 0.5, s * 0.13, 0, Math.PI * 2);
+            ctx.arc(s * 0.24, -s * 0.5, s * 0.14, 0, Math.PI * 2);
+        });
+        fill(appearance.eyeInner, () => {
+            ctx.beginPath();
+            ctx.arc(s * 0.24, -s * 0.5, s * 0.09, 0, Math.PI * 2);
         });
         // Pupille (schwarz, oval)
         ctx.fillStyle = '#000';
@@ -294,7 +323,7 @@ class Target {
 
         // --- Schnabel (breite Comic-Form) ---
         // Oberschnabel
-        fill('#FFD020', () => {
+        fill(appearance.beakTop, () => {
             ctx.beginPath();
             ctx.moveTo(s * 0.52, -s * 0.38);
             ctx.lineTo(s * 1.05, -s * 0.22);
@@ -310,7 +339,7 @@ class Target {
         ctx.closePath();
         ctx.fill();
         // Unterschnabel
-        fill('#E09010', () => {
+        fill(appearance.beakBottom, () => {
             ctx.beginPath();
             ctx.moveTo(s * 0.52, -s * 0.12);
             ctx.lineTo(s * 0.98, -s * 0.2);
@@ -326,7 +355,7 @@ class Target {
         ctx.stroke();
 
         // --- Kehlwampe ---
-        fill('#EE1818', () => {
+        fill(appearance.wattle, () => {
             ctx.beginPath();
             ctx.ellipse(s * 0.44, -s * 0.0, s * 0.1, s * 0.14, 0.15, 0, Math.PI * 2);
         });
@@ -503,11 +532,33 @@ class RareTarget extends Target {
         this.isRare = true;
     }
 
+    getAppearance() {
+        return {
+            tailColors: ['#C98A00', '#E0A91A', '#F6C95A'],
+            rearWing: '#C58B12',
+            body: '#FFD54F',
+            bodyShade: '#DAA520',
+            belly: '#FFF1A8',
+            wingColors: ['#DCA521', '#EDBC35', '#FFD95A', '#E6B129', '#B67C11'],
+            wingCover: '#FFE38A',
+            neck: '#F2C544',
+            head: '#FFE070',
+            cheek: 'rgba(255, 216, 120, 0.28)',
+            comb: '#FF7043',
+            combBase: '#E4572E',
+            eyeOuter: '#B66A00',
+            eyeInner: '#FFE26A',
+            beakTop: '#FFE082',
+            beakBottom: '#FFB74D',
+            wattle: '#FF6F3F'
+        };
+    }
+
     draw(ctx) {
         // Golden aura effect
         ctx.save();
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.78)';
+        ctx.shadowBlur = 18;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
@@ -517,27 +568,8 @@ class RareTarget extends Target {
         ctx.arc(this.x, this.y, this.size * 1.3, 0, Math.PI * 2);
         ctx.fill();
         
-        // Draw the chicken body (slightly golden)
-        ctx.fillStyle = '#FDD835';
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.size * 0.7, this.size * 0.6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw head
-        ctx.fillStyle = '#FBC02D';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y - this.size * 0.3, this.size * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw eyes
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(this.x - this.size * 0.25, this.y - this.size * 0.4, this.size * 0.15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(this.x + this.size * 0.25, this.y - this.size * 0.4, this.size * 0.15, 0, Math.PI * 2);
-        ctx.fill();
-        
+        super.draw(ctx);
+
         ctx.restore();
     }
 }
