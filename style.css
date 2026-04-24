@@ -126,29 +126,6 @@ body {
     align-items: center;
 }
 
-.fun-mode-panel {
-    width: min(540px, calc(100vw - 32px));
-    margin-top: 20px;
-    padding: 18px;
-    border-radius: 24px;
-    background:
-        linear-gradient(180deg, rgba(12, 24, 39, 0.9), rgba(8, 13, 22, 0.76));
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: 0 20px 34px rgba(0, 0, 0, 0.28);
-}
-
-.fun-mode-copy h3 {
-    color: #9fe7ff;
-    font-size: 1.35rem;
-    margin-bottom: 6px;
-}
-
-.fun-mode-copy p {
-    color: rgba(255, 255, 255, 0.74);
-    font-size: 0.95rem;
-    line-height: 1.4;
-}
-
 .fun-weapon-btn {
     display: flex;
     flex-direction: column;
@@ -1547,21 +1524,6 @@ body {
 @keyframes rotate360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 @media (max-width: 768px) {
-    .fun-mode-panel {
-        width: min(100%, 380px);
-        padding: 14px;
-        margin-top: 14px;
-        border-radius: 18px;
-    }
-
-    .fun-mode-copy h3 {
-        font-size: 1.05rem;
-    }
-
-    .fun-mode-copy p {
-        font-size: 0.8rem;
-    }
-
     .fun-weapon-btn {
         padding: 10px 12px;
         border-radius: 14px;
@@ -1719,11 +1681,6 @@ body {
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-    .fun-mode-panel {
-        width: min(640px, calc(100vw - 24px));
-        padding: 12px;
-    }
-
     .fun-weapon-btn {
         padding: 8px 10px;
     }
