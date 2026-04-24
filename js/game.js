@@ -2268,6 +2268,7 @@ class Game {
             funWeaponButtons: Array.from(document.querySelectorAll('#fun-weapon-hud .fun-weapon-btn')),
 
             cursor: document.getElementById('custom-cursor'),
+            btnHudBack: document.getElementById('btn-hud-back'),
             btnReloadLeft: document.getElementById('btn-reload-left'),
             btnReloadRight: document.getElementById('btn-reload-right'),
             btnArMode: document.getElementById('btn-ar-mode'),
@@ -2638,6 +2639,9 @@ class Game {
 
         document.getElementById('btn-play-again').addEventListener('click', () => this.startGame(this.playMode));
         document.getElementById('btn-gameover-menu').addEventListener('click', () => this.showMainMenu());
+        if (this.ui.btnHudBack) {
+            this.ui.btnHudBack.addEventListener('click', () => this.showMainMenu());
+        }
 
         document.getElementById('btn-toggle-mode').addEventListener('click', () => this.toggleAdultMode());
 

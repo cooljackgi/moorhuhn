@@ -264,9 +264,25 @@ body {
     width: 100%;
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     padding: 20px 40px;
     font-size: 2.5rem;
     text-shadow: 2px 2px 0px #000;
+}
+
+.btn-hud-back {
+    pointer-events: auto;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(8, 12, 20, 0.72);
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 10px 16px rgba(0, 0, 0, 0.24);
 }
 
 .score-container {
@@ -1572,64 +1588,69 @@ body {
 
     .hud-top {
         padding:
-            max(10px, env(safe-area-inset-top))
-            max(12px, env(safe-area-inset-right))
+            max(8px, env(safe-area-inset-top))
+            max(10px, env(safe-area-inset-right))
             0
-            max(12px, env(safe-area-inset-left));
-        gap: 10px;
+            max(10px, env(safe-area-inset-left));
+        gap: 6px;
     }
 
     .hud-pill {
         min-width: 0;
         flex: 1 1 0;
-        padding: 10px 12px;
-        border-radius: 18px;
+        padding: 8px 10px;
+        border-radius: 15px;
     }
 
     .hud-label {
-        font-size: 0.62rem;
+        font-size: 0.54rem;
     }
 
     .hud-value {
-        font-size: 1.4rem;
+        font-size: 1.12rem;
     }
 
     .hud-bottom {
         align-items: stretch;
-        padding: 0 max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        padding: 0 max(10px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
     }
 
     .hud-mode-indicator {
-        font-size: 0.72rem;
-        padding: 6px 10px;
-        bottom: 176px;
+        font-size: 0.6rem;
+        padding: 5px 8px;
+        bottom: 150px;
         max-width: calc(100vw - 28px);
     }
 
     .hud-picker-btn {
-        font-size: 0.64rem;
-        padding: 5px 10px;
+        font-size: 0.56rem;
+        padding: 4px 8px;
+    }
+
+    .btn-hud-back {
+        font-size: 0.58rem;
+        padding: 6px 9px;
     }
 
     .hud-mobile-controls {
         width: 100%;
         grid-template-columns: 1fr;
-        gap: 8px;
+        gap: 6px;
     }
 
     .hud-mobile-card {
         min-height: 0;
-        padding: 10px 12px;
-        border-radius: 18px;
+        padding: 8px 10px;
+        border-radius: 15px;
     }
 
     .hud-card-header {
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 
     .hud-card-title,
     .hud-card-meta {
-        font-size: 0.72rem;
+        font-size: 0.64rem;
     }
 
     .ammo-container {
@@ -1640,24 +1661,24 @@ body {
     }
 
     .bullet {
-        width: 12px;
-        height: 28px;
+        width: 10px;
+        height: 22px;
     }
 
     .buffs-container {
-        min-height: 30px;
-        gap: 6px;
+        min-height: 24px;
+        gap: 5px;
     }
 
     .buff-chip {
-        font-size: 0.72rem;
-        min-height: 26px;
-        padding: 5px 8px;
+        font-size: 0.62rem;
+        min-height: 22px;
+        padding: 4px 7px;
     }
 
     .btn-reload {
         bottom: max(14px, env(safe-area-inset-bottom));
-        padding: 14px 22px;
+        padding: 11px 16px;
         font-size: 1rem;
         border-radius: 18px;
         min-width: 110px;
@@ -1718,24 +1739,26 @@ body {
     }
 
     .hud-top {
-        gap: 8px;
+        gap: 6px;
     }
 
     .hud-pill {
-        padding: 8px 10px;
-        border-radius: 16px;
+        padding: 6px 8px;
+        border-radius: 14px;
     }
 
     .hud-value {
-        font-size: 1.1rem;
+        font-size: 0.98rem;
     }
 
     .hud-bottom {
-        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
 
     .hud-mode-indicator {
-        bottom: 132px;
+        bottom: 112px;
+        font-size: 0.54rem;
+        padding: 4px 7px;
     }
 
     .hud-mobile-controls {
@@ -1744,8 +1767,8 @@ body {
     }
 
     .hud-mobile-card {
-        padding: 8px 10px;
-        border-radius: 16px;
+        padding: 7px 8px;
+        border-radius: 14px;
     }
 
     .hud-card-header {
@@ -1772,6 +1795,11 @@ body {
         font-size: 0.85rem;
         border-radius: 14px;
         min-width: 92px;
+    }
+
+    .btn-hud-back {
+        font-size: 0.54rem;
+        padding: 5px 8px;
     }
 
     .btn-reload-left {
