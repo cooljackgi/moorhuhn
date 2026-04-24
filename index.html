@@ -11,6 +11,7 @@
 
 <body>
     <div id="game-container">
+        <video id="ar-camera-feed" class="ar-camera-feed hidden" autoplay playsinline muted></video>
         <canvas id="game-canvas"></canvas>
 
         <div id="ui-layer">
@@ -36,6 +37,7 @@
                 </div>
                 <div class="mode-toggle-container">
                     <button id="btn-toggle-mode" class="btn btn-mode-toggle">🐥 Harmlos</button>
+                    <button id="btn-ar-mode" class="btn btn-secondary btn-ar-mode">AR Kamera: Aus</button>
                     <button id="btn-fullscreen" class="btn btn-secondary btn-fullscreen">Vollbild</button>
                     <div style="margin-top:10px">
                         <label style="font-size:1em;cursor:pointer;">

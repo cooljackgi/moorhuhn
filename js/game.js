@@ -2159,6 +2159,7 @@ class Game {
 
         this.state = GameState.MENU;
         this.playMode = 'classic';
+        this.arModeEnabled = localStorage.getItem('moorhuhn_ar_mode') === '1';
         this.selectedFunWeapon = 'blaster';
         this.currentWeaponConfig = null;
         this.isFunWeaponMenuOpen = false;
@@ -2166,6 +2167,7 @@ class Game {
         this.isHoldingFire = false;
         this.holdFirePointer = { x: 0, y: 0 };
         this.holdFireCooldown = 0;
+        this.arStream = null;
 
         // Touch/mobile detection
         this.isTouchDevice = this.detectTouchDevice();
@@ -2224,6 +2226,7 @@ class Game {
         this.ui = {
             mainMenu: document.getElementById('main-menu'),
             hud: document.getElementById('hud'),
+            arCameraFeed: document.getElementById('ar-camera-feed'),
             hudModeIndicator: document.getElementById('hud-mode-indicator'),
             funWeaponHud: document.getElementById('fun-weapon-hud'),
             shopMenu: document.getElementById('shop-menu'),
@@ -2267,6 +2270,7 @@ class Game {
             cursor: document.getElementById('custom-cursor'),
             btnReloadLeft: document.getElementById('btn-reload-left'),
             btnReloadRight: document.getElementById('btn-reload-right'),
+            btnArMode: document.getElementById('btn-ar-mode'),
             btnFullscreen: document.getElementById('btn-fullscreen'),
             cheatMenu: document.getElementById('cheat-menu')
         };
@@ -2293,6 +2297,7 @@ class Game {
         window.addEventListener('resize', () => this.resize());
 
         this.updateMenuUI();
+        this.updateARModeButton();
         this.updateModeToggleUI();
         this.initAdminAuth();
         this.loadRemoteConfig();
@@ -2615,6 +2620,9 @@ class Game {
                 this.toggleFunWeaponMenu();
             });
         }
+        if (this.ui.btnArMode) {
+            this.ui.btnArMode.addEventListener('click', () => this.toggleARMode());
+        }
         if (this.ui.btnFullscreen) {
             this.ui.btnFullscreen.addEventListener('click', () => this.enterFullscreen());
             this.ui.btnFullscreen.addEventListener('touchstart', (e) => {
@@ -2737,6 +2745,66 @@ class Game {
     updateMenuUI() {
         this.ui.menuCoins.innerText = this.meta.coins;
         this.ui.shopCoins.innerText = this.meta.coins;
+    }
+
+    updateARModeButton() {
+        if (!this.ui.btnArMode) return;
+        this.ui.btnArMode.textContent = this.arModeEnabled ? 'AR Kamera: An' : 'AR Kamera: Aus';
+        this.ui.btnArMode.style.filter = this.arModeEnabled ? '' : 'grayscale(0.15)';
+    }
+
+    async enableARCamera() {
+        if (!this.ui.arCameraFeed || this.arStream) {
+            if (this.ui.arCameraFeed) {
+                this.ui.arCameraFeed.classList.remove('hidden');
+            }
+            return true;
+        }
+        if (!navigator.mediaDevices?.getUserMedia) {
+            this.arModeEnabled = false;
+            this.updateARModeButton();
+            return false;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { ideal: 'environment' }
+                },
+                audio: false
+            });
+            this.arStream = stream;
+            this.ui.arCameraFeed.srcObject = stream;
+            this.ui.arCameraFeed.classList.remove('hidden');
+            return true;
+        } catch (_) {
+            this.arModeEnabled = false;
+            localStorage.setItem('moorhuhn_ar_mode', '0');
+            this.updateARModeButton();
+            return false;
+        }
+    }
+
+    disableARCamera() {
+        if (this.arStream) {
+            this.arStream.getTracks().forEach((track) => track.stop());
+            this.arStream = null;
+        }
+        if (this.ui.arCameraFeed) {
+            this.ui.arCameraFeed.srcObject = null;
+            this.ui.arCameraFeed.classList.add('hidden');
+        }
+    }
+
+    async toggleARMode() {
+        this.arModeEnabled = !this.arModeEnabled;
+        localStorage.setItem('moorhuhn_ar_mode', this.arModeEnabled ? '1' : '0');
+        this.updateARModeButton();
+        if (!this.arModeEnabled) {
+            this.disableARCamera();
+            return;
+        }
+        await this.enableARCamera();
     }
 
     getFunWeaponUnlockRequirements() {
@@ -2951,6 +3019,7 @@ class Game {
         this.hudModeIndicatorUntil = 0;
         this.isHoldingFire = false;
         this.holdFireCooldown = 0;
+        this.disableARCamera();
         this.audio.stopBGM();
         this.hideAllScreens();
         this.ui.mainMenu.classList.remove('hidden');
@@ -3245,7 +3314,7 @@ class Game {
         }
     }
 
-    startGame(mode = 'classic') {
+    async startGame(mode = 'classic') {
         if (!this.remoteConfig.game_enabled) {
             this.setHighscoreEditMessage('Das Spiel ist aktuell deaktiviert.', true);
             return;
@@ -3262,6 +3331,11 @@ class Game {
         this.hudModeIndicatorUntil = 0;
         this.isHoldingFire = false;
         this.holdFireCooldown = 0;
+        if (this.arModeEnabled) {
+            await this.enableARCamera();
+        } else {
+            this.disableARCamera();
+        }
         this.state = GameState.PLAYING;
         this.audio.startBGM();
         this.hideAllScreens();
@@ -3634,7 +3708,7 @@ class Game {
         }
 
         // 2. Wenn kein Ziel getroffen wurde (oder Shotgun), Umgebung prüfen (Geheimnisse)
-        if (!hitSomething || isShotgun) {
+        if ((!hitSomething || isShotgun) && !this.arStream) {
             const sceneryHit = this.landscape.checkHits(x, y);
             if (sceneryHit) {
                 this.score += sceneryHit.points;
@@ -3928,7 +4002,9 @@ class Game {
         }
 
         // Umgebungs-Updates (geht auch im Menü, wenn wir dort Bewegung haben wollen)
-        this.landscape.update(deltaTime);
+        if (!this.arStream) {
+            this.landscape.update(deltaTime);
+        }
 
         // Buff Timers
         if (this.activeBuffs.machinegun > 0) {
@@ -4081,13 +4157,18 @@ class Game {
 
     draw() {
         // Hintergrundlandschaft immer zeichnen (auch im Menü)
-        this.landscape.draw(this.ctx);
+        this.ctx.clearRect(0, 0, this.gameW, this.gameH);
+        if (!this.arStream) {
+            this.landscape.draw(this.ctx);
+        }
 
         // Im Menü passiert nichts auf dem Canvas bzgl Targets, wir brechen hier ab. 
         // Die Landschaft ist schon gerendert und bleibt als cooles Menü-Hintergrundbild.
         if (this.state !== GameState.PLAYING && this.targets.length === 0 && this.particles.length === 0) {
             // Trotzdem Vordergrund zeichnen (damit er auch im Menü cool aussieht)
-            this.landscape.drawForeground(this.ctx);
+            if (!this.arStream) {
+                this.landscape.drawForeground(this.ctx);
+            }
             return;
         }
 
@@ -4107,7 +4188,9 @@ class Game {
             }
         });
         // 3. Vordergrund-Objekte (Baum, Fels, Holzstapel) ÜBER den Hühnern
-        this.landscape.drawForeground(this.ctx);
+        if (!this.arStream) {
+            this.landscape.drawForeground(this.ctx);
+        }
         // 4. Blutlachen (unter Partikeln, damit sie auf dem Boden liegen)
         this.bloodPools.forEach(bp => bp.draw(this.ctx));
         // 5. Partikel und Popups (sollen über allem schweben)
