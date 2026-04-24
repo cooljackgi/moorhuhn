@@ -8,45 +8,21 @@ class AudioManager {
 
     playShoot() {
         if (!this.enabled) return;
-        // Kraftvollerer Schusssound mit Noise-Element
-        const t = this.ctx.currentTime;
-        const dur = 0.2;
-        
-        // Oszillator für den Knall
         const osc = this.ctx.createOscillator();
-        const oscGain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, t);
-        osc.frequency.exponentialRampToValueAtTime(10, t + dur);
-        oscGain.gain.setValueAtTime(0.8, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.01, t + dur);
-        osc.connect(oscGain);
-        oscGain.connect(this.ctx.destination);
-        osc.start(t);
-        osc.stop(t + dur);
+        const gainNode = this.ctx.createGain();
 
-        // Weißes Rauschen (White Noise) für die Explosion
-        const bufferSize = this.ctx.sampleRate * dur;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-        
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-        const noiseFilter = this.ctx.createBiquadFilter();
-        noiseFilter.type = 'lowpass';
-        noiseFilter.frequency.value = 1000;
-        const noiseGain = this.ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.5, t);
-        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + dur);
-        
-        noise.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(this.ctx.destination);
-        
-        noise.start(t);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(620, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(140, this.ctx.currentTime + 0.08);
+
+        gainNode.gain.setValueAtTime(0.32, this.ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+        osc.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
     }
 
     playEmptyClick() {
@@ -91,22 +67,21 @@ class AudioManager {
 
     playChickenHit() {
         if (!this.enabled) return;
-        // Kurzes, knackiges Quiek / Plopp (näher am Original)
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.15); // Kürzer (0.15s statt 0.3s)
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(520, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.18);
 
-        gainNode.gain.setValueAtTime(0.5, this.ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+        gainNode.gain.setValueAtTime(0.35, this.ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
 
         osc.connect(gainNode);
         gainNode.connect(this.ctx.destination);
 
         osc.start();
-        osc.stop(this.ctx.currentTime + 0.15);
+        osc.stop(this.ctx.currentTime + 0.18);
     }
 
     playUpgradeHit() {
