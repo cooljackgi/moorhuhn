@@ -2277,7 +2277,12 @@ class Game {
         document.body.classList.toggle('is-touch-device', this.isTouchDevice);
 
         this.initEvents();
+        this.ui.funWeaponButtons.forEach((button) => {
+            const label = button.querySelector('span');
+            if (label) label.dataset.baseLabel = label.textContent;
+        });
         this.selectFunWeapon(this.selectedFunWeapon);
+        this.syncFunWeaponButtons();
         this.resize();
         window.addEventListener('resize', () => this.resize());
 
@@ -2302,6 +2307,8 @@ class Game {
         const defaults = {
             coins: 0,
             highscores: [],
+            totalRoundsPlayed: 0,
+            funRoundsPlayed: 0,
             upgrades: {
                 magazine: 0,
                 reloadSpeed: 0,
@@ -2317,6 +2324,10 @@ class Game {
         const saved = localStorage.getItem('moorhuhn_meta');
         if (saved) {
             const parsed = JSON.parse(saved);
+            parsed.coins = Number.isFinite(parsed.coins) ? parsed.coins : defaults.coins;
+            parsed.highscores = Array.isArray(parsed.highscores) ? parsed.highscores : defaults.highscores;
+            parsed.totalRoundsPlayed = Number.isFinite(parsed.totalRoundsPlayed) ? parsed.totalRoundsPlayed : defaults.totalRoundsPlayed;
+            parsed.funRoundsPlayed = Number.isFinite(parsed.funRoundsPlayed) ? parsed.funRoundsPlayed : defaults.funRoundsPlayed;
             // Neue Upgrade-Schlüssel in bestehende Saves einmergen
             parsed.upgrades = Object.assign({}, defaults.upgrades, parsed.upgrades);
             return parsed;
@@ -2327,6 +2338,7 @@ class Game {
     saveMeta() {
         localStorage.setItem('moorhuhn_meta', JSON.stringify(this.meta));
         this.updateMenuUI();
+        this.syncFunWeaponButtons();
     }
 
     detectTouchDevice() {
@@ -2672,6 +2684,42 @@ class Game {
         this.ui.shopCoins.innerText = this.meta.coins;
     }
 
+    getFunWeaponUnlockRequirements() {
+        return {
+            blaster: 0,
+            scatter: 2,
+            laser: 4,
+            flame: 6,
+            rocket: 9,
+            zap: 12
+        };
+    }
+
+    isFunWeaponUnlocked(weaponId) {
+        const requirements = this.getFunWeaponUnlockRequirements();
+        return (this.meta.totalRoundsPlayed || 0) >= (requirements[weaponId] || 0);
+    }
+
+    syncFunWeaponButtons() {
+        if (!this.ui.funWeaponButtons) return;
+        const requirements = this.getFunWeaponUnlockRequirements();
+
+        this.ui.funWeaponButtons.forEach((button) => {
+            const weaponId = button.dataset.weapon;
+            const unlocked = this.isFunWeaponUnlocked(weaponId);
+            const requirement = requirements[weaponId] || 0;
+            const label = button.querySelector('span');
+            button.disabled = !unlocked;
+            button.classList.toggle('locked', !unlocked);
+            button.classList.toggle('active', this.selectedFunWeapon === weaponId && unlocked);
+            if (label) {
+                label.textContent = unlocked
+                    ? label.dataset.baseLabel
+                    : `Ab ${requirement} Runden`;
+            }
+        });
+    }
+
     getFunWeaponProfiles() {
         return {
             blaster: {
@@ -2724,6 +2772,40 @@ class Game {
                     { x: 48, y: -18 },
                     { x: 48, y: 18 }
                 ]
+            },
+            rocket: {
+                id: 'rocket',
+                name: 'Raketenwerfer',
+                hudLabel: 'Spassmodus: Raketenwerfer',
+                accent: '#ff5252',
+                infiniteAmmo: true,
+                hitRadiusBonus: 60,
+                bonusTime: 30,
+                scoreMultiplier: 1.15,
+                burstOffsets: [
+                    { x: 0, y: 0 },
+                    { x: -28, y: 0 },
+                    { x: 28, y: 0 },
+                    { x: 0, y: -24 },
+                    { x: 0, y: 24 }
+                ]
+            },
+            zap: {
+                id: 'zap',
+                name: 'Blitzkanone',
+                hudLabel: 'Spassmodus: Blitzkanone',
+                accent: '#c58cff',
+                infiniteAmmo: true,
+                shotgun: true,
+                zoom: true,
+                hitRadiusBonus: 30,
+                bonusTime: 25,
+                scoreMultiplier: 1.05,
+                burstOffsets: [
+                    { x: 0, y: 0 },
+                    { x: 18, y: -18 },
+                    { x: 18, y: 18 }
+                ]
             }
         };
     }
@@ -2737,13 +2819,10 @@ class Game {
     selectFunWeapon(weaponId) {
         const weapons = this.getFunWeaponProfiles();
         if (!weapons[weaponId]) return;
+        if (!this.isFunWeaponUnlocked(weaponId)) return;
         this.selectedFunWeapon = weaponId;
         this.currentWeaponConfig = this.getCurrentWeaponConfig();
-        if (this.ui.funWeaponButtons) {
-            this.ui.funWeaponButtons.forEach((button) => {
-                button.classList.toggle('active', button.dataset.weapon === weaponId);
-            });
-        }
+        this.syncFunWeaponButtons();
         if (this.state === GameState.PLAYING && this.playMode === 'fun') {
             this.applyFunWeaponLoadout();
             this.audio.playUpgradeHit();
@@ -2797,6 +2876,7 @@ class Game {
             button.classList.remove('visible');
         });
         this.updateMenuUI();
+        this.syncFunWeaponButtons();
         this.updatePortraitOverlay();
 
         // Initialize main menu ad once the menu is visible and layout has settled.
@@ -2806,7 +2886,7 @@ class Game {
     }
 
     async startNewSession() {
-        this.currentSessionId = await window.db.startGameSession();
+        this.currentSessionId = await window.db.startGameSession(this.playMode);
         this.sessionStartedAt = Date.now();
     }
 
@@ -3091,6 +3171,10 @@ class Game {
 
         // Init Stats
         this.score = 0;
+        if (this.playMode === 'fun' && !this.isFunWeaponUnlocked(this.selectedFunWeapon)) {
+            this.selectedFunWeapon = 'blaster';
+            this.currentWeaponConfig = this.getCurrentWeaponConfig();
+        }
         const weaponConfig = this.currentWeaponConfig;
         this.timeRemaining = this.remoteConfig.time_limit_seconds + (this.meta.upgrades.timeBonus * 10) + (weaponConfig?.bonusTime || 0);
         this.maxAmmo = this.playMode === 'fun' ? 999 : DEFAULT_AMMO + (this.meta.upgrades.magazine * 2);
@@ -3584,6 +3668,10 @@ class Game {
         // Calc Coins (z.B. 10 Punkte = 1 Münze, Goldgier gibt Bonus)
         const earnedCoins = Math.floor(this.score / 10 * (1 + (this.meta.upgrades.goldgier || 0) * 0.2));
         this.meta.coins += earnedCoins;
+        this.meta.totalRoundsPlayed = (this.meta.totalRoundsPlayed || 0) + 1;
+        if (this.playMode === 'fun') {
+            this.meta.funRoundsPlayed = (this.meta.funRoundsPlayed || 0) + 1;
+        }
         await this.finishActiveSession(true, 'completed', earnedCoins);
 
         let isNewHS = false;

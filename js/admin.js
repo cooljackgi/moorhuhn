@@ -283,14 +283,16 @@ class AdminApp {
         this.ui.sessionsBody.innerHTML = '';
 
         if (sessions.length === 0) {
-            this.ui.sessionsBody.innerHTML = '<tr><td colspan="5">Noch keine Sessions gefunden.</td></tr>';
+            this.ui.sessionsBody.innerHTML = '<tr><td colspan="6">Noch keine Sessions gefunden.</td></tr>';
             return;
         }
 
         sessions.forEach((session) => {
+            const mode = String(session.page_path || '').includes('mode=fun') ? 'Spaß' : 'Normal';
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${this.formatDate(session.started_at)}</td>
+                <td>${mode}</td>
                 <td>${session.completed ? 'Beendet' : 'Offen'}</td>
                 <td>${session.score || 0}</td>
                 <td>${session.duration_seconds || 0}s</td>

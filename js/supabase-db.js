@@ -168,8 +168,9 @@ async function deleteHighscore(entry) {
     }
 }
 
-async function startGameSession() {
+async function startGameSession(playMode = 'classic') {
     const clientSessionId = generateClientSessionId();
+    const sessionMode = playMode === 'fun' ? 'fun' : 'classic';
 
     try {
         const { error } = await supabaseClient
@@ -178,7 +179,7 @@ async function startGameSession() {
                 client_session_id: clientSessionId,
                 started_at: new Date().toISOString(),
                 completed: false,
-                page_path: window.location.pathname,
+                page_path: `${window.location.pathname}?mode=${sessionMode}`,
                 user_agent: navigator.userAgent
             }]);
 

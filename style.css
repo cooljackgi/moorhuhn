@@ -170,6 +170,15 @@ body {
     background: rgba(35, 126, 176, 0.3);
 }
 
+.fun-weapon-btn:disabled,
+.fun-weapon-btn.locked {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
 .btn-fun {
     background: linear-gradient(180deg, #00acc1, #006064);
 }
@@ -335,7 +344,7 @@ body {
 .fun-weapon-hud {
     width: min(760px, calc(100vw - 28px));
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
     margin-top: 10px;
     padding: 10px;
@@ -1662,7 +1671,7 @@ body {
 
     .fun-weapon-hud {
         width: min(720px, calc(100vw - 24px));
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 6px;
         padding: 8px;
     }
