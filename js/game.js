@@ -3012,9 +3012,9 @@ class Game {
         }
     }
 
-    showMainMenu() {
+    async showMainMenu() {
         if (this.state === GameState.PLAYING && this.currentSessionId) {
-            this.finishActiveSession(false, 'menu');
+            await this.finishActiveSession(false, 'menu');
         }
         this.state = GameState.MENU;
         this.playMode = 'classic';
@@ -3324,7 +3324,7 @@ class Game {
             return;
         }
         if (this.currentSessionId) {
-            this.finishActiveSession(false, 'restart');
+            await this.finishActiveSession(false, 'restart');
         }
         if (this.audio.ctx.state === 'suspended') {
             this.audio.ctx.resume();

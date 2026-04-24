@@ -289,14 +289,20 @@ class AdminApp {
 
         sessions.forEach((session) => {
             const mode = String(session.page_path || '').includes('mode=fun') ? 'Spaß' : 'Normal';
+            const status = session.ended_at
+                ? (session.completed ? 'Beendet' : 'Abgebrochen')
+                : 'Offen';
+            const exitReason = session.ended_at
+                ? this.escapeHtml(session.exit_reason || '-')
+                : '-';
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${this.formatDate(session.started_at)}</td>
                 <td>${mode}</td>
-                <td>${session.completed ? 'Beendet' : 'Offen'}</td>
+                <td>${status}</td>
                 <td>${session.score || 0}</td>
                 <td>${session.duration_seconds || 0}s</td>
-                <td>${this.escapeHtml(session.exit_reason || '-')}</td>
+                <td>${exitReason}</td>
             `;
             this.ui.sessionsBody.appendChild(tr);
         });
