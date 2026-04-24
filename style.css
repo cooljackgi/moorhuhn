@@ -1545,18 +1545,19 @@ body {
 
     .fun-weapon-hud {
         left: 12px;
-        right: 12px;
-        bottom: 188px;
-        width: auto;
+        right: auto;
+        bottom: 108px;
+        width: min(286px, calc(100vw - 24px));
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
         padding: 8px;
         border-radius: 18px;
+        z-index: 16;
     }
 
     .fun-weapon-hud .fun-weapon-btn {
-        min-height: 58px;
-        padding: 8px 10px;
+        min-height: 50px;
+        padding: 7px 9px;
     }
 
     #main-menu {
@@ -1606,7 +1607,13 @@ body {
     .hud-mode-indicator {
         font-size: 0.72rem;
         padding: 6px 10px;
-        bottom: 148px;
+        bottom: 176px;
+        max-width: calc(100vw - 28px);
+    }
+
+    .hud-picker-btn {
+        font-size: 0.64rem;
+        padding: 5px 10px;
     }
 
     .hud-mobile-controls {
@@ -1697,12 +1704,13 @@ body {
     }
 
     .fun-weapon-hud {
-        left: calc(50% - 298px);
-        bottom: 148px;
-        width: min(320px, calc(100vw - 24px));
+        left: 12px;
+        bottom: 82px;
+        width: min(292px, calc(100vw - 24px));
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
         padding: 8px;
+        z-index: 16;
     }
 
     .fun-weapon-hud .fun-weapon-btn {
@@ -1735,7 +1743,7 @@ body {
     }
 
     .hud-mode-indicator {
-        bottom: 118px;
+        bottom: 132px;
     }
 
     .hud-mobile-controls {
