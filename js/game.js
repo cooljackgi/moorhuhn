@@ -2477,7 +2477,7 @@ class Game {
         if (startButton) {
             startButton.disabled = !this.remoteConfig.game_enabled;
             startButton.style.filter = this.remoteConfig.game_enabled ? '' : 'grayscale(1)';
-            startButton.textContent = this.remoteConfig.game_enabled ? 'Spiel Starten' : 'Spiel Deaktiviert';
+            startButton.textContent = this.remoteConfig.game_enabled ? 'Klassisch Starten' : 'Spiel Deaktiviert';
         }
     }
 

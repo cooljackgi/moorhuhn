@@ -91,24 +91,22 @@ class AudioManager {
 
     playChickenHit() {
         if (!this.enabled) return;
-        // Comedymäßiges Quieken + Plopp
-        const t = this.ctx.currentTime;
+        // Kurzes, knackiges Quiek / Plopp (näher am Original)
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
 
         osc.type = 'sine';
-        // Schneller Pitch-Drop für Comedy-Effekt
-        osc.frequency.setValueAtTime(1200, t);
-        osc.frequency.exponentialRampToValueAtTime(100, t + 0.3);
+        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.15); // Kürzer (0.15s statt 0.3s)
 
-        gainNode.gain.setValueAtTime(0.6, t);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        gainNode.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
 
         osc.connect(gainNode);
         gainNode.connect(this.ctx.destination);
 
-        osc.start(t);
-        osc.stop(t + 0.3);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.15);
     }
 
     playUpgradeHit() {
