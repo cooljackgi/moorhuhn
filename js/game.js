@@ -2161,6 +2161,8 @@ class Game {
         this.playMode = 'classic';
         this.selectedFunWeapon = 'blaster';
         this.currentWeaponConfig = null;
+        this.isFunWeaponMenuOpen = false;
+        this.hudModeIndicatorUntil = 0;
 
         // Touch/mobile detection
         this.isTouchDevice = this.detectTouchDevice();
@@ -2229,6 +2231,7 @@ class Game {
             time: document.getElementById('hud-time'),
             ammoContainer: document.getElementById('ammo-container'),
             ammoCountLabel: document.getElementById('ammo-count-label'),
+            btnFunWeaponPicker: document.getElementById('btn-fun-weapon-picker'),
             reloadProgress: document.getElementById('reload-progress'),
             reloadProgressBar: document.getElementById('reload-progress-bar'),
             reloadHint: document.getElementById('reload-hint'),
@@ -2309,6 +2312,14 @@ class Game {
             highscores: [],
             totalRoundsPlayed: 0,
             funRoundsPlayed: 0,
+            funWeaponUnlocks: {
+                blaster: true,
+                scatter: false,
+                laser: false,
+                flame: false,
+                rocket: false,
+                zap: false
+            },
             upgrades: {
                 magazine: 0,
                 reloadSpeed: 0,
@@ -2328,6 +2339,7 @@ class Game {
             parsed.highscores = Array.isArray(parsed.highscores) ? parsed.highscores : defaults.highscores;
             parsed.totalRoundsPlayed = Number.isFinite(parsed.totalRoundsPlayed) ? parsed.totalRoundsPlayed : defaults.totalRoundsPlayed;
             parsed.funRoundsPlayed = Number.isFinite(parsed.funRoundsPlayed) ? parsed.funRoundsPlayed : defaults.funRoundsPlayed;
+            parsed.funWeaponUnlocks = Object.assign({}, defaults.funWeaponUnlocks, parsed.funWeaponUnlocks);
             // Neue Upgrade-Schlüssel in bestehende Saves einmergen
             parsed.upgrades = Object.assign({}, defaults.upgrades, parsed.upgrades);
             return parsed;
@@ -2575,6 +2587,13 @@ class Game {
                 button.addEventListener('click', () => this.selectFunWeapon(button.dataset.weapon));
             });
         }
+        if (this.ui.btnFunWeaponPicker) {
+            this.ui.btnFunWeaponPicker.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleFunWeaponMenu();
+            });
+        }
         if (this.ui.btnFullscreen) {
             this.ui.btnFullscreen.addEventListener('click', () => this.enterFullscreen());
             this.ui.btnFullscreen.addEventListener('touchstart', (e) => {
@@ -2650,6 +2669,12 @@ class Game {
             }
         });
 
+        document.addEventListener('click', (e) => {
+            if (!this.isFunWeaponMenuOpen || !this.ui.funWeaponHud || !this.ui.btnFunWeaponPicker) return;
+            if (this.ui.funWeaponHud.contains(e.target) || this.ui.btnFunWeaponPicker.contains(e.target)) return;
+            this.toggleFunWeaponMenu(false);
+        });
+
         if (this.ui.adminPasswordInput) {
             this.ui.adminPasswordInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
@@ -2687,27 +2712,47 @@ class Game {
     getFunWeaponUnlockRequirements() {
         return {
             blaster: 0,
-            scatter: 2,
-            laser: 4,
-            flame: 6,
-            rocket: 9,
-            zap: 12
+            scatter: 450,
+            laser: 650,
+            flame: 900,
+            rocket: 1250,
+            zap: 1500
         };
     }
 
     isFunWeaponUnlocked(weaponId) {
-        const requirements = this.getFunWeaponUnlockRequirements();
-        return (this.meta.totalRoundsPlayed || 0) >= (requirements[weaponId] || 0);
+        return Boolean(this.meta.funWeaponUnlocks?.[weaponId]);
+    }
+
+    showTemporaryModeIndicator(durationMs = 2000) {
+        if (this.playMode !== 'fun') {
+            this.hudModeIndicatorUntil = 0;
+            return;
+        }
+        this.hudModeIndicatorUntil = Date.now() + durationMs;
+        this.updateHUD();
+        setTimeout(() => {
+            if (Date.now() >= this.hudModeIndicatorUntil) {
+                this.updateHUD();
+            }
+        }, durationMs + 50);
+    }
+
+    toggleFunWeaponMenu(forceState = !this.isFunWeaponMenuOpen) {
+        if (this.playMode !== 'fun') {
+            this.isFunWeaponMenuOpen = false;
+            return;
+        }
+        this.isFunWeaponMenuOpen = Boolean(forceState);
+        this.updateHUD();
     }
 
     syncFunWeaponButtons() {
         if (!this.ui.funWeaponButtons) return;
-        const requirements = this.getFunWeaponUnlockRequirements();
 
         this.ui.funWeaponButtons.forEach((button) => {
             const weaponId = button.dataset.weapon;
             const unlocked = this.isFunWeaponUnlocked(weaponId);
-            const requirement = requirements[weaponId] || 0;
             const label = button.querySelector('span');
             button.disabled = !unlocked;
             button.classList.toggle('locked', !unlocked);
@@ -2715,7 +2760,7 @@ class Game {
             if (label) {
                 label.textContent = unlocked
                     ? label.dataset.baseLabel
-                    : `Ab ${requirement} Runden`;
+                    : 'Im Shop';
             }
         });
     }
@@ -2822,10 +2867,12 @@ class Game {
         if (!this.isFunWeaponUnlocked(weaponId)) return;
         this.selectedFunWeapon = weaponId;
         this.currentWeaponConfig = this.getCurrentWeaponConfig();
+        this.isFunWeaponMenuOpen = false;
         this.syncFunWeaponButtons();
         if (this.state === GameState.PLAYING && this.playMode === 'fun') {
             this.applyFunWeaponLoadout();
             this.audio.playUpgradeHit();
+            this.showTemporaryModeIndicator(2000);
             this.updateHUD();
         }
     }
@@ -2864,6 +2911,8 @@ class Game {
         this.state = GameState.MENU;
         this.playMode = 'classic';
         this.currentWeaponConfig = null;
+        this.isFunWeaponMenuOpen = false;
+        this.hudModeIndicatorUntil = 0;
         this.audio.stopBGM();
         this.hideAllScreens();
         this.ui.mainMenu.classList.remove('hidden');
@@ -3097,6 +3146,22 @@ class Game {
             { id: 'missShield', name: 'Kugelsicherung', desc: '+1 Fehlschuss pro Spiel ohne Combo-Verlust', cost: 200 * ((this.meta.upgrades.missShield || 0) + 1), max: 3, current: this.meta.upgrades.missShield || 0 },
             { id: 'eagleEye', name: 'Adlerauge', desc: 'Boni-Ballons erscheinen 1s früher pro Level', cost: 175 * ((this.meta.upgrades.eagleEye || 0) + 1), max: 3, current: this.meta.upgrades.eagleEye || 0 }
         ];
+        const unlockCosts = this.getFunWeaponUnlockRequirements();
+        const unlockItems = [
+            { id: 'scatter', name: 'Spaßwaffe: Streuer', desc: 'Breiter Spread im Spaßmodus', cost: unlockCosts.scatter },
+            { id: 'laser', name: 'Spaßwaffe: Laser', desc: 'Präzise Waffe mit Zoom-Fokus', cost: unlockCosts.laser },
+            { id: 'flame', name: 'Spaßwaffe: Flammenwerfer', desc: 'Feuerkegel für chaotische Treffer', cost: unlockCosts.flame },
+            { id: 'rocket', name: 'Spaßwaffe: Raketenwerfer', desc: 'Große Explosion und viel Fläche', cost: unlockCosts.rocket },
+            { id: 'zap', name: 'Spaßwaffe: Blitzkanone', desc: 'Schnelle Kettenblitze im Spaßmodus', cost: unlockCosts.zap }
+        ].map((item) => ({
+            id: `unlock_${item.id}`,
+            name: item.name,
+            desc: item.desc,
+            cost: item.cost,
+            max: 1,
+            current: this.isFunWeaponUnlocked(item.id) ? 1 : 0
+        }));
+        items.push(...unlockItems);
 
         items.forEach(item => {
             const div = document.createElement('div');
@@ -3122,6 +3187,17 @@ class Game {
 
     // ACHTUNG: Auf globalen Context angewiesen wegen onclick im HTML string.
     buyUpgrade(id, cost) {
+        if (id.startsWith('unlock_')) {
+            const weaponId = id.replace('unlock_', '');
+            if (this.meta.coins < cost || this.isFunWeaponUnlocked(weaponId)) return;
+            this.meta.coins -= cost;
+            this.meta.funWeaponUnlocks[weaponId] = true;
+            this.saveMeta();
+            this.renderShopItems();
+            this.audio.playUpgradeHit();
+            return;
+        }
+
         if (this.meta.coins >= cost && this.meta.upgrades[id] < 3) {
             this.meta.coins -= cost;
             this.meta.upgrades[id]++;
@@ -3144,6 +3220,8 @@ class Game {
         }
         this.playMode = mode === 'fun' ? 'fun' : 'classic';
         this.currentWeaponConfig = this.getCurrentWeaponConfig();
+        this.isFunWeaponMenuOpen = false;
+        this.hudModeIndicatorUntil = 0;
         this.state = GameState.PLAYING;
         this.audio.startBGM();
         this.hideAllScreens();
@@ -3212,6 +3290,9 @@ class Game {
 
         this.lastTime = performance.now();
         this.updateHUD();
+        if (this.playMode === 'fun') {
+            this.showTemporaryModeIndicator(2000);
+        }
         this.startNewSession();
     }
 
@@ -3222,12 +3303,17 @@ class Game {
             this.ui.ammoCountLabel.innerText = this.playMode === 'fun' ? '∞ / ∞' : `${this.ammo} / ${this.maxAmmo}`;
         }
         if (this.ui.hudModeIndicator) {
-            const showModeIndicator = this.playMode === 'fun' && this.currentWeaponConfig;
+            const showModeIndicator = this.playMode === 'fun' && this.currentWeaponConfig && Date.now() < this.hudModeIndicatorUntil;
             this.ui.hudModeIndicator.classList.toggle('hidden', !showModeIndicator);
             this.ui.hudModeIndicator.textContent = showModeIndicator ? this.currentWeaponConfig.hudLabel : '';
         }
+        if (this.ui.btnFunWeaponPicker) {
+            const showPicker = this.playMode === 'fun' && this.currentWeaponConfig;
+            this.ui.btnFunWeaponPicker.classList.toggle('hidden', !showPicker);
+            this.ui.btnFunWeaponPicker.textContent = showPicker ? this.currentWeaponConfig.name : 'Waffe';
+        }
         if (this.ui.funWeaponHud) {
-            this.ui.funWeaponHud.classList.toggle('hidden', this.playMode !== 'fun');
+            this.ui.funWeaponHud.classList.toggle('hidden', this.playMode !== 'fun' || !this.isFunWeaponMenuOpen);
         }
 
         // Render Ammo

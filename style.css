@@ -330,7 +330,7 @@ body {
 .hud-mode-indicator {
     position: absolute;
     left: 50%;
-    bottom: 188px;
+    bottom: 156px;
     transform: translateX(-50%);
     padding: 8px 16px;
     border-radius: 999px;
@@ -345,13 +345,13 @@ body {
 
 .fun-weapon-hud {
     position: absolute;
-    left: 50%;
-    bottom: 250px;
-    transform: translateX(-50%);
-    width: min(760px, calc(100vw - 28px));
+    left: calc(50% - 278px);
+    bottom: 152px;
+    transform: none;
+    width: min(340px, calc(100vw - 28px));
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
     padding: 10px;
     border-radius: 22px;
     background: rgba(5, 12, 20, 0.5);
@@ -361,8 +361,8 @@ body {
 }
 
 .fun-weapon-hud .fun-weapon-btn {
-    min-height: 64px;
-    padding: 10px 12px;
+    min-height: 58px;
+    padding: 9px 11px;
     border-radius: 16px;
 }
 
@@ -425,6 +425,26 @@ body {
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 10px;
+}
+
+.hud-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hud-picker-btn {
+    border: 1px solid rgba(126, 217, 255, 0.55);
+    background: rgba(0, 172, 193, 0.18);
+    color: #d7fbff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .hud-card-title,
@@ -1524,10 +1544,12 @@ body {
     }
 
     .fun-weapon-hud {
-        width: min(100%, 420px);
+        left: 12px;
+        right: 12px;
+        bottom: 188px;
+        width: auto;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
-        bottom: 208px;
         padding: 8px;
         border-radius: 18px;
     }
@@ -1584,7 +1606,7 @@ body {
     .hud-mode-indicator {
         font-size: 0.72rem;
         padding: 6px 10px;
-        bottom: 164px;
+        bottom: 148px;
     }
 
     .hud-mobile-controls {
@@ -1675,10 +1697,11 @@ body {
     }
 
     .fun-weapon-hud {
-        width: min(720px, calc(100vw - 24px));
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        left: calc(50% - 298px);
+        bottom: 148px;
+        width: min(320px, calc(100vw - 24px));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
-        bottom: 176px;
         padding: 8px;
     }
 
@@ -1712,7 +1735,7 @@ body {
     }
 
     .hud-mode-indicator {
-        bottom: 132px;
+        bottom: 118px;
     }
 
     .hud-mobile-controls {
