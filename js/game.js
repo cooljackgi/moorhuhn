@@ -2163,6 +2163,9 @@ class Game {
         this.currentWeaponConfig = null;
         this.isFunWeaponMenuOpen = false;
         this.hudModeIndicatorUntil = 0;
+        this.isHoldingFire = false;
+        this.holdFirePointer = { x: 0, y: 0 };
+        this.holdFireCooldown = 0;
 
         // Touch/mobile detection
         this.isTouchDevice = this.detectTouchDevice();
@@ -2538,11 +2541,26 @@ class Game {
     }
 
     initEvents() {
+        const updateHoldPointer = (x, y) => {
+            this.holdFirePointer.x = x;
+            this.holdFirePointer.y = y;
+        };
+        const beginHoldFire = (x, y) => {
+            if (this.playMode !== 'fun' || this.currentWeaponConfig?.id !== 'flame') return;
+            this.isHoldingFire = true;
+            this.holdFireCooldown = 0;
+            updateHoldPointer(x, y);
+        };
+        const endHoldFire = () => {
+            this.isHoldingFire = false;
+            this.holdFireCooldown = 0;
+        };
         // Mausbewegung für Fadenkreuz (Canvas und UI)
         document.addEventListener('mousemove', (e) => {
             if (this.state === GameState.PLAYING) {
                 this.ui.cursor.style.left = e.clientX + 'px';
                 this.ui.cursor.style.top = e.clientY + 'px';
+                updateHoldPointer(e.clientX, e.clientY);
             }
         });
 
@@ -2552,12 +2570,15 @@ class Game {
             if (Date.now() - this._lastTouchTime < 600) return; // Synthetisches mousedown nach Touch ignorieren
             if (this.state === GameState.PLAYING) {
                 if (e.button === 0) {
+                    beginHoldFire(e.clientX, e.clientY);
                     this.shoot(e.clientX, e.clientY);
                 } else if (e.button === 2) {
                     this.reload();
                 }
             }
         });
+        document.addEventListener('mouseup', () => endHoldFire());
+        this.canvas.addEventListener('mouseleave', () => endHoldFire());
 
         // Verhindere Kontextmenü für Rechtsklick
         window.addEventListener('contextmenu', e => e.preventDefault());
@@ -2627,6 +2648,7 @@ class Game {
                 this.lastTouchTime = now;
                 this._lastTouchTime = now;
                 const touch = e.touches[0];
+                beginHoldFire(touch.clientX, touch.clientY);
                 this.shoot(touch.clientX, touch.clientY);
             }
         }, { passive: false });
@@ -2635,7 +2657,9 @@ class Game {
         let lastTouchEndTime = 0;
         this.canvas.addEventListener('touchend', () => {
             lastTouchEndTime = Date.now();
+            endHoldFire();
         });
+        this.canvas.addEventListener('touchcancel', () => endHoldFire());
         const originalMouseDown = this.canvas.onmousedown;
         this.canvas.addEventListener('mousedown', (e) => {
             if (Date.now() - lastTouchEndTime < 300) {
@@ -2660,6 +2684,12 @@ class Game {
         // Verhindere Scroll/Zoom während des Spiels
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
+            if (this.state === GameState.PLAYING && e.touches[0]) {
+                const touch = e.touches[0];
+                updateHoldPointer(touch.clientX, touch.clientY);
+                this.ui.cursor.style.left = touch.clientX + 'px';
+                this.ui.cursor.style.top = touch.clientY + 'px';
+            }
         }, { passive: false });
 
         // deltaTime-Sprung nach Tab-Wechsel / Bildschirm sperren verhindern
@@ -2807,15 +2837,19 @@ class Game {
                 accent: '#ff8a3d',
                 infiniteAmmo: true,
                 frenzy: true,
-                hitRadiusBonus: 42,
+                hitRadiusBonus: 56,
                 bonusTime: 40,
                 scoreMultiplier: 0.95,
                 burstOffsets: [
                     { x: 0, y: 0 },
-                    { x: 26, y: -10 },
-                    { x: 26, y: 10 },
-                    { x: 48, y: -18 },
-                    { x: 48, y: 18 }
+                    { x: 18, y: -16 },
+                    { x: 18, y: 16 },
+                    { x: 36, y: -24 },
+                    { x: 36, y: 0 },
+                    { x: 36, y: 24 },
+                    { x: 58, y: -30 },
+                    { x: 58, y: 0 },
+                    { x: 58, y: 30 }
                 ]
             },
             rocket: {
@@ -2868,6 +2902,8 @@ class Game {
         this.selectedFunWeapon = weaponId;
         this.currentWeaponConfig = this.getCurrentWeaponConfig();
         this.isFunWeaponMenuOpen = false;
+        this.isHoldingFire = false;
+        this.holdFireCooldown = 0;
         this.syncFunWeaponButtons();
         if (this.state === GameState.PLAYING && this.playMode === 'fun') {
             this.applyFunWeaponLoadout();
@@ -2913,6 +2949,8 @@ class Game {
         this.currentWeaponConfig = null;
         this.isFunWeaponMenuOpen = false;
         this.hudModeIndicatorUntil = 0;
+        this.isHoldingFire = false;
+        this.holdFireCooldown = 0;
         this.audio.stopBGM();
         this.hideAllScreens();
         this.ui.mainMenu.classList.remove('hidden');
@@ -3222,6 +3260,8 @@ class Game {
         this.currentWeaponConfig = this.getCurrentWeaponConfig();
         this.isFunWeaponMenuOpen = false;
         this.hudModeIndicatorUntil = 0;
+        this.isHoldingFire = false;
+        this.holdFireCooldown = 0;
         this.state = GameState.PLAYING;
         this.audio.startBGM();
         this.hideAllScreens();
@@ -3510,17 +3550,17 @@ class Game {
         });
 
         if (this.playMode === 'fun' && this.currentWeaponConfig?.id === 'flame') {
-            const flameColors = ['#ff6f00', '#ff8f00', '#ffd54f', '#ff7043'];
-            for (let i = 0; i < 12; i++) {
+            const flameColors = ['#ff6f00', '#ff8f00', '#ffd54f', '#ff7043', '#fff176'];
+            for (let i = 0; i < 22; i++) {
                 const particle = new Particle(
-                    x + Math.random() * 52,
-                    y + (Math.random() - 0.5) * 32,
+                    x + Math.random() * 72,
+                    y + (Math.random() - 0.5) * 44,
                     flameColors[Math.floor(Math.random() * flameColors.length)]
                 );
-                particle.size = Math.random() * 10 + 6;
-                particle.speedX = Math.random() * 12 + 4;
-                particle.speedY = (Math.random() - 0.5) * 6;
-                particle.life = 0.7;
+                particle.size = Math.random() * 12 + 7;
+                particle.speedX = Math.random() * 16 + 8;
+                particle.speedY = (Math.random() - 0.5) * 8;
+                particle.life = 0.85;
                 this.particles.push(particle);
             }
         }
@@ -3909,6 +3949,22 @@ class Game {
         }
         if (this.activeBuffs.zoom > 0) {
             this.activeBuffs.zoom -= deltaTime;
+        }
+
+        if (this.isHoldingFire) {
+            const canSprayFlame = this.state === GameState.PLAYING
+                && this.playMode === 'fun'
+                && this.currentWeaponConfig?.id === 'flame';
+            if (!canSprayFlame) {
+                this.isHoldingFire = false;
+                this.holdFireCooldown = 0;
+            } else {
+                this.holdFireCooldown -= deltaTime;
+                while (this.holdFireCooldown <= 0) {
+                    this.holdFireCooldown += 70;
+                    this.shoot(this.holdFirePointer.x, this.holdFirePointer.y);
+                }
+            }
         }
 
         // Update HUD min. jeden Frame wg Buff-Timer
