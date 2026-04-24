@@ -2220,6 +2220,7 @@ class Game {
             mainMenu: document.getElementById('main-menu'),
             hud: document.getElementById('hud'),
             hudModeIndicator: document.getElementById('hud-mode-indicator'),
+            funWeaponHud: document.getElementById('fun-weapon-hud'),
             shopMenu: document.getElementById('shop-menu'),
             highscoreMenu: document.getElementById('highscore-menu'),
             gameOver: document.getElementById('game-over-screen'),
@@ -2255,7 +2256,7 @@ class Game {
             scoreSubmitMsg: document.getElementById('score-submit-msg'),
             highscoreSubmissionDiv: document.getElementById('highscore-submission'),
             btnStartFun: document.getElementById('btn-start-fun'),
-            funWeaponButtons: Array.from(document.querySelectorAll('.fun-weapon-btn')),
+            funWeaponButtons: Array.from(document.querySelectorAll('#fun-weapon-hud .fun-weapon-btn')),
 
             cursor: document.getElementById('custom-cursor'),
             btnReloadLeft: document.getElementById('btn-reload-left'),
@@ -2677,6 +2678,7 @@ class Game {
                 id: 'blaster',
                 name: 'Arcade Blaster',
                 hudLabel: 'Spassmodus: Arcade Blaster',
+                accent: '#7ed9ff',
                 infiniteAmmo: true,
                 hitRadiusBonus: 18,
                 bonusTime: 30,
@@ -2686,6 +2688,7 @@ class Game {
                 id: 'scatter',
                 name: 'Konfetti-Streuer',
                 hudLabel: 'Spassmodus: Konfetti-Streuer',
+                accent: '#f8de57',
                 infiniteAmmo: true,
                 shotgun: true,
                 hitRadiusBonus: 22,
@@ -2696,12 +2699,31 @@ class Game {
                 id: 'laser',
                 name: 'Sonnen-Laser',
                 hudLabel: 'Spassmodus: Sonnen-Laser',
+                accent: '#66e2ff',
                 infiniteAmmo: true,
                 hitRadiusBonus: 34,
                 zoom: true,
                 frenzy: true,
                 bonusTime: 35,
                 scoreMultiplier: 1.1
+            },
+            flame: {
+                id: 'flame',
+                name: 'Flammenwerfer',
+                hudLabel: 'Spassmodus: Flammenwerfer',
+                accent: '#ff8a3d',
+                infiniteAmmo: true,
+                frenzy: true,
+                hitRadiusBonus: 42,
+                bonusTime: 40,
+                scoreMultiplier: 0.95,
+                burstOffsets: [
+                    { x: 0, y: 0 },
+                    { x: 26, y: -10 },
+                    { x: 26, y: 10 },
+                    { x: 48, y: -18 },
+                    { x: 48, y: 18 }
+                ]
             }
         };
     }
@@ -2716,11 +2738,26 @@ class Game {
         const weapons = this.getFunWeaponProfiles();
         if (!weapons[weaponId]) return;
         this.selectedFunWeapon = weaponId;
+        this.currentWeaponConfig = this.getCurrentWeaponConfig();
         if (this.ui.funWeaponButtons) {
             this.ui.funWeaponButtons.forEach((button) => {
                 button.classList.toggle('active', button.dataset.weapon === weaponId);
             });
         }
+        if (this.state === GameState.PLAYING && this.playMode === 'fun') {
+            this.applyFunWeaponLoadout();
+            this.audio.playUpgradeHit();
+            this.updateHUD();
+        }
+    }
+
+    applyFunWeaponLoadout() {
+        if (this.playMode !== 'fun' || !this.currentWeaponConfig) return;
+
+        this.activeBuffs.machinegun = Infinity;
+        this.activeBuffs.shotgun = this.currentWeaponConfig.shotgun ? Infinity : 0;
+        this.activeBuffs.zoom = this.currentWeaponConfig.zoom ? Infinity : 0;
+        this.activeBuffs.frenzy = this.currentWeaponConfig.frenzy ? Infinity : 0;
     }
 
     toggleAdultMode() {
@@ -3062,10 +3099,7 @@ class Game {
         this.reloadEndsAt = 0;
         this.reloadDurationMs = 0;
         this.activeBuffs = { machinegun: 0, slowmo: 0, shotgun: 0, doublescore: 0, frenzy: 0, zoom: 0 };
-        if (weaponConfig?.shotgun) this.activeBuffs.shotgun = Infinity;
-        if (weaponConfig?.zoom) this.activeBuffs.zoom = Infinity;
-        if (weaponConfig?.frenzy) this.activeBuffs.frenzy = Infinity;
-        if (weaponConfig?.infiniteAmmo) this.activeBuffs.machinegun = Infinity;
+        if (this.playMode === 'fun') this.applyFunWeaponLoadout();
         this.missShieldsLeft = this.meta.upgrades.missShield || 0;
         this.comboWindowMs = 2200 + (this.meta.upgrades.comboExtender || 0) * 300;
         this.chickenSpeedBoost = 0;
@@ -3108,6 +3142,9 @@ class Game {
             this.ui.hudModeIndicator.classList.toggle('hidden', !showModeIndicator);
             this.ui.hudModeIndicator.textContent = showModeIndicator ? this.currentWeaponConfig.hudLabel : '';
         }
+        if (this.ui.funWeaponHud) {
+            this.ui.funWeaponHud.classList.toggle('hidden', this.playMode !== 'fun');
+        }
 
         // Render Ammo
         this.ui.ammoContainer.innerHTML = '';
@@ -3135,7 +3172,8 @@ class Game {
                 const div = document.createElement('div');
                 div.className = 'bullet';
                 if (this.playMode === 'fun') {
-                    div.style.background = 'linear-gradient(to right, #00e5ff, #7c4dff)';
+                    const accent = this.currentWeaponConfig?.accent || '#7ed9ff';
+                    div.style.background = `linear-gradient(to right, ${accent}, #ffe082)`;
                 } else if (limitType) {
                     div.style.background = 'linear-gradient(to right, #ff0000, #ff5722)'; // MG Ammo
                 } else if (i >= this.ammo) {
@@ -3198,7 +3236,14 @@ class Game {
         this.ui.buffsContainer.innerHTML = buffChips.join('');
 
         // Fadenkreuz anpassen
-        if (this.activeBuffs.shotgun > 0) {
+        if (this.playMode === 'fun' && this.currentWeaponConfig?.id === 'flame') {
+            this.ui.cursor.style.width = '92px';
+            this.ui.cursor.style.height = '92px';
+            this.ui.cursor.style.marginLeft = '-46px';
+            this.ui.cursor.style.marginTop = '-46px';
+            this.ui.cursor.style.borderColor = 'rgba(255, 138, 61, 0.85)';
+            this.ui.cursor.style.borderWidth = '5px';
+        } else if (this.activeBuffs.shotgun > 0) {
             this.ui.cursor.style.width = '120px';
             this.ui.cursor.style.height = '120px';
             this.ui.cursor.style.marginLeft = '-60px';
@@ -3250,7 +3295,7 @@ class Game {
 
             this.audio.playShoot();
             this.updateHUD();
-            const hitAnything = this.checkHits(x, y);
+            const hitAnything = this.fireWeaponPattern(x, y);
             if (!hitAnything && this.state === GameState.PLAYING) {
                 this.registerMiss(); // Combo wird zurückgesetzt
             }
@@ -3282,6 +3327,35 @@ class Game {
                 this.updateHUD();
             }
         }, reloadTime);
+    }
+
+    fireWeaponPattern(x, y) {
+        const offsets = this.playMode === 'fun' && Array.isArray(this.currentWeaponConfig?.burstOffsets)
+            ? this.currentWeaponConfig.burstOffsets
+            : [{ x: 0, y: 0 }];
+
+        let hitAnything = false;
+        offsets.forEach((offset) => {
+            hitAnything = this.checkHits(x + offset.x, y + offset.y) || hitAnything;
+        });
+
+        if (this.playMode === 'fun' && this.currentWeaponConfig?.id === 'flame') {
+            const flameColors = ['#ff6f00', '#ff8f00', '#ffd54f', '#ff7043'];
+            for (let i = 0; i < 12; i++) {
+                const particle = new Particle(
+                    x + Math.random() * 52,
+                    y + (Math.random() - 0.5) * 32,
+                    flameColors[Math.floor(Math.random() * flameColors.length)]
+                );
+                particle.size = Math.random() * 10 + 6;
+                particle.speedX = Math.random() * 12 + 4;
+                particle.speedY = (Math.random() - 0.5) * 6;
+                particle.life = 0.7;
+                this.particles.push(particle);
+            }
+        }
+
+        return hitAnything;
     }
 
     checkHits(x, y) {

@@ -24,21 +24,7 @@
                 <div class="fun-mode-panel">
                     <div class="fun-mode-copy">
                         <h3>Spaßmodus</h3>
-                        <p>Waffenwahl, keine Nachladepflicht und bewusst ohne Highscore-Wertung.</p>
-                    </div>
-                    <div id="fun-weapon-list" class="fun-weapon-list">
-                        <button class="fun-weapon-btn active" data-weapon="blaster" type="button">
-                            <strong>Arcade Blaster</strong>
-                            <span>∞ Schüsse, große Trefferzone</span>
-                        </button>
-                        <button class="fun-weapon-btn" data-weapon="scatter" type="button">
-                            <strong>Konfetti-Streuer</strong>
-                            <span>Breiter Spread, trifft mehrere Hühner</span>
-                        </button>
-                        <button class="fun-weapon-btn" data-weapon="laser" type="button">
-                            <strong>Sonnen-Laser</strong>
-                            <span>Zoom-Fokus, durchschlagend und präzise</span>
-                        </button>
+                        <p>Kein Nachladen, keine Highscore-Wertung und Waffenwechsel direkt im Spiel.</p>
                     </div>
                     <button id="btn-start-fun" class="btn btn-fun">Spaßmodus Starten</button>
                 </div>
@@ -74,6 +60,24 @@
                     </div>
                 </div>
                 <div id="hud-mode-indicator" class="hud-mode-indicator hidden"></div>
+                <div id="fun-weapon-hud" class="fun-weapon-hud hidden">
+                    <button class="fun-weapon-btn" data-weapon="blaster" type="button">
+                        <strong>Blaster</strong>
+                        <span>Allround</span>
+                    </button>
+                    <button class="fun-weapon-btn" data-weapon="scatter" type="button">
+                        <strong>Streuer</strong>
+                        <span>Breit</span>
+                    </button>
+                    <button class="fun-weapon-btn" data-weapon="laser" type="button">
+                        <strong>Laser</strong>
+                        <span>Präzise</span>
+                    </button>
+                    <button class="fun-weapon-btn" data-weapon="flame" type="button">
+                        <strong>Flamme</strong>
+                        <span>Kegel</span>
+                    </button>
+                </div>
 
                 <div class="hud-bottom">
                     <div class="hud-mobile-controls">
