@@ -328,8 +328,10 @@ body {
 }
 
 .hud-mode-indicator {
-    align-self: center;
-    margin-top: 8px;
+    position: absolute;
+    left: 50%;
+    bottom: 188px;
+    transform: translateX(-50%);
     padding: 8px 16px;
     border-radius: 999px;
     background: rgba(0, 172, 193, 0.22);
@@ -342,11 +344,14 @@ body {
 }
 
 .fun-weapon-hud {
+    position: absolute;
+    left: 50%;
+    bottom: 250px;
+    transform: translateX(-50%);
     width: min(760px, calc(100vw - 28px));
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
-    margin-top: 10px;
     padding: 10px;
     border-radius: 22px;
     background: rgba(5, 12, 20, 0.5);
@@ -1522,7 +1527,7 @@ body {
         width: min(100%, 420px);
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
-        margin-top: 8px;
+        bottom: 208px;
         padding: 8px;
         border-radius: 18px;
     }
@@ -1579,7 +1584,7 @@ body {
     .hud-mode-indicator {
         font-size: 0.72rem;
         padding: 6px 10px;
-        margin-top: 6px;
+        bottom: 164px;
     }
 
     .hud-mobile-controls {
@@ -1673,6 +1678,7 @@ body {
         width: min(720px, calc(100vw - 24px));
         grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 6px;
+        bottom: 176px;
         padding: 8px;
     }
 
@@ -1703,6 +1709,10 @@ body {
 
     .hud-bottom {
         padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .hud-mode-indicator {
+        bottom: 132px;
     }
 
     .hud-mobile-controls {
