@@ -2158,6 +2158,9 @@ class Game {
         this.audio = new AudioManager();
 
         this.state = GameState.MENU;
+        this.playMode = 'classic';
+        this.selectedFunWeapon = 'blaster';
+        this.currentWeaponConfig = null;
 
         // Touch/mobile detection
         this.isTouchDevice = this.detectTouchDevice();
@@ -2216,6 +2219,7 @@ class Game {
         this.ui = {
             mainMenu: document.getElementById('main-menu'),
             hud: document.getElementById('hud'),
+            hudModeIndicator: document.getElementById('hud-mode-indicator'),
             shopMenu: document.getElementById('shop-menu'),
             highscoreMenu: document.getElementById('highscore-menu'),
             gameOver: document.getElementById('game-over-screen'),
@@ -2243,12 +2247,15 @@ class Game {
             resScore: document.getElementById('result-score'),
             resCoins: document.getElementById('result-coins'),
             newHsMsg: document.getElementById('new-highscore-msg'),
+            gameoverModeNote: document.getElementById('gameover-mode-note'),
 
             // Global Highscore UI
             playerNameInput: document.getElementById('player-name-input'),
             btnSubmitScore: document.getElementById('btn-submit-score'),
             scoreSubmitMsg: document.getElementById('score-submit-msg'),
             highscoreSubmissionDiv: document.getElementById('highscore-submission'),
+            btnStartFun: document.getElementById('btn-start-fun'),
+            funWeaponButtons: Array.from(document.querySelectorAll('.fun-weapon-btn')),
 
             cursor: document.getElementById('custom-cursor'),
             btnReloadLeft: document.getElementById('btn-reload-left'),
@@ -2269,6 +2276,7 @@ class Game {
         document.body.classList.toggle('is-touch-device', this.isTouchDevice);
 
         this.initEvents();
+        this.selectFunWeapon(this.selectedFunWeapon);
         this.resize();
         window.addEventListener('resize', () => this.resize());
 
@@ -2349,8 +2357,9 @@ class Game {
         if (this.state === GameState.PLAYING) {
             [this.ui.btnReloadLeft, this.ui.btnReloadRight].forEach((button) => {
                 if (!button) return;
-                button.classList.toggle('hidden', !this.isTouchDevice);
-                button.classList.toggle('visible', this.isTouchDevice);
+                const showReloadControls = this.isTouchDevice && this.playMode === 'classic';
+                button.classList.toggle('hidden', !showReloadControls);
+                button.classList.toggle('visible', showReloadControls);
             });
         }
         this.updatePortraitOverlay();
@@ -2542,9 +2551,17 @@ class Game {
         });
 
         // Menü Buttons
-        document.getElementById('btn-start').addEventListener('click', () => this.startGame());
+        document.getElementById('btn-start').addEventListener('click', () => this.startGame('classic'));
+        if (this.ui.btnStartFun) {
+            this.ui.btnStartFun.addEventListener('click', () => this.startGame('fun'));
+        }
         document.getElementById('btn-shop').addEventListener('click', () => this.openShop());
         document.getElementById('btn-highscores').addEventListener('click', () => this.openHighscores());
+        if (this.ui.funWeaponButtons) {
+            this.ui.funWeaponButtons.forEach((button) => {
+                button.addEventListener('click', () => this.selectFunWeapon(button.dataset.weapon));
+            });
+        }
         if (this.ui.btnFullscreen) {
             this.ui.btnFullscreen.addEventListener('click', () => this.enterFullscreen());
             this.ui.btnFullscreen.addEventListener('touchstart', (e) => {
@@ -2558,7 +2575,7 @@ class Game {
         if (this.ui.btnAdminLogin) this.ui.btnAdminLogin.addEventListener('click', () => this.loginAdmin());
         if (this.ui.btnAdminLogout) this.ui.btnAdminLogout.addEventListener('click', () => this.logoutAdmin());
 
-        document.getElementById('btn-play-again').addEventListener('click', () => this.startGame());
+        document.getElementById('btn-play-again').addEventListener('click', () => this.startGame(this.playMode));
         document.getElementById('btn-gameover-menu').addEventListener('click', () => this.showMainMenu());
 
         document.getElementById('btn-toggle-mode').addEventListener('click', () => this.toggleAdultMode());
@@ -2654,6 +2671,58 @@ class Game {
         this.ui.shopCoins.innerText = this.meta.coins;
     }
 
+    getFunWeaponProfiles() {
+        return {
+            blaster: {
+                id: 'blaster',
+                name: 'Arcade Blaster',
+                hudLabel: 'Spassmodus: Arcade Blaster',
+                infiniteAmmo: true,
+                hitRadiusBonus: 18,
+                bonusTime: 30,
+                scoreMultiplier: 1
+            },
+            scatter: {
+                id: 'scatter',
+                name: 'Konfetti-Streuer',
+                hudLabel: 'Spassmodus: Konfetti-Streuer',
+                infiniteAmmo: true,
+                shotgun: true,
+                hitRadiusBonus: 22,
+                bonusTime: 45,
+                scoreMultiplier: 0.9
+            },
+            laser: {
+                id: 'laser',
+                name: 'Sonnen-Laser',
+                hudLabel: 'Spassmodus: Sonnen-Laser',
+                infiniteAmmo: true,
+                hitRadiusBonus: 34,
+                zoom: true,
+                frenzy: true,
+                bonusTime: 35,
+                scoreMultiplier: 1.1
+            }
+        };
+    }
+
+    getCurrentWeaponConfig() {
+        if (this.playMode !== 'fun') return null;
+        const weapons = this.getFunWeaponProfiles();
+        return weapons[this.selectedFunWeapon] || weapons.blaster;
+    }
+
+    selectFunWeapon(weaponId) {
+        const weapons = this.getFunWeaponProfiles();
+        if (!weapons[weaponId]) return;
+        this.selectedFunWeapon = weaponId;
+        if (this.ui.funWeaponButtons) {
+            this.ui.funWeaponButtons.forEach((button) => {
+                button.classList.toggle('active', button.dataset.weapon === weaponId);
+            });
+        }
+    }
+
     toggleAdultMode() {
         this.adultMode = !this.adultMode;
         localStorage.setItem('moorhuhn_adult', this.adultMode ? '1' : '0');
@@ -2677,6 +2746,8 @@ class Game {
             this.finishActiveSession(false, 'menu');
         }
         this.state = GameState.MENU;
+        this.playMode = 'classic';
+        this.currentWeaponConfig = null;
         this.audio.stopBGM();
         this.hideAllScreens();
         this.ui.mainMenu.classList.remove('hidden');
@@ -2943,7 +3014,7 @@ class Game {
         }
     }
 
-    startGame() {
+    startGame(mode = 'classic') {
         if (!this.remoteConfig.game_enabled) {
             this.setHighscoreEditMessage('Das Spiel ist aktuell deaktiviert.', true);
             return;
@@ -2954,6 +3025,8 @@ class Game {
         if (this.audio.ctx.state === 'suspended') {
             this.audio.ctx.resume();
         }
+        this.playMode = mode === 'fun' ? 'fun' : 'classic';
+        this.currentWeaponConfig = this.getCurrentWeaponConfig();
         this.state = GameState.PLAYING;
         this.audio.startBGM();
         this.hideAllScreens();
@@ -2963,25 +3036,36 @@ class Game {
         document.body.style.cursor = this.isTouchDevice ? 'default' : 'none';
         this.ui.cursor.style.display = this.isTouchDevice ? 'none' : 'block';
 
-        // Show reload button on touch devices
-        if (this.isTouchDevice) {
+        const showReloadControls = this.isTouchDevice && this.playMode === 'classic';
+        if (showReloadControls) {
             [this.ui.btnReloadLeft, this.ui.btnReloadRight].forEach((button) => {
                 if (!button) return;
                 button.classList.remove('hidden');
                 button.classList.add('visible');
+            });
+        } else {
+            [this.ui.btnReloadLeft, this.ui.btnReloadRight].forEach((button) => {
+                if (!button) return;
+                button.classList.add('hidden');
+                button.classList.remove('visible');
             });
         }
         this.updatePortraitOverlay();
 
         // Init Stats
         this.score = 0;
-        this.timeRemaining = this.remoteConfig.time_limit_seconds + (this.meta.upgrades.timeBonus * 10);
-        this.maxAmmo = DEFAULT_AMMO + (this.meta.upgrades.magazine * 2);
+        const weaponConfig = this.currentWeaponConfig;
+        this.timeRemaining = this.remoteConfig.time_limit_seconds + (this.meta.upgrades.timeBonus * 10) + (weaponConfig?.bonusTime || 0);
+        this.maxAmmo = this.playMode === 'fun' ? 999 : DEFAULT_AMMO + (this.meta.upgrades.magazine * 2);
         this.ammo = this.maxAmmo;
         this.isReloading = false;
         this.reloadEndsAt = 0;
         this.reloadDurationMs = 0;
         this.activeBuffs = { machinegun: 0, slowmo: 0, shotgun: 0, doublescore: 0, frenzy: 0, zoom: 0 };
+        if (weaponConfig?.shotgun) this.activeBuffs.shotgun = Infinity;
+        if (weaponConfig?.zoom) this.activeBuffs.zoom = Infinity;
+        if (weaponConfig?.frenzy) this.activeBuffs.frenzy = Infinity;
+        if (weaponConfig?.infiniteAmmo) this.activeBuffs.machinegun = Infinity;
         this.missShieldsLeft = this.meta.upgrades.missShield || 0;
         this.comboWindowMs = 2200 + (this.meta.upgrades.comboExtender || 0) * 300;
         this.chickenSpeedBoost = 0;
@@ -3017,7 +3101,12 @@ class Game {
         this.ui.score.innerText = this.score;
         this.ui.time.innerText = Math.ceil(this.timeRemaining);
         if (this.ui.ammoCountLabel) {
-            this.ui.ammoCountLabel.innerText = `${this.ammo} / ${this.maxAmmo}`;
+            this.ui.ammoCountLabel.innerText = this.playMode === 'fun' ? '∞ / ∞' : `${this.ammo} / ${this.maxAmmo}`;
+        }
+        if (this.ui.hudModeIndicator) {
+            const showModeIndicator = this.playMode === 'fun' && this.currentWeaponConfig;
+            this.ui.hudModeIndicator.classList.toggle('hidden', !showModeIndicator);
+            this.ui.hudModeIndicator.textContent = showModeIndicator ? this.currentWeaponConfig.hudLabel : '';
         }
 
         // Render Ammo
@@ -3041,10 +3130,13 @@ class Game {
                 this.ui.reloadProgressBar.style.boxShadow = `0 0 12px hsla(${hue}, 95%, 55%, 0.45)`;
             }
         } else {
-            for (let i = 0; i < this.maxAmmo; i++) {
+            const ammoRenderCount = this.playMode === 'fun' ? 7 : this.maxAmmo;
+            for (let i = 0; i < ammoRenderCount; i++) {
                 const div = document.createElement('div');
                 div.className = 'bullet';
-                if (limitType) {
+                if (this.playMode === 'fun') {
+                    div.style.background = 'linear-gradient(to right, #00e5ff, #7c4dff)';
+                } else if (limitType) {
                     div.style.background = 'linear-gradient(to right, #ff0000, #ff5722)'; // MG Ammo
                 } else if (i >= this.ammo) {
                     div.classList.add('empty');
@@ -3053,7 +3145,7 @@ class Game {
             }
         }
 
-        if (this.ammo === 0 && !this.isReloading && !limitType) {
+        if (this.playMode === 'classic' && this.ammo === 0 && !this.isReloading && !limitType) {
             this.ui.reloadHint.classList.remove('hidden');
         } else {
             this.ui.reloadHint.classList.add('hidden');
@@ -3100,6 +3192,9 @@ class Game {
         if (this.endRushMode) {
             buffChips.push(this.createBuffChip('Endspurt!', '#ff5252', ['warning']));
         }
+        if (this.playMode === 'fun' && this.currentWeaponConfig) {
+            buffChips.unshift(this.createBuffChip(this.currentWeaponConfig.name, '#7ed9ff'));
+        }
         this.ui.buffsContainer.innerHTML = buffChips.join('');
 
         // Fadenkreuz anpassen
@@ -3121,6 +3216,7 @@ class Game {
     }
 
     formatBuffSeconds(durationMs) {
+        if (!Number.isFinite(durationMs)) return 'FUN';
         return `${(durationMs / 1000).toFixed(1)}s`;
     }
 
@@ -3143,7 +3239,7 @@ class Game {
     shoot(x, y) {
         if (this.state !== GameState.PLAYING || this.isReloading) return;
 
-        const hasInfiniteAmmo = this.activeBuffs.machinegun > 0;
+        const hasInfiniteAmmo = this.playMode === 'fun' || this.activeBuffs.machinegun > 0;
 
         if (this.ammo > 0 || hasInfiniteAmmo) {
             if (!hasInfiniteAmmo) this.ammo--;
@@ -3164,6 +3260,7 @@ class Game {
     }
 
     reload() {
+        if (this.playMode === 'fun') return;
         if (this.state !== GameState.PLAYING || this.isReloading || this.ammo === this.maxAmmo) return;
 
         this.isReloading = true;
@@ -3189,9 +3286,11 @@ class Game {
 
     checkHits(x, y) {
         let hitSomething = false;
+        const weaponConfig = this.currentWeaponConfig;
         const isShotgun = this.activeBuffs.shotgun > 0;
         const touchBonus = this.isTouchDevice ? 18 : 0; // Größere Hitbox auf Handy
-        const hitRadius = isShotgun ? 60 : (touchBonus + (this.activeBuffs.zoom > 0 ? 15 : 0));
+        const weaponBonus = weaponConfig?.hitRadiusBonus || 0;
+        const hitRadius = isShotgun ? 60 + weaponBonus : (touchBonus + weaponBonus + (this.activeBuffs.zoom > 0 ? 15 : 0));
 
         // 1. Zuerst normale Ziele prüfen (Rückwärts wegen Überlappung)
         for (let i = this.targets.length - 1; i >= 0; i--) {
@@ -3231,7 +3330,8 @@ class Game {
                     }
                     // Doppelpunkte-Buff
                     const doubleScoreMult = this.activeBuffs.doublescore > 0 ? 2 : 1;
-                    const pointsGained = Math.floor(basePoints * multiplier * critMult * doubleScoreMult);
+                    const modeMultiplier = this.playMode === 'fun' ? (weaponConfig?.scoreMultiplier || 1) : 1;
+                    const pointsGained = Math.floor(basePoints * multiplier * critMult * doubleScoreMult * modeMultiplier);
                     this.score += pointsGained;
                     this.registerHit(); // Combo-Tracking
                     this.popups.push(new ScorePopup(t.x, t.y, `+${pointsGained}`));
@@ -3413,16 +3513,18 @@ class Game {
         await this.finishActiveSession(true, 'completed', earnedCoins);
 
         let isNewHS = false;
-        this.meta.highscores.push(this.score);
-        this.meta.highscores.sort((a, b) => b - a);
+        if (this.playMode === 'classic') {
+            this.meta.highscores.push(this.score);
+            this.meta.highscores.sort((a, b) => b - a);
 
         // Prüfen ob es ein neuer lokaler Rekord ist
-        if (this.meta.highscores[0] === this.score && this.score > 0) {
-            isNewHS = true;
-        }
+            if (this.meta.highscores[0] === this.score && this.score > 0) {
+                isNewHS = true;
+            }
 
         // Behalte nur Top 5 lokal (für Historie/Backup falls gewünscht)
-        this.meta.highscores = this.meta.highscores.slice(0, 5);
+            this.meta.highscores = this.meta.highscores.slice(0, 5);
+        }
         this.saveMeta();
 
         // UI Update
@@ -3434,9 +3536,15 @@ class Game {
         } else {
             this.ui.newHsMsg.classList.add('hidden');
         }
+        if (this.ui.gameoverModeNote) {
+            this.ui.gameoverModeNote.classList.toggle('hidden', this.playMode === 'classic');
+            this.ui.gameoverModeNote.textContent = this.playMode === 'fun'
+                ? `${this.currentWeaponConfig?.name || 'Spassmodus'}: keine Highscores, nur pures Chaos.`
+                : '';
+        }
 
         // Reset Global Submission UI
-        if (this.score > 0) {
+        if (this.score > 0 && this.playMode === 'classic') {
             this.ui.highscoreSubmissionDiv.style.display = 'block';
             this.ui.btnSubmitScore.disabled = false;
             this.ui.scoreSubmitMsg.classList.add('hidden');
@@ -3469,7 +3577,7 @@ class Game {
 
     async submitGlobalScore() {
         const name = this.ui.playerNameInput.value.trim();
-        if (this.score <= 0) return;
+        if (this.score <= 0 || this.playMode !== 'classic') return;
 
         this.ui.btnSubmitScore.disabled = true;
         this.ui.scoreSubmitMsg.innerText = 'Speichere...';

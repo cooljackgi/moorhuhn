@@ -113,6 +113,73 @@ body {
     align-items: center;
 }
 
+.fun-mode-panel {
+    width: min(540px, calc(100vw - 32px));
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 24px;
+    background:
+        linear-gradient(180deg, rgba(12, 24, 39, 0.9), rgba(8, 13, 22, 0.76));
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 20px 34px rgba(0, 0, 0, 0.28);
+}
+
+.fun-mode-copy h3 {
+    color: #9fe7ff;
+    font-size: 1.35rem;
+    margin-bottom: 6px;
+}
+
+.fun-mode-copy p {
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.fun-weapon-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0 16px;
+}
+
+.fun-weapon-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.fun-weapon-btn strong {
+    font-size: 0.9rem;
+}
+
+.fun-weapon-btn span {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.fun-weapon-btn:hover,
+.fun-weapon-btn.active {
+    transform: translateY(-2px);
+    border-color: rgba(126, 217, 255, 0.7);
+    background: rgba(35, 126, 176, 0.3);
+}
+
+.btn-fun {
+    background: linear-gradient(180deg, #00acc1, #006064);
+}
+
 .btn {
     font-family: 'Fredoka One', cursive;
     font-size: 1.5rem;
@@ -255,6 +322,20 @@ body {
     to {
         opacity: 0;
     }
+}
+
+.hud-mode-indicator {
+    align-self: center;
+    margin-top: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(0, 172, 193, 0.22);
+    border: 1px solid rgba(159, 231, 255, 0.38);
+    color: #d7fbff;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
 }
 
 .hud-pill {
@@ -485,6 +566,12 @@ body {
     color: var(--gold);
     font-size: 2rem;
     animation: pulse 2s infinite;
+}
+
+.gameover-mode-note {
+    margin-top: 10px;
+    color: #9fe7ff;
+    font-size: 1rem;
 }
 
 @keyframes pulse {
@@ -1372,6 +1459,40 @@ body {
 @keyframes rotate360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 @media (max-width: 768px) {
+    .fun-mode-panel {
+        width: min(100%, 380px);
+        padding: 14px;
+        margin-top: 14px;
+        border-radius: 18px;
+    }
+
+    .fun-mode-copy h3 {
+        font-size: 1.05rem;
+    }
+
+    .fun-mode-copy p {
+        font-size: 0.8rem;
+    }
+
+    .fun-weapon-list {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin: 10px 0 12px;
+    }
+
+    .fun-weapon-btn {
+        padding: 10px 12px;
+        border-radius: 14px;
+    }
+
+    .fun-weapon-btn strong {
+        font-size: 0.8rem;
+    }
+
+    .fun-weapon-btn span {
+        font-size: 0.68rem;
+    }
+
     #main-menu {
         justify-content: flex-end;
         padding: 24px 16px max(20px, env(safe-area-inset-bottom));
@@ -1414,6 +1535,12 @@ body {
     .hud-bottom {
         align-items: stretch;
         padding: 0 max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    .hud-mode-indicator {
+        font-size: 0.72rem;
+        padding: 6px 10px;
+        margin-top: 6px;
     }
 
     .hud-mobile-controls {
@@ -1486,6 +1613,29 @@ body {
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
+    .fun-mode-panel {
+        width: min(640px, calc(100vw - 24px));
+        padding: 12px;
+    }
+
+    .fun-weapon-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 10px 0 12px;
+    }
+
+    .fun-weapon-btn {
+        padding: 8px 10px;
+    }
+
+    .fun-weapon-btn strong {
+        font-size: 0.74rem;
+    }
+
+    .fun-weapon-btn span {
+        font-size: 0.62rem;
+    }
+
     #main-menu {
         justify-content: center;
         padding: 12px 12px 16px;

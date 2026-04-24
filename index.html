@@ -21,6 +21,27 @@
                     <button id="btn-shop" class="btn btn-secondary">Upgrade Shop</button>
                     <button id="btn-highscores" class="btn btn-secondary">Highscores</button>
                 </div>
+                <div class="fun-mode-panel">
+                    <div class="fun-mode-copy">
+                        <h3>Spaßmodus</h3>
+                        <p>Waffenwahl, keine Nachladepflicht und bewusst ohne Highscore-Wertung.</p>
+                    </div>
+                    <div id="fun-weapon-list" class="fun-weapon-list">
+                        <button class="fun-weapon-btn active" data-weapon="blaster" type="button">
+                            <strong>Arcade Blaster</strong>
+                            <span>∞ Schüsse, große Trefferzone</span>
+                        </button>
+                        <button class="fun-weapon-btn" data-weapon="scatter" type="button">
+                            <strong>Konfetti-Streuer</strong>
+                            <span>Breiter Spread, trifft mehrere Hühner</span>
+                        </button>
+                        <button class="fun-weapon-btn" data-weapon="laser" type="button">
+                            <strong>Sonnen-Laser</strong>
+                            <span>Zoom-Fokus, durchschlagend und präzise</span>
+                        </button>
+                    </div>
+                    <button id="btn-start-fun" class="btn btn-fun">Spaßmodus Starten</button>
+                </div>
                 <div class="admin-link-row">
                     <a href="admin.html" class="btn btn-secondary admin-link-btn">Adminbereich</a>
                 </div>
@@ -52,6 +73,7 @@
                         <span class="hud-value"><span id="hud-time">90</span>s</span>
                     </div>
                 </div>
+                <div id="hud-mode-indicator" class="hud-mode-indicator hidden"></div>
 
                 <div class="hud-bottom">
                     <div class="hud-mobile-controls">
@@ -97,6 +119,7 @@
                     <p>Erreichte Punkte: <span id="result-score" class="highlight">0</span></p>
                     <p>Verdiente Münzen: <span id="result-coins" class="highlight">0</span></p>
                     <p id="new-highscore-msg" class="hidden highlight-gold">Neuer Highscore!</p>
+                    <p id="gameover-mode-note" class="gameover-mode-note hidden"></p>
                 </div>
 
                 <div id="highscore-submission" class="mt-20">
