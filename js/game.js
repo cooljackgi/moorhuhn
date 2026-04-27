@@ -3681,7 +3681,7 @@ class Game {
                     this.applyBuff(t.type);
                     this.popups.push(new ScorePopup(t.x, t.y, 'BUFF!', '#3498db'));
                 } else {
-                    this.audio.playChickenHit();
+                    const isRare = Boolean(t.isRare);
                     // Shotgun gibt nur halbe Punkte weil es zu einfach ist
                     const basePoints = isShotgun ? Math.max(1, Math.floor(t.points / 2)) : t.points;
                     const multiplier = this.getScoreMultiplier();
@@ -3694,6 +3694,7 @@ class Game {
                     const doubleScoreMult = this.activeBuffs.doublescore > 0 ? 2 : 1;
                     const modeMultiplier = this.playMode === 'fun' ? (weaponConfig?.scoreMultiplier || 1) : 1;
                     const pointsGained = Math.floor(basePoints * multiplier * critMult * doubleScoreMult * modeMultiplier);
+                    this.audio.playChickenHit({ isRare, isCrit: critMult > 1 });
                     this.score += pointsGained;
                     this.registerHit(); // Combo-Tracking
                     this.popups.push(new ScorePopup(t.x, t.y, `+${pointsGained}`));
@@ -3856,6 +3857,7 @@ class Game {
 
     async endGame() {
         this.state = GameState.GAMEOVER;
+        this.audio.playRoundEnd(this.score);
         this.audio.stopBGM();
         this.hideAllScreens();
         this.ui.gameOver.classList.remove('hidden');
@@ -4067,6 +4069,7 @@ class Game {
         // ===== GIMMICK: Endspurt-Modus (Stress bei <5s) =====
         if (this.timeRemaining < 5 && !this.endRushMode) {
             this.endRushMode = true;
+            this.audio.playEndRushStart();
             this.popups.push(new ScorePopup(this.gameW / 2, 100, 'FINALER ENDSPURT!', '#FF0000'));
         }
         if (this.timeRemaining >= 5) {
@@ -4241,6 +4244,7 @@ class Game {
     registerHit() {
         this.comboCount++;
         this.comboTimer = this.comboWindowMs;
+        this.audio.playCombo(this.comboCount);
         
         if (this.comboCount === 5) {
             this.unlockAchievement('combo5', 'Kombo-Master 5x');
@@ -4253,9 +4257,11 @@ class Game {
     registerMiss() {
         if (this.missShieldsLeft > 0) {
             this.missShieldsLeft--;
+            this.audio.playMiss(true);
             this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2 - 40, '🛡️ Kugelsicherung!', '#27ae60'));
             return; // Combo bleibt erhalten
         }
+        this.audio.playMiss(false);
         if (this.comboCount >= 5) {
             const msg = `Kombo weg! (${this.comboCount}x)`;
             this.popups.push(new ScorePopup(this.gameW / 2, this.gameH / 2, msg, 'combo-break'));
@@ -4267,6 +4273,7 @@ class Game {
     unlockAchievement(id, title) {
         if (!this.unlockedAchievements[id]) {
             this.unlockedAchievements[id] = true;
+            this.audio.playAchievement();
             const msg = `🏆 ${title}!`;
             this.popups.push(new ScorePopup(this.gameW / 2, 100, msg, 'achievement'));
         }
