@@ -1810,3 +1810,72 @@ body {
         right: 12px;
     }
 }
+
+/* == QoL Audio & Gift Styles == */
+.btn-hud-audio {
+    pointer-events: auto;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(8, 12, 20, 0.72);
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 10px 16px rgba(0, 0, 0, 0.24);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-hud-audio:hover {
+    background: rgba(30, 40, 55, 0.85);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-audio-toggle {
+    margin-top: 10px;
+    min-width: 180px;
+    font-size: 1rem;
+    padding: 10px 24px;
+}
+
+/* Geschenk-Button */
+.btn-gift {
+    background: linear-gradient(180deg, #ffc107, #ff9800);
+    box-shadow: 0 6px 0px #b26a00, 0 10px 20px rgba(255, 152, 0, 0.4);
+    animation: bounce-gift 2s infinite ease-in-out;
+}
+
+.btn-gift:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 0px #b26a00, 0 8px 16px rgba(255, 152, 0, 0.5);
+}
+
+.btn-gift:disabled, .btn-gift.claimed {
+    background: linear-gradient(180deg, #78909c, #546e7a) !important;
+    box-shadow: 0 6px 0px #37474f !important;
+    cursor: not-allowed;
+    animation: none;
+    opacity: 0.8;
+}
+
+@keyframes bounce-gift {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-6px) scale(1.04);
+        box-shadow: 0 12px 0px #b26a00, 0 16px 24px rgba(255, 152, 0, 0.6);
+    }
+}
+
+/* Responsive adjustment for HUD audio button */
+@media (max-width: 900px) {
+    .btn-hud-audio {
+        font-size: 0.54rem;
+        padding: 5px 8px;
+    }
+}

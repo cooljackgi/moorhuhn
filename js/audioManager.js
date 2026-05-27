@@ -131,6 +131,14 @@ class AudioManager {
         });
     }
 
+    toggleMute() {
+        this.enabled = !this.enabled;
+        if (!this.enabled) {
+            this.stopBGM();
+        }
+        return this.enabled;
+    }
+
     startBGM() {
         if (!this.ensureContext() || this.bgmPlaying) return;
 
@@ -150,7 +158,7 @@ class AudioManager {
         const beatLength = 60 / tempo;
 
         const scheduleNotes = () => {
-            if (!this.bgmPlaying) return;
+            if (!this.bgmPlaying || !this.enabled) return;
 
             const time = this.ctx.currentTime;
 

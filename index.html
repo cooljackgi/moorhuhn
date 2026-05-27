@@ -18,6 +18,7 @@
             <div id="main-menu" class="screen active">
                 <h1 class="game-title">Moorhuhn<br><span>Madness</span></h1>
                 <div class="menu-buttons">
+                    <button id="btn-daily-reward" class="btn btn-gift hidden">🎁 Geschenk bereit!</button>
                     <button id="btn-start" class="btn btn-primary">Klassisch Starten</button>
                     <button id="btn-start-fun" class="btn btn-fun">Spassmodus Starten</button>
                     <button id="btn-shop" class="btn btn-secondary">Upgrade Shop</button>
@@ -33,6 +34,7 @@
                 <div class="mode-toggle-container">
                     <button id="btn-toggle-mode" class="btn btn-mode-toggle">🐥 Harmlos</button>
                     <button id="btn-ar-mode" class="btn btn-secondary btn-ar-mode">AR Kamera: Aus</button>
+                    <button id="btn-audio-toggle" class="btn btn-secondary btn-audio-toggle">🔊 Ton: An</button>
                     <button id="btn-fullscreen" class="btn btn-secondary btn-fullscreen">Vollbild</button>
                     <div style="margin-top:10px">
                         <label style="font-size:1em;cursor:pointer;">
@@ -47,6 +49,7 @@
             <div id="hud" class="screen hidden">
                 <div class="hud-top">
                     <button id="btn-hud-back" class="btn-hud-back" type="button">Zurück</button>
+                    <button id="btn-hud-audio" class="btn-hud-audio" type="button" style="pointer-events: auto;">🔊</button>
                     <div class="hud-pill score-container">
                         <span class="hud-label">Punkte</span>
                         <span id="hud-score" class="hud-value">0</span>

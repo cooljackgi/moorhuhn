@@ -2156,6 +2156,7 @@ class Game {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.audio = new AudioManager();
+        this.audio.enabled = localStorage.getItem('moorhuhn_muted') !== '1';
 
         this.state = GameState.MENU;
         this.playMode = 'classic';
@@ -2273,6 +2274,9 @@ class Game {
             btnReloadRight: document.getElementById('btn-reload-right'),
             btnArMode: document.getElementById('btn-ar-mode'),
             btnFullscreen: document.getElementById('btn-fullscreen'),
+            btnAudioToggle: document.getElementById('btn-audio-toggle'),
+            btnHudAudio: document.getElementById('btn-hud-audio'),
+            btnDailyReward: document.getElementById('btn-daily-reward'),
             cheatMenu: document.getElementById('cheat-menu')
         };
 
@@ -2300,6 +2304,8 @@ class Game {
         this.updateMenuUI();
         this.updateARModeButton();
         this.updateModeToggleUI();
+        this.updateAudioToggleButtons();
+        this.updateDailyRewardButton();
         this.initAdminAuth();
         this.loadRemoteConfig();
 
@@ -2321,6 +2327,7 @@ class Game {
             highscores: [],
             totalRoundsPlayed: 0,
             funRoundsPlayed: 0,
+            lastDailyRewardClaimed: "",
             funWeaponUnlocks: {
                 blaster: true,
                 scatter: false,
@@ -2348,6 +2355,7 @@ class Game {
             parsed.highscores = Array.isArray(parsed.highscores) ? parsed.highscores : defaults.highscores;
             parsed.totalRoundsPlayed = Number.isFinite(parsed.totalRoundsPlayed) ? parsed.totalRoundsPlayed : defaults.totalRoundsPlayed;
             parsed.funRoundsPlayed = Number.isFinite(parsed.funRoundsPlayed) ? parsed.funRoundsPlayed : defaults.funRoundsPlayed;
+            parsed.lastDailyRewardClaimed = parsed.lastDailyRewardClaimed || defaults.lastDailyRewardClaimed;
             parsed.funWeaponUnlocks = Object.assign({}, defaults.funWeaponUnlocks, parsed.funWeaponUnlocks);
             // Neue Upgrade-Schlüssel in bestehende Saves einmergen
             parsed.upgrades = Object.assign({}, defaults.upgrades, parsed.upgrades);
@@ -2641,6 +2649,15 @@ class Game {
         document.getElementById('btn-gameover-menu').addEventListener('click', () => this.showMainMenu());
         if (this.ui.btnHudBack) {
             this.ui.btnHudBack.addEventListener('click', () => this.showMainMenu());
+        }
+        if (this.ui.btnAudioToggle) {
+            this.ui.btnAudioToggle.addEventListener('click', () => this.toggleMute());
+        }
+        if (this.ui.btnHudAudio) {
+            this.ui.btnHudAudio.addEventListener('click', () => this.toggleMute());
+        }
+        if (this.ui.btnDailyReward) {
+            this.ui.btnDailyReward.addEventListener('click', () => this.claimDailyReward());
         }
 
         document.getElementById('btn-toggle-mode').addEventListener('click', () => this.toggleAdultMode());
@@ -3036,6 +3053,7 @@ class Game {
             button.classList.remove('visible');
         });
         this.updateMenuUI();
+        this.updateDailyRewardButton();
         this.syncFunWeaponButtons();
         this.updatePortraitOverlay();
 
@@ -4419,6 +4437,86 @@ class Game {
         return target;
     }
 
+    updateAudioToggleButtons() {
+        const isEnabled = this.audio.enabled;
+        if (this.ui.btnAudioToggle) {
+            this.ui.btnAudioToggle.textContent = isEnabled ? '🔊 Ton: An' : '🔇 Ton: Aus';
+            this.ui.btnAudioToggle.style.filter = isEnabled ? '' : 'grayscale(0.15)';
+        }
+        if (this.ui.btnHudAudio) {
+            this.ui.btnHudAudio.textContent = isEnabled ? '🔊' : '🔇';
+        }
+    }
+
+    toggleMute() {
+        const newState = this.audio.toggleMute();
+        localStorage.setItem('moorhuhn_muted', newState ? '0' : '1');
+        this.updateAudioToggleButtons();
+        if (newState && this.state === GameState.PLAYING) {
+            this.audio.startBGM();
+        }
+    }
+
+    updateDailyRewardButton() {
+        if (!this.ui.btnDailyReward) return;
+
+        const claimedStr = this.meta.lastDailyRewardClaimed;
+        let isAvailable = true;
+
+        if (claimedStr) {
+            const lastClaimDate = new Date(claimedStr).toDateString();
+            const todayDate = new Date().toDateString();
+            if (lastClaimDate === todayDate) {
+                isAvailable = false;
+            }
+        }
+
+        if (isAvailable) {
+            this.ui.btnDailyReward.classList.remove('hidden');
+            this.ui.btnDailyReward.classList.remove('claimed');
+            this.ui.btnDailyReward.disabled = false;
+            this.ui.btnDailyReward.textContent = '🎁 Geschenk abholen!';
+        } else {
+            this.ui.btnDailyReward.classList.remove('hidden');
+            this.ui.btnDailyReward.classList.add('claimed');
+            this.ui.btnDailyReward.disabled = true;
+            this.ui.btnDailyReward.textContent = '🎁 Bereits abgeholt!';
+        }
+    }
+
+    claimDailyReward() {
+        const claimedStr = this.meta.lastDailyRewardClaimed;
+        let isAvailable = true;
+
+        if (claimedStr) {
+            const lastClaimDate = new Date(claimedStr).toDateString();
+            const todayDate = new Date().toDateString();
+            if (lastClaimDate === todayDate) {
+                isAvailable = false;
+            }
+        }
+
+        if (!isAvailable) return;
+
+        this.meta.coins += 100;
+        this.meta.lastDailyRewardClaimed = new Date().toISOString();
+        this.saveMeta();
+
+        this.updateDailyRewardButton();
+
+        this.audio.playUpgradeHit();
+
+        const screenCenterX = this.gameW / 2;
+        const screenCenterY = this.gameH / 2;
+        
+        for (let i = 0; i < 20; i++) {
+            this.particles.push(new Particle(screenCenterX, screenCenterY, '#ffd700'));
+        }
+        
+        this.popups.push(new ScorePopup(screenCenterX - 50, screenCenterY - 50, '+100💰', '#ffd700'));
+
+        this.updateMenuUI();
+    }
 }
 
 // Bootstrap
