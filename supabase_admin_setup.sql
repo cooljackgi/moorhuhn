@@ -74,7 +74,8 @@ create table if not exists public.game_sessions (
     duration_seconds integer not null default 0,
     exit_reason text not null default 'unknown',
     page_path text,
-    user_agent text
+    user_agent text,
+    ip_address text
 );
 
 alter table public.game_sessions enable row level security;
@@ -101,3 +102,7 @@ on public.game_sessions
 for select
 to authenticated
 using ((auth.jwt() ->> 'email') = 'becker.bubenrod@gmail.com');
+
+-- UPGRADE MIGRATION FÜR BESTEHENDE DATENBANKEN:
+-- Falls die Tabelle 'game_sessions' bereits existiert, führe diesen SQL-Befehl im Supabase SQL Editor aus:
+-- alter table public.game_sessions add column if not exists ip_address text;

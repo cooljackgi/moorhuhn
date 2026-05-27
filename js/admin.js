@@ -295,6 +295,7 @@ class AdminApp {
             const exitReason = session.ended_at
                 ? this.escapeHtml(session.exit_reason || '-')
                 : '-';
+            const ip = this.escapeHtml(session.ip_address || '-');
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${this.formatDate(session.started_at)}</td>
@@ -302,6 +303,7 @@ class AdminApp {
                 <td>${status}</td>
                 <td>${session.score || 0}</td>
                 <td>${session.duration_seconds || 0}s</td>
+                <td>${ip}</td>
                 <td>${exitReason}</td>
             `;
             this.ui.sessionsBody.appendChild(tr);

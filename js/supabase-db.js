@@ -8,6 +8,25 @@ const ADMIN_EMAILS = [
 ];
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// IP-Adresse im Hintergrund ermitteln, um das Spiel nicht zu blockieren
+let cachedUserIp = 'Lade...';
+async function fetchUserIp() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 Sek. Timeout
+        
+        const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        const json = await res.json();
+        cachedUserIp = json.ip || 'Unbekannt';
+    } catch (e) {
+        console.warn('IP-Adresse konnte nicht ermittelt werden:', e);
+        cachedUserIp = 'Blockiert/Fehler';
+    }
+}
+fetchUserIp();
 const DEFAULT_GAME_CONFIG = {
     time_limit_seconds: 90,
     game_enabled: true,
@@ -180,7 +199,8 @@ async function startGameSession(playMode = 'classic') {
                 started_at: new Date().toISOString(),
                 completed: false,
                 page_path: `${window.location.pathname}?mode=${sessionMode}`,
-                user_agent: navigator.userAgent
+                user_agent: navigator.userAgent,
+                ip_address: cachedUserIp
             }]);
 
         if (error) {
@@ -297,7 +317,7 @@ async function getAdminDashboardData() {
             getHighscores(50),
             supabaseClient
                 .from('game_sessions')
-                .select('started_at, ended_at, completed, score, coins_earned, duration_seconds, exit_reason, page_path')
+                .select('started_at, ended_at, completed, score, coins_earned, duration_seconds, exit_reason, page_path, ip_address')
                 .order('started_at', { ascending: false })
                 .limit(30),
             supabaseClient
