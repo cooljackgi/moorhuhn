@@ -10,6 +10,17 @@ const MOORHUHN_FRAME_SIZE = 384;
 const MOORHUHN_FRAME_COUNT = 8;
 const MOORHUHN_FRAME_DURATION = 100;
 MOORHUHN_SPRITE.src = 'assets/moorhuhn/moorhuhn-flight.png?v=peppy-2';
+const MOORHUHN_HIDDEN_SPRITE = new Image();
+const MOORHUHN_HIT_CONTEXT = document.createElement('canvas').getContext('2d');
+let moorhuhnHiddenPixels = null;
+MOORHUHN_HIDDEN_SPRITE.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = MOORHUHN_FRAME_SIZE;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(MOORHUHN_HIDDEN_SPRITE, 0, 0);
+    moorhuhnHiddenPixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+};
+MOORHUHN_HIDDEN_SPRITE.src = 'assets/moorhuhn/moorhuhn-hidden.png?v=1';
 
 // Status Enums
 const GameState = {
@@ -601,7 +612,7 @@ class HiddenTarget {
         this.canvasHeight = canvasHeight;
         this.obstacle = obstacle; // {x, y, popDirection: 'up'|'left'|'right'}
 
-        this.size = 40;
+        this.size = 32;
         this.points = 25; // Mehr Punkte weil schwerer zu treffen
 
         // Position = am Versteck
@@ -609,6 +620,7 @@ class HiddenTarget {
         this.homeY = obstacle.y;
         this.x = this.homeX;
         this.y = this.homeY;
+        this.direction = obstacle.popDirection === 'left' ? -1 : 1;
 
         // State Machine: 'hiding' -> 'popping' -> 'exposed' -> 'ducking' -> 'gone'
         this.phase = 'hiding';
@@ -629,10 +641,17 @@ class HiddenTarget {
         this.phaseTimer += deltaTime;
         this.flapTime += deltaTime;
 
-        const popDistance = 70; // Pixel die es sich bewegt
+        // Obstacle objects are updated in place when the canvas is resized.
+        this.homeX = this.obstacle.x;
+        this.homeY = this.obstacle.y;
+        this.canvasWidth = this.obstacle.canvasWidth;
+        this.canvasHeight = this.obstacle.canvasHeight;
+        const popDistance = this.obstacle.popDistance;
 
         switch (this.phase) {
             case 'hiding':
+                this.x = this.homeX;
+                this.y = this.homeY;
                 if (this.phaseTimer > this.hideDelay) {
                     this.phase = 'popping';
                     this.phaseTimer = 0;
@@ -640,6 +659,8 @@ class HiddenTarget {
                 break;
 
             case 'popping':
+                this.x = this.homeX;
+                this.y = this.homeY;
                 this.popOffset = Math.min(1, this.phaseTimer / this.popDuration);
                 // Smooth easing
                 const easeOut = 1 - Math.pow(1 - this.popOffset, 3);
@@ -657,6 +678,8 @@ class HiddenTarget {
                 break;
 
             case 'exposed':
+                this.x = this.homeX;
+                this.y = this.homeY;
                 // Leichtes Wackeln
                 if (this.obstacle.popDirection === 'up') {
                     this.y = (this.homeY - popDistance) + Math.sin(this.flapTime / 200) * 3;
@@ -670,6 +693,8 @@ class HiddenTarget {
                 break;
 
             case 'ducking':
+                this.x = this.homeX;
+                this.y = this.homeY;
                 this.popOffset = Math.max(0, 1 - this.phaseTimer / this.duckDuration);
                 const easeIn = 1 - Math.pow(1 - this.popOffset, 2);
                 if (this.obstacle.popDirection === 'up') {
@@ -692,8 +717,23 @@ class HiddenTarget {
         if (this.phase === 'hiding' || this.phase === 'gone') return;
 
         ctx.save();
+        // Reveal only the area outside the cover; the foreground then draws over it.
+        const edge = this.obstacle.revealEdge;
+        ctx.beginPath();
+        if (this.obstacle.popDirection === 'up') ctx.rect(0, 0, this.canvasWidth, edge);
+        else if (this.obstacle.popDirection === 'left') ctx.rect(0, 0, edge, this.canvasHeight);
+        else ctx.rect(edge, 0, this.canvasWidth - edge, this.canvasHeight);
+        ctx.clip();
         ctx.translate(this.x, this.y);
         const s = this.size;
+        if (this.direction === -1) ctx.scale(-1, 1);
+
+        if (MOORHUHN_HIDDEN_SPRITE.complete && MOORHUHN_HIDDEN_SPRITE.naturalWidth === MOORHUHN_FRAME_SIZE) {
+            const extent = s * 2.8;
+            ctx.drawImage(MOORHUHN_HIDDEN_SPRITE, -extent / 2, -extent / 2, extent, extent);
+            ctx.restore();
+            return;
+        }
 
         // --- Original Moorhuhn Style (sitzendes Huhn, Glubschaugen) ---
 
@@ -788,6 +828,19 @@ class HiddenTarget {
     checkHit(px, py) {
         // Nur treffbar wenn exposed oder popping (also sichtbar)
         if (this.phase !== 'exposed' && this.phase !== 'popping') return false;
+        const edge = this.obstacle.revealEdge;
+        if ((this.obstacle.popDirection === 'up' && py >= edge) ||
+            (this.obstacle.popDirection === 'left' && px >= edge) ||
+            (this.obstacle.popDirection === 'right' && px <= edge)) return false;
+        if (MOORHUHN_HIT_CONTEXT.isPointInPath(this.obstacle.cover, px, py)) return false;
+        if (moorhuhnHiddenPixels) {
+            const extent = this.size * 2.8;
+            const u = (px - this.x) / extent * this.direction + .5;
+            const v = (py - this.y) / extent + .5;
+            if (u < 0 || u >= 1 || v < 0 || v >= 1) return false;
+            return moorhuhnHiddenPixels[(Math.floor(v * MOORHUHN_FRAME_SIZE) * MOORHUHN_FRAME_SIZE +
+                Math.floor(u * MOORHUHN_FRAME_SIZE)) * 4 + 3] > 32;
+        }
         const dx = px - this.x;
         const dy = py - this.y;
         return (dx * dx + dy * dy) < (this.size * this.size * 1.2);
@@ -1225,11 +1278,36 @@ class Landscape {
         this.mole.y = this.height * 0.82;
 
         // Positionen der Verstecke, relativ zur Canvas-Größe
-        this.obstacles = [
-            { id: 'tree', x: this.width * 0.12, y: this.height * 0.72, popDirection: 'right' },
-            { id: 'rock', x: this.width * 0.5, y: this.height * 0.82, popDirection: 'up' },
-            { id: 'windmill', x: this.width * 0.85, y: this.height * 0.75, popDirection: 'left' },
+        const treeX = this.width * .12, treeY = this.height * .78;
+        const rockX = this.width * .5, rockY = this.height * .83;
+        const millX = this.windmill.x, millY = this.height * .76;
+        const treeCover = new Path2D();
+        treeCover.rect(treeX - 15, treeY - 160, 30, 180);
+        [[-40,-150,45],[40,-155,40],[0,-190,50],[-20,-170,42],[20,-170,42]].forEach(([x,y,r]) => {
+            treeCover.moveTo(treeX + x + r, treeY + y);
+            treeCover.arc(treeX + x, treeY + y, r, 0, Math.PI * 2);
+        });
+        const rockCover = new Path2D();
+        [[-60,20],[-55,-30],[-30,-50],[10,-55],[40,-40],[55,-15],[60,20]].forEach(([x,y],i) => {
+            if (i === 0) rockCover.moveTo(rockX + x, rockY + y);
+            else rockCover.lineTo(rockX + x, rockY + y);
+        });
+        rockCover.closePath();
+        const millCover = new Path2D();
+        millCover.moveTo(millX - 25, millY);
+        [[25,0],[15,-80],[20,-80],[0,-105],[-20,-80],[-15,-80]].forEach(([x,y]) => millCover.lineTo(millX+x,millY+y));
+        millCover.closePath();
+        const positions = [
+            { id: 'tree', x: treeX + 40, y: treeY - 165, popDirection: 'right', popDistance: 40, revealEdge: treeX + 75, cover: treeCover },
+            { id: 'rock', x: rockX, y: rockY - 8, popDirection: 'up', popDistance: 49, revealEdge: rockY - 50, cover: rockCover },
+            { id: 'windmill', x: millX + 10, y: millY - 42, popDirection: 'left', popDistance: 37, revealEdge: millX - 24, cover: millCover },
         ];
+        this.obstacles = positions.map(position => {
+            position.canvasWidth = this.width;
+            position.canvasHeight = this.height;
+            const existing = this.obstacles?.find(obstacle => obstacle.id === position.id);
+            return existing ? Object.assign(existing, position) : position;
+        });
     }
 
     getRandomObstacle() {
@@ -3759,7 +3837,10 @@ class Game {
 
             // Erweiterte Hit-Logik für Shotgun:
             let isHit = false;
-            if (isShotgun || touchBonus > 0) {
+            if (t instanceof HiddenTarget) {
+                // Even touch/shotgun shots cannot hit pixels concealed by the cover.
+                isHit = t.checkHit(x, y);
+            } else if (isShotgun || touchBonus > 0) {
                 // Erweiterte Hitbox für Shotgun oder Touch-Gerät
                 const dx = x - t.x;
                 const dy = y - t.y;
@@ -4284,7 +4365,7 @@ class Game {
         // 1. Hintergrund (bereits gezeichnet oben)
         // 2. Alle Targets (Hühner fliegen HINTER den Hindernissen)
         this.targets.forEach(t => {
-            if (this.activeBuffs.zoom > 0 && !(t instanceof InGameUpgrade)) {
+            if (this.activeBuffs.zoom > 0 && !(t instanceof InGameUpgrade) && !(t instanceof HiddenTarget)) {
                 this.ctx.save();
                 this.ctx.translate(t.x, t.y);
                 this.ctx.scale(1.35, 1.35);

@@ -9,6 +9,7 @@ mit Beinkick wiederholt sich alle 0,8 Sekunden.
 - `moorhuhn.glb`: Figur mit der gemeinsamen Animation `Flight`, ohne Studiolichter.
   Vorwärtsrichtung in Blender: +X, oben: +Z. Export ins glTF-Koordinatensystem erfolgt automatisch.
 - `moorhuhn-preview.png`: transparente Vorschau, 1024 × 1024 Pixel.
+- `moorhuhn-hidden.png`: ruhige Pose für die Verstecke, 384 × 384 Pixel.
 - `moorhuhn-flight.png`: transparentes Sprite-Sheet, acht Felder horizontal,
   jeweils 384 × 384 Pixel, gesamte Größe 3072 × 384 Pixel.
 - `moorhuhn-flight.json`: Maße, Bildrate und Ankerpunkt.
@@ -21,7 +22,11 @@ Das aktuelle `Target.draw()` zeichnet die Figur noch mit Canvas-Pfaden.
 `Target.draw()` verwendet jetzt das Sprite-Sheet für normale und goldene fliegende
 Hühner. Goldene Hühner erhalten einen Goldfilter und behalten ihre Aura.
 Solange die Grafik lädt oder wenn sie nicht geladen werden kann, bleibt die bisherige
-Canvas-Zeichnung als Ersatz aktiv. Größe, Richtungsspiegelung und Trefferlogik bleiben erhalten.
+Canvas-Zeichnung als Ersatz aktiv. Größe, Richtungsspiegelung und Trefferlogik der
+fliegenden Hühner bleiben erhalten. Versteckte Hühner verwenden die ruhige Pose:
+rechts aus der Baumkrone, oben hinter dem Fels und links hinter dem Mühlenturm.
+Nur sichtbare Pixel außerhalb der Hindernisse sind treffbar, auch mit Touch/Schrotflinte.
+Die Verstecke bleiben beim Ändern der Fenstergröße an ihren Hindernissen.
 Ein geladenes Sprite-Sheet wird mit diesem Ausschnitt gezeichnet:
 
 ```js
