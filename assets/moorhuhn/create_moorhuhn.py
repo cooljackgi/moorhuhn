@@ -19,21 +19,24 @@ bpy.context.window.scene = scene
 collection = bpy.data.collections.new('Moorhuhn_Character')
 scene.collection.children.link(collection)
 
-def material(name, color, roughness=.58):
+def material(name, color, roughness=.68):
     m = bpy.data.materials.new(name)
     m.diffuse_color = (*color, 1)
     m.use_nodes = True
-    p = m.node_tree.nodes.get('Principled BSDF')
+    p = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     p.inputs['Base Color'].default_value = (*color, 1)
     p.inputs['Roughness'].default_value = roughness
+    p.inputs['Specular IOR Level'].default_value = .25
     return m
 
-brown = material('Feathers • warm chestnut', (.46, .19, .065))
-gold = material('Feathers • caramel', (.72, .35, .105))
-cream = material('Belly • honey cream', (.95, .67, .30))
-dark = material('Tail • deep brown', (.19, .065, .025))
-red = material('Comb • poppy red', (.76, .025, .025), .42)
-yellow = material('Beak and feet • marigold', (1, .55, .045), .42)
+brown = material('Feathers • warm chestnut', (.28, .055, .015))
+gold = material('Feathers • caramel', (.68, .20, .035))
+cream = material('Belly • honey cream', (.95, .58, .14))
+dark = material('Tail • deep brown', (.12, .025, .008))
+red = material('Comb • poppy red', (.85, .008, .030), .52)
+yellow = material('Beak and feet • marigold', (1, .42, .008), .52)
+iris = material('Eyes • emerald iris', (.012, .20, .12), .38)
+coral = material('Cheeks • coral', (.95, .12, .055), .75)
 white = material('Eyes • warm ivory', (1, .97, .87), .3)
 black = material('Pupils • espresso', (.012, .008, .006), .22)
 highlight = material('Eye highlights', (1, 1, 1), .2)
@@ -132,11 +135,11 @@ wrap.use_negative_direction=False
 wrap.offset=.009
 for polygon in mesh.polygons:
     polygon.use_smooth=True
-ellipsoid('Cheek', (.73, -.31, 2.40), (.24, .105, .20), cream)
+ellipsoid('Cheek', (.73, -.365, 2.40), (.15, .06, .11), coral)
 
 # Three floppy rounded comb lobes, rather than a sharp rooster crest.
-for i, (x, z, tilt) in enumerate([(.40, 3.00, -.3), (.65, 3.14, -.15), (.90, 3.10, .22)]):
-    ellipsoid('Comb_%d' % i, (x, 0, z), (.17, .12, .25), red, rot=(0, tilt, 0))
+for i, (x, z, tilt) in enumerate([(.34, 3.04, -.50), (.61, 3.18, -.30), (.89, 3.13, -.08)]):
+    ellipsoid('Comb_%d' % i, (x, 0, z), (.17, .12, .28), red, rot=(0, tilt, 0))
 ellipsoid('Comb_Base', (.65, 0, 2.94), (.35, .125, .10), red)
 ellipsoid('Wattle', (1.02, -.035, 2.18), (.105, .14, .25), red, rot=(0, -.15, 0))
 
@@ -162,9 +165,11 @@ bill('Lower_Beak', (1.23, -.01, 2.36), .16, .39, yellow, .48)
 for side in [-1, 1]:
     y = side*.345
     ellipsoid('Eye_%s' % side, (.90, y, 2.69), (.245, .145, .29), white)
-    ellipsoid('Pupil_%s' % side, (1.003, side*.454, 2.69), (.102, .048, .143), black)
-    ellipsoid('Glint_%s' % side, (1.02, side*.491, 2.752), (.034, .015, .043), highlight)
-    capsule('Brow_%s' % side, (.78, side*.406, 2.94), (1.04, side*.398, 2.92), .038, dark)
+    ellipsoid('Iris_%s' % side, (1.003, side*.460, 2.70), (.133, .035, .177), iris)
+    ellipsoid('Pupil_%s' % side, (1.025, side*.490, 2.70), (.083, .028, .125), black)
+    ellipsoid('Glint_%s' % side, (1.04, side*.515, 2.757), (.031, .012, .039), highlight)
+    brow_z = (3.00, 2.92) if side == -1 else (2.94, 3.02)
+    capsule('Brow_%s' % side, (.76, side*.410, brow_z[0]), (1.04, side*.405, brow_z[1]), .043, dark)
     ellipsoid('Nostril_%s' % side, (1.28, side*.123, 2.55), (.037, .018, .021), dark)
 
 for i, (end, width, mat) in enumerate([
@@ -198,17 +203,18 @@ for side in [-1, 1]:
 
 scene.frame_start = 1
 scene.frame_end = 25
-scene.render.fps = 24
+scene.render.fps = 30
 for f in range(1,26,3):
     phase = (f-1)/24*2*math.pi
     for side,pivot in zip([-1,1],wings):
-        pivot.rotation_euler.x = side*(.15+.83*math.sin(phase))
+        pivot.rotation_euler.x = side*(.05+1.05*math.sin(phase))
+        pivot.rotation_euler.z = side*.10*math.cos(phase)
         pivot.keyframe_insert(data_path='rotation_euler', frame=f)
     for side,pivot in zip([-1,1],legs):
-        pivot.rotation_euler.y = -.28+side*.14*math.sin(phase)
+        pivot.rotation_euler.y = -.35+side*.23*math.sin(phase)
         pivot.keyframe_insert(data_path='rotation_euler', frame=f)
-    root.location.z = .065*math.sin(phase*2)
-    root.rotation_euler.y = .035*math.sin(phase)
+    root.location.z = .10*math.sin(phase*2)
+    root.rotation_euler.y = .08*math.sin(phase)
     root.keyframe_insert(data_path='location',frame=f)
     root.keyframe_insert(data_path='rotation_euler',frame=f)
 for obj in [root,*wings,*legs]:

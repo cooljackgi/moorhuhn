@@ -1,7 +1,8 @@
 # Moorhuhn aus Blender
 
-Eigenes Comic-Moorhuhn mit warmbraunen Federn, hellem Bauch, rotem Kamm,
-großen Augen und einer einsekündigen Flugschleife.
+Eigenes Comic-Moorhuhn mit kräftigen karamellbraunen Federn, honigfarbenem Bauch,
+rotem Kamm, grünen Augen und frech hochgezogenen Brauen. Der stärkere Flügelschlag
+mit Beinkick wiederholt sich alle 0,8 Sekunden.
 
 - `moorhuhn.blend`: editierbares Modell, Materialien, Animation, Kamera und Licht.
   Die Figur steht in der Szene `Moorhuhn_Asset`. Die vorherige Szene bleibt erhalten.
@@ -11,7 +12,7 @@ großen Augen und einer einsekündigen Flugschleife.
 - `moorhuhn-flight.png`: transparentes Sprite-Sheet, acht Felder horizontal,
   jeweils 384 × 384 Pixel, gesamte Größe 3072 × 384 Pixel.
 - `moorhuhn-flight.json`: Maße, Bildrate und Ankerpunkt.
-- `frames/flight-00.png` bis `flight-07.png`: einzelne Flugphasen, 8 Bilder/s.
+- `frames/flight-00.png` bis `flight-07.png`: einzelne Flugphasen, 10 Bilder/s.
 - `create_moorhuhn.py` und `render_moorhuhn.py`: reproduzierbare Blender-Skripte.
 
 ## Verwendung im bestehenden Canvas-Spiel
@@ -24,7 +25,7 @@ Canvas-Zeichnung als Ersatz aktiv. Größe, Richtungsspiegelung und Trefferlogik
 Ein geladenes Sprite-Sheet wird mit diesem Ausschnitt gezeichnet:
 
 ```js
-const frame = Math.floor(this.flapTime / 125) % 8;
+const frame = Math.floor(this.flapTime / 100) % 8;
 const extent = this.size * 2.8;
 // Nach translate(this.x, this.y) und der vorhandenen Richtungsspiegelung:
 ctx.drawImage(spriteSheet, frame * 384, 0, 384, 384,
@@ -34,5 +35,7 @@ ctx.drawImage(spriteSheet, frame * 384, 0, 384, 384,
 ## Erneut erzeugen
 
 `create_moorhuhn.py` in Blender ausführen, anschließend die gespeicherte
-`moorhuhn.blend` mit `render_moorhuhn.py` rendern. Das Modell nutzt Blender 4.4.
+`moorhuhn.blend` mit `render_moorhuhn.py` rendern. Anschließend mit Python und Pillow
+`pack_moorhuhn.py` ausführen, um Sprite-Sheet und Metadaten zu aktualisieren.
+Das Modell nutzt Blender 4.4.
 Die Erstellung ersetzt ausschließlich die eigene Szene `Moorhuhn_Asset`.

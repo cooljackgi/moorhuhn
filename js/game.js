@@ -8,8 +8,8 @@ const MENU_CHEAT_CODE = 'MOORHUHN';
 const MOORHUHN_SPRITE = new Image();
 const MOORHUHN_FRAME_SIZE = 384;
 const MOORHUHN_FRAME_COUNT = 8;
-const MOORHUHN_FRAME_DURATION = 125;
-MOORHUHN_SPRITE.src = 'assets/moorhuhn/moorhuhn-flight.png';
+const MOORHUHN_FRAME_DURATION = 100;
+MOORHUHN_SPRITE.src = 'assets/moorhuhn/moorhuhn-flight.png?v=peppy-2';
 
 // Status Enums
 const GameState = {

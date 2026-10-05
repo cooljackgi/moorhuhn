@@ -5,8 +5,8 @@
   "columns": 8,
   "rows": 1,
   "frameCount": 8,
-  "fps": 8,
-  "durationSeconds": 1,
+  "fps": 10,
+  "durationSeconds": 0.8,
   "anchor": {
     "x": 0.5,
     "y": 0.5
