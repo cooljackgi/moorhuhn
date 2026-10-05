@@ -822,6 +822,66 @@ class Particle {
     }
 }
 
+class FeatherParticle {
+    constructor(x, y) {
+        this.x = x + (Math.random() - 0.5) * 12;
+        this.y = y + (Math.random() - 0.5) * 12;
+        this.vx = (Math.random() - 0.5) * 7;
+        this.vy = -2 - Math.random() * 5;
+        this.gravity = 0.12 + Math.random() * 0.08;
+        this.length = 18 + Math.random() * 16;
+        this.width = this.length * (0.22 + Math.random() * 0.12);
+        this.color = ['#fff8e7', '#f5e6c8', '#d9b98b', '#c98b55'][Math.floor(Math.random() * 4)];
+        this.rotation = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - 0.5) * 0.14;
+        this.flutter = Math.random() * Math.PI * 2;
+        this.age = 0;
+        this.life = 1;
+        this.markedForDeletion = false;
+    }
+
+    update(deltaTime) {
+        const dt = deltaTime / 16;
+        this.age += dt;
+        this.vy += this.gravity * dt;
+        this.x += (this.vx + Math.sin(this.age * 0.16 + this.flutter) * 1.2) * dt;
+        this.y += this.vy * dt;
+        this.rotation += this.spin * dt;
+        this.life -= 0.007 * dt;
+        if (this.life <= 0) this.markedForDeletion = true;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        const halfWidth = this.width / 2;
+        const halfLength = this.length / 2;
+        ctx.fillStyle = this.color;
+        ctx.strokeStyle = 'rgba(91, 57, 31, 0.55)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(0, -halfLength);
+        ctx.quadraticCurveTo(halfWidth * 1.25, -halfLength * 0.45, halfWidth * 0.55, halfLength * 0.32);
+        ctx.quadraticCurveTo(halfWidth * 0.25, halfLength * 0.58, 0, halfLength);
+        ctx.quadraticCurveTo(-halfWidth * 0.6, halfLength * 0.38, -halfWidth * 0.55, -halfLength * 0.12);
+        ctx.quadraticCurveTo(-halfWidth * 0.35, -halfLength * 0.55, 0, -halfLength);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(120, 79, 45, 0.65)';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(0, -halfLength * 0.82);
+        ctx.lineTo(0, halfLength * 0.82);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
 class ScorePopup {
     constructor(x, y, text, color = '#ffd700') {
         this.x = x;
@@ -3875,9 +3935,9 @@ class Game {
                 p.speedY = (Math.random() - 0.5) * 14;
                 this.particles.push(p);
             }
-            // Ein paar Federn trotzdem
-            for (let i = 0; i < 5; i++) {
-                this.particles.push(new Particle(x, y, '#ffffff'));
+            // Federn bleiben auch im erwachsenen Modus als comicartiger Treffer-Effekt erhalten.
+            for (let i = 0; i < 7; i++) {
+                this.particles.push(new FeatherParticle(x, y));
             }
             // Blutlache
             this.bloodPools.push(new BloodPool(x, y));
@@ -3887,8 +3947,10 @@ class Game {
         } else {
             for (let i = 0; i < 15; i++) {
                 this.particles.push(new Particle(x, y, color));
-                if (isChicken) {
-                    this.particles.push(new Particle(x, y, '#ffffff'));
+            }
+            if (isChicken) {
+                for (let i = 0; i < 7; i++) {
+                    this.particles.push(new FeatherParticle(x, y));
                 }
             }
         }
@@ -4544,4 +4606,3 @@ class Game {
 window.onload = () => {
     window.game = new Game();
 };
-
