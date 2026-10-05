@@ -4,6 +4,13 @@ const DEFAULT_AMMO = 5;
 const KONAMI_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
 const MENU_CHEAT_CODE = 'MOORHUHN';
 
+// Blender render: eight transparent flight poses, loaded once for all targets.
+const MOORHUHN_SPRITE = new Image();
+const MOORHUHN_FRAME_SIZE = 384;
+const MOORHUHN_FRAME_COUNT = 8;
+const MOORHUHN_FRAME_DURATION = 125;
+MOORHUHN_SPRITE.src = 'assets/moorhuhn/moorhuhn-flight.png';
+
 // Status Enums
 const GameState = {
     MENU: 0,
@@ -101,6 +108,20 @@ class Target {
         ctx.translate(this.x, this.y);
         const s = this.size;
         if (this.direction === -1) ctx.scale(-1, 1);
+
+        // Keep the canvas drawing as a fallback while loading or on image errors.
+        if (MOORHUHN_SPRITE.complete &&
+            MOORHUHN_SPRITE.naturalWidth === MOORHUHN_FRAME_SIZE * MOORHUHN_FRAME_COUNT &&
+            MOORHUHN_SPRITE.naturalHeight === MOORHUHN_FRAME_SIZE) {
+            const frame = Math.floor(this.flapTime / MOORHUHN_FRAME_DURATION) % MOORHUHN_FRAME_COUNT;
+            const extent = s * 2.8;
+            if (this.isRare) ctx.filter = 'sepia(0.8) saturate(1.8) brightness(1.12)';
+            ctx.drawImage(MOORHUHN_SPRITE,
+                frame * MOORHUHN_FRAME_SIZE, 0, MOORHUHN_FRAME_SIZE, MOORHUHN_FRAME_SIZE,
+                -extent / 2, -extent / 2, extent, extent);
+            ctx.restore();
+            return;
+        }
 
         const appearance = this.getAppearance();
         const flapAngle = Math.sin(this.flapTime / 50) * 0.7;

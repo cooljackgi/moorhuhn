@@ -1,0 +1,18 @@
+{
+  "image": "moorhuhn-flight.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 8,
+  "rows": 1,
+  "frameCount": 8,
+  "fps": 8,
+  "durationSeconds": 1,
+  "anchor": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "facing": "right",
+  "animation": "Flight",
+  "model": "moorhuhn.glb",
+  "source": "moorhuhn.blend"
+}
